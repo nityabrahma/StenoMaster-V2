@@ -22,9 +22,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarSeparator,
-  SidebarTrigger,
 } from './ui/sidebar';
 import Logo from './logo';
+import { useSidebar } from './ui/sidebar';
 
 const teacherLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -42,6 +42,7 @@ const studentLinks = [
 export default function AppSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const { isMobile } = useSidebar();
 
   if (!user) return null;
 
@@ -52,13 +53,14 @@ export default function AppSidebar() {
     .join('');
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-           <Logo />
-          <SidebarTrigger />
-        </div>
-      </SidebarHeader>
+    <Sidebar className="hidden md:flex md:flex-col md:border-r md:w-64">
+      {isMobile && (
+        <SidebarHeader>
+          <div className="flex items-center gap-2 p-2">
+            <Logo />
+          </div>
+        </SidebarHeader>
+      )}
 
       <SidebarContent className="p-2">
         <SidebarMenu>

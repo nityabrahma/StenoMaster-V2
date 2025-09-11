@@ -14,6 +14,8 @@ import UserButton from '@/components/UserButton';
 import type { User, Class } from '@/lib/types';
 import { AuthProvider } from '@/components/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { colorScheme } = useTheme();
@@ -53,12 +55,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             setAssignments([]);
           }
         } else if (user.role === 'teacher') {
+          await fetchScoresForTeacher(user);
           const teacherClasses: Class[] = await fetchClassesForTeacher(user);
           if (teacherClasses.length > 0) {
             for (const c of teacherClasses) {
               await fetchStudentsInClass(c.id);
             }
-            await fetchScoresForTeacher(user);
           }
           await fetchAssignments();
         }
@@ -82,42 +84,49 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  const handleBack = () => {
+    window.history.back();
+  }
+
   return (
     <SidebarProvider>
-      <div
-        className={`min-h-screen flex w-full bg-gradient-to-br ${
+        <div className={`min-h-screen w-full flex flex-col bg-gradient-to-br ${
           colorScheme === 'dark'
             ? 'from-slate-900 via-slate-800 to-slate-900'
             : 'from-slate-50 via-blue-50 to-slate-100'
-        }`}
-      >
-        {!isAssignmentPage && <AppSidebar />}
-        <SidebarInset className="flex-1 flex flex-col">
-          <nav className="border-b h-16 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex justify-between items-center h-16 px-4 lg:px-6">
-              <div className="flex items-center space-x-4">
-                {!isAssignmentPage && (
-                  <SidebarTrigger
-                    className={`lg:hidden h-9 w-9 cursor-pointer ${
-                      colorScheme === 'dark'
-                        ? 'bg-slate-900/70 hover:bg-black/60'
-                        : 'bg-slate-200 hover:bg-slate-300'
-                    }`}
-                  />
-                )}
-                {isAssignmentPage && <Logo />}
-              </div>
-              <div className="flex items-center space-x-2 lg:space-x-4">
-                <ThemeToggle />
-                <UserButton />
-              </div>
+        }`}>
+            <nav className="border-b h-16 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">
+                <div className="flex justify-between items-center h-16 px-4 lg:px-6">
+                    <div className="flex items-center space-x-4">
+                        <div className="md:hidden">
+                            <SidebarTrigger
+                                className={`h-9 w-9 cursor-pointer ${
+                                colorScheme === 'dark'
+                                    ? 'bg-slate-900/70 hover:bg-black/60'
+                                    : 'bg-slate-200 hover:bg-slate-300'
+                                }`}
+                            />
+                        </div>
+                        <div className="hidden md:flex items-center gap-2">
+                           <Logo />
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={handleBack}>
+                            <ArrowLeft />
+                        </Button>
+                    </div>
+                    <div className="flex items-center space-x-2 lg:space-x-4">
+                        <ThemeToggle />
+                        <UserButton />
+                    </div>
+                </div>
+            </nav>
+            <div className="flex flex-1">
+                <AppSidebar />
+                <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto size-full">
+                    {children}
+                </main>
             </div>
-          </nav>
-          <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto size-full">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
+        </div>
     </SidebarProvider>
   );
 };
