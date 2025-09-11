@@ -3,8 +3,9 @@
  * This is a mock authentication service.
  * In a real application, you would make API calls to a backend service.
  */
-import { students, teachers } from './data';
-import type { LoginCredentials, SignupCredentials, User } from './types';
+import type { LoginCredentials, SignupCredentials, User, Student } from './types';
+import { useStudents } from '@/hooks/use-students';
+import { teachers, students as initialStudents } from './data';
 
 // In a real app, this would be a secret key stored on the server.
 const JWT_SECRET = 'your-super-secret-key-that-is-at-least-32-characters-long';
@@ -27,19 +28,15 @@ function base64UrlDecode(str: string): string {
     return Buffer.from(str, 'base64').toString('utf-8');
 }
 
-
-// Initialize mock users from data.ts if not already in localStorage
-function initializeMockUsers() {
-    if (typeof window !== 'undefined' && !localStorage.getItem(MOCK_USERS_KEY)) {
-        const initialUsers: User[] = [...teachers, ...students];
-        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initialUsers));
-    }
-}
-
 function getMockUsers(): User[] {
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') return [...teachers, ...initialStudents];
     const users = localStorage.getItem(MOCK_USERS_KEY);
-    return users ? JSON.parse(users) : [];
+    if (!users) {
+        const initialUsers: User[] = [...teachers, ...initialStudents];
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initialUsers));
+        return initialUsers;
+    }
+    return JSON.parse(users);
 }
 
 function saveMockUsers(users: User[]) {
@@ -116,7 +113,6 @@ function parseExpiry(expiresIn: string): number {
 export async function signIn(credentials: LoginCredentials): Promise<string> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            initializeMockUsers(); // Ensure localStorage is initialized.
             const userList: User[] = getMockUsers();
             const user = userList.find((u) => u.email === credentials.email && u.role === credentials.role);
 
@@ -146,10 +142,9 @@ export async function signIn(credentials: LoginCredentials): Promise<string> {
  * Simulates a sign-up API call.
  * Adds a new user to our mock database.
  */
-export async function signUp(credentials: SignupCredentials): Promise<void> {
+export async function signUp(credentials: SignupCredentials): Promise<User> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            initializeMockUsers(); // Ensure localStorage is initialized.
             const users = getMockUsers();
             const existingUser = users.find(u => u.email === credentials.email);
 
@@ -157,21 +152,30 @@ export async function signUp(credentials: SignupCredentials): Promise<void> {
                 return reject(new Error('An account with this email already exists.'));
             }
 
-            const newUser: User = {
-                id: `user-${Date.now()}`,
-                name: credentials.name,
-                email: credentials.email,
-                role: credentials.role,
-            };
+            let newUser: User;
 
-            if (newUser.role === 'student') {
-                (newUser as any).classIds = [];
+            if(credentials.role === 'student') {
+                const newStudent: Student = {
+                    id: `student-${Date.now()}`,
+                    name: credentials.name,
+                    email: credentials.email,
+                    role: 'student',
+                    classIds: []
+                };
+                newUser = newStudent;
+            } else {
+                 newUser = {
+                    id: `user-${Date.now()}`,
+                    name: credentials.name,
+                    email: credentials.email,
+                    role: credentials.role,
+                };
             }
             
             users.push(newUser);
             saveMockUsers(users);
             
-            resolve();
+            resolve(newUser);
         }, 500); // Simulate network latency
     });
 }

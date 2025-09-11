@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { students } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStudents } from '@/hooks/use-students';
+import { useClasses } from '@/hooks/use-classes';
 
 
 export default function NewClassPage() {
@@ -24,6 +25,8 @@ export default function NewClassPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { students } = useStudents();
+  const { addClass } = useClasses();
   
   const [className, setClassName] = useState('');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -34,23 +37,18 @@ export default function NewClassPage() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!className.trim()) {
+    if (!className.trim() || !user) {
         toast({ title: "Error", description: "Class name is required.", variant: 'destructive' });
         return;
     }
     
-    const newClass = {
-        id: `class-${Date.now()}`,
+    const newClass = await addClass({
         name: className,
-        teacherId: user?.id,
+        teacherId: user.id,
         studentIds: selectedStudents,
-    };
-
-    console.log('Creating new class:', newClass);
-    // In a real app, you would save this to your database
-    // For now, we just log it and show a toast.
+    });
     
     toast({
         title: "Class Created!",

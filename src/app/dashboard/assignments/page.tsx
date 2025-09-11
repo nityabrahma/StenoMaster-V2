@@ -1,6 +1,5 @@
 'use client';
 import { useAuth } from '@/hooks/use-auth';
-import { assignments, classes, students, submissions } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -30,12 +29,20 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation';
+import { useAssignments } from '@/hooks/use-assignments';
+import { useClasses } from '@/hooks/use-classes';
+import { useStudents } from '@/hooks/use-students';
 
 // Teacher's View
 function TeacherAssignments() {
   const { user } = useAuth();
   const router = useRouter();
-  const teacherClasses = classes.filter(c => c.teacherId === user?.id);
+  const { assignments, submissions } = useAssignments();
+  const { classes } = useClasses();
+
+  if(!user) return null;
+
+  const teacherClasses = classes.filter(c => c.teacherId === user.id);
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
 
   return (
@@ -104,9 +111,14 @@ function TeacherAssignments() {
 // Student's View
 function StudentAssignments() {
   const { user } = useAuth();
-  const student = students.find(s => s.id === user?.id);
+  const { students } = useStudents();
+  const { assignments, submissions } = useAssignments();
+  
+  if(!user) return null;
+
+  const student = students.find(s => s.id === user.id);
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
-  const mySubmissions = submissions.filter(s => s.studentId === user?.id);
+  const mySubmissions = submissions.filter(s => s.studentId === user.id);
   
   const assignmentColors = [
     'from-blue-500 to-sky-500',

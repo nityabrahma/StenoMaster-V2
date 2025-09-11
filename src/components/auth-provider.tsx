@@ -26,6 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    // Also clear zustand stores
+    localStorage.removeItem('assignments-storage');
+    localStorage.removeItem('classes-storage');
+    localStorage.removeItem('students-storage');
     if(pathname !== '/') {
         router.push('/');
     }
@@ -86,10 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials) => {
+    async (credentials: SignupCredentials): Promise<User> => {
         setLoading(true);
         try {
-            await signUp(credentials);
+            const newUser = await signUp(credentials);
+            return newUser;
         } catch (error: any) {
             console.error("Signup failed", error);
             // The toast is now thrown from the signup function itself

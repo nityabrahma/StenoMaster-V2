@@ -14,7 +14,7 @@ type AuthContextType = {
   firstLoadDone: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<void>;
+  signup: (credentials: SignupCredentials) => Promise<User>;
   logout: () => void;
 };
 

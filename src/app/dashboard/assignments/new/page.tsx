@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { classes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -43,6 +42,8 @@ import { format } from 'date-fns';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { useClasses } from '@/hooks/use-classes';
+import { useAssignments } from '@/hooks/use-assignments';
 
 const assignmentSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -61,6 +62,8 @@ export default function NewAssignmentPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { classes } = useClasses();
+  const { addAssignment } = useAssignments();
   
   const teacherClasses = classes.filter((c) => c.teacherId === user?.id);
 
@@ -81,8 +84,11 @@ export default function NewAssignmentPage() {
     }
   }, [searchParams, form]);
 
-  const onSubmit = (data: AssignmentFormValues) => {
-    console.log('Creating assignment:', data);
+  const onSubmit = async (data: AssignmentFormValues) => {
+    await addAssignment({
+        ...data,
+        deadline: data.deadline.toISOString(),
+    });
     toast({
         title: "Assignment Created!",
         description: `The assignment "${data.title}" has been successfully created.`,

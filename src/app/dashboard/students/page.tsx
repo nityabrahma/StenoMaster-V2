@@ -1,7 +1,6 @@
 
 'use client';
 import { useAuth } from '@/hooks/use-auth';
-import { classes, students as mockStudents, submissions } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -41,13 +40,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useStudents } from '@/hooks/use-students';
+import { useClasses } from '@/hooks/use-classes';
+import { useAssignments } from '@/hooks/use-assignments';
 
 function CreateStudentDialog() {
     const { signup } = useAuth();
     const { toast } = useToast();
+    const { addStudent } = useStudents();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,15 +65,18 @@ function CreateStudentDialog() {
         }
 
         try {
-            await signup({ name, email, password, role: 'student' });
+            const newUser = await signup({ name, email, password, role: 'student' });
+            if (newUser.role === 'student') {
+                await addStudent(newUser);
+            }
             toast({
                 title: 'Success',
                 description: `Student account for ${name} created.`,
             });
-            // TODO: close dialog and refresh student list
             setName('');
             setEmail('');
             setPassword('');
+            setIsOpen(false);
         } catch (error: any) {
             toast({
                 title: 'Error',
@@ -80,7 +87,7 @@ function CreateStudentDialog() {
     };
 
     return (
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -126,8 +133,9 @@ function CreateStudentDialog() {
 
 export default function StudentsPage() {
   const { user } = useAuth();
-  // For now, we continue to use mockStudents for display until the auth state manages all users
-  const [students, setStudents] = useState(mockStudents);
+  const { students } = useStudents();
+  const { classes } = useClasses();
+  const { submissions } = useAssignments();
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 

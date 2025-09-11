@@ -1,6 +1,7 @@
 'use client';
 import { useAuth } from '@/hooks/use-auth';
-import { classes, students, teachers } from '@/lib/data';
+import { useClasses } from '@/hooks/use-classes';
+import { useStudents } from '@/hooks/use-students';
 import type { Student } from '@/lib/types';
 import {
   Card,
@@ -33,6 +34,8 @@ import { Badge } from '@/components/ui/badge';
 export default function ClassesPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { classes } = useClasses();
+  const { students } = useStudents();
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 

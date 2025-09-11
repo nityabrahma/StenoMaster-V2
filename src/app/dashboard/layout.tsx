@@ -8,7 +8,6 @@ import { useTheme } from '@/hooks/use-theme';
 import Logo from '@/components/logo';
 import { useAuth } from '@/hooks/use-auth';
 import { usePathname, useRouter } from 'next/navigation';
-import { useScore } from '@/hooks/useScore';
 import { Card, CardContent } from '@/components/ui/card';
 import UserButton from '@/components/UserButton';
 import type { User, Class } from '@/lib/types';
@@ -16,6 +15,9 @@ import { AuthProvider } from '@/components/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useAssignments } from '@/hooks/use-assignments';
+import { useClasses } from '@/hooks/use-classes';
+import { useStudents } from '@/hooks/use-students';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { colorScheme } = useTheme();
@@ -26,16 +28,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isAssignmentPage = pathname.startsWith('/dashboard/assignments/');
 
   const [initialLoad, setInitialLoad] = useState(true);
-
-  const {
-    fetchAssignments,
-    fetchClasses,
-    setAssignments,
-    fetchScores,
-    fetchClassesForTeacher,
-    fetchStudentsInClass,
-    fetchScoresForTeacher,
-  } = useScore();
+  
+  const { loadAssignments } = useAssignments();
+  const { loadClasses } = useClasses();
+  const { loadStudents } = useStudents();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -46,29 +42,16 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const loadData = async () => {
       if (user && isAuthenticated && initialLoad) {
-        if (user.role === 'student') {
-          const studentClasses = await fetchClasses(user);
-          await fetchScores(user.id);
-          if (studentClasses.length > 0) {
-            await fetchAssignments(studentClasses[0].id);
-          } else {
-            setAssignments([]);
-          }
-        } else if (user.role === 'teacher') {
-          await fetchScoresForTeacher(user);
-          const teacherClasses: Class[] = await fetchClassesForTeacher(user);
-          if (teacherClasses.length > 0) {
-            for (const c of teacherClasses) {
-              await fetchStudentsInClass(c.id);
-            }
-          }
-          await fetchAssignments();
-        }
+        await Promise.all([
+            loadAssignments(),
+            loadClasses(),
+            loadStudents()
+        ]);
         setInitialLoad(false);
       }
     };
     loadData();
-  }, [user, isAuthenticated, initialLoad, fetchClasses, fetchScores, fetchAssignments, setAssignments, fetchClassesForTeacher, fetchStudentsInClass, fetchScoresForTeacher]);
+  }, [user, isAuthenticated, initialLoad, loadAssignments, loadClasses, loadStudents]);
 
   if (loading || !user || initialLoad) {
     return (
