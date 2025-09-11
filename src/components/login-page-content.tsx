@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Card,
@@ -21,7 +20,6 @@ import { useTheme } from '@/hooks/use-theme';
 import Logo from '@/components/logo';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import Image from 'next/image';
 import {
   Award,
   BookOpen,
@@ -30,6 +28,7 @@ import {
   Target,
   Users,
 } from 'lucide-react';
+import Image from 'next/image';
 
 function LoginDialogContent({
   isLoginOpen,
@@ -51,17 +50,17 @@ function LoginDialogContent({
   return (
     <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
       <DialogTrigger asChild>
-        <Button>Login</Button>
+        <Button className="gradient-button">Login</Button>
       </DialogTrigger>
       <DialogContent
-        className={`flex flex-col rounded-xl ${
+        className={`flex flex-col rounded-xl bg-gradient-to-br backdrop-blur-xl border-0 shadow-2xl ${
           colorScheme === 'dark'
-            ? 'max-h-[90vh] max-w-sm sm:max-w-lg bg-gradient-to-br from-gray-900/95 via-blue-950/90 to-purple-950/95 backdrop-blur-xl border-0 shadow-2xl'
-            : 'max-h-[90vh] max-w-sm sm:max-w-lg bg-gradient-to-br from-white/95 via-blue-50/90 to-purple-50/95 backdrop-blur-xl border-0 shadow-2xl'
+            ? 'modal-gradient-dark-bg'
+            : 'modal-gradient-light-bg'
         }`}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-bold text-center">
+          <DialogTitle className="text-xl font-bold text-center">
             <Logo />
           </DialogTitle>
         </DialogHeader>
@@ -155,14 +154,14 @@ const LoginPageContent = () => {
   return (
     <div
       className={`min-h-screen ${
-        colorScheme === 'dark'
-          ? 'bg-gray-950 text-gray-100'
-          : 'bg-gray-50 text-gray-900'
+        colorScheme === 'dark' ? 'gradient-card-dark' : 'gradient-card-light'
       }`}
     >
       <nav
         className={`border-b border-border/50 backdrop-blur-xl fixed w-full top-0 z-50 ${
-          colorScheme === 'dark' ? 'bg-gray-950/80' : 'bg-gray-50/80'
+          colorScheme === 'dark'
+            ? 'gradient-section-dark'
+            : 'gradient-section-light'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -172,10 +171,12 @@ const LoginPageContent = () => {
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <LoginDialogContent
-                isLoginOpen={isLoginOpen}
-                setIsLoginOpen={setIsLoginOpen}
-              />
+              <Suspense fallback={<Button disabled>Loading...</Button>}>
+                <LoginDialogContent
+                    isLoginOpen={isLoginOpen}
+                    setIsLoginOpen={setIsLoginOpen}
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -187,7 +188,7 @@ const LoginPageContent = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-indigo-600/20 blur-3xl"></div>
               <div className="relative">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 gradient-text leading-tight">
                   Master Stenography
                   <br />
                   <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
@@ -195,7 +196,9 @@ const LoginPageContent = () => {
                   </span>
                 </h2>
                 <p
-                  className={`text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed`}
+                  className={`text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed ${
+                    colorScheme === 'dark' ? 'text-dark' : 'text-light'
+                  }`}
                 >
                   A comprehensive platform for learning stenography with
                   real-time feedback, progress tracking, and interactive
@@ -204,7 +207,7 @@ const LoginPageContent = () => {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
                     size="lg"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto font-bold"
+                    className="gradient-button w-full sm:w-auto font-bold"
                     onClick={() => setIsLoginOpen(true)}
                   >
                     Get Started
@@ -222,11 +225,11 @@ const LoginPageContent = () => {
         >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12 sm:mb-16">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">
                 Why Choose StenoMaster?
               </h3>
               <p
-                className={`text-lg font-medium sm:text-xl text-muted-foreground`}
+                className={`text-lg font-medium sm:text-xl ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
               >
                 Everything you need to excel in stenography education
               </p>
@@ -238,7 +241,11 @@ const LoginPageContent = () => {
                 return (
                   <Card
                     key={index}
-                    className={`relative overflow-hidden bg-card backdrop-blur-xl border group`}
+                    className={`relative overflow-hidden bg-gradient-to-br backdrop-blur-xl border-0 group ${
+                        colorScheme === 'dark'
+                          ? 'from-gray-900/80 via-blue-950/60 to-purple-950/60'
+                          : 'from-white/80 via-blue-50/60 to-purple-50/60'
+                      }`}
                   >
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}
@@ -251,7 +258,7 @@ const LoginPageContent = () => {
                           <Icon className="h-6 w-6 text-white" />
                         </div>
                         <CardTitle
-                          className={`text-lg sm:text-xl text-card-foreground`}
+                          className={`text-lg sm:text-xl ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
                         >
                           {feature.title}
                         </CardTitle>
@@ -259,7 +266,7 @@ const LoginPageContent = () => {
                     </CardHeader>
                     <CardContent className="relative z-10">
                       <p
-                        className={`leading-relaxed text-muted-foreground`}
+                        className={`leading-relaxed ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
                       >
                         {feature.description}
                       </p>
@@ -274,22 +281,26 @@ const LoginPageContent = () => {
         <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <Card
-              className={`relative overflow-hidden bg-card backdrop-blur-xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}
+              className={`relative overflow-hidden backdrop-blur-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                colorScheme === 'dark'
+                  ? 'gradient-card-cta-dark'
+                  : 'gradient-card-cta-light'
+              }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10"></div>
               <CardContent className="py-12 sm:py-16 relative z-10">
-                <h3 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">
                   Ready to Start Learning?
                 </h3>
                 <p
-                  className={`text-lg sm:text-xl text-muted-foreground mb-8 leading-relaxed`}
+                  className={`text-lg sm:text-xl mb-8 leading-relaxed ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
                 >
                   Join thousands of students and teachers already using
                   StenoMaster to master stenography
                 </p>
                 <Button
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="gradient-button"
                   onClick={() => setIsLoginOpen(true)}
                 >
                   Login to Your Account
@@ -301,10 +312,16 @@ const LoginPageContent = () => {
       </main>
 
       <footer
-        className={`border-t border-border/50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 p-1`}
+        className={`border-t border-border/50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 p-1 bg-gradient-to-r ${
+            colorScheme == 'dark'
+              ? 'from-blue-950/50 via-purple-950/30 to-indigo-950/50'
+              : 'from-blue-50/50 via-purple-50/30 to-indigo-50/50'
+          }`}
       >
         <span
-          className={`justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row text-muted-foreground`}
+          className={`justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message ${
+            colorScheme == 'dark' ? 'text-dark-muted' : 'text-light-muted'
+          }`}
         >
           <p>Copyright © {new Date().getFullYear()}</p>
           <p className="font-normal hidden sm:flex">|</p>

@@ -61,10 +61,18 @@ const LoginForm = () => {
 
   return (
     <Card
-      className={`w-full max-w-md mx-auto flex flex-col overflow-auto backdrop-blur-xl border shadow-xl bg-card`}
+      className={`w-full max-w-md mx-auto flex flex-col overflow-auto backdrop-blur-xl border shadow-xl ${
+        colorScheme === 'dark'
+          ? 'bg-black/20 border-white/10'
+          : 'bg-white/20 border-white/30'
+      }`}
     >
       <CardHeader className="flex flex-col gap-2 justify-center items-center pb-2">
-        <p className={`font-bold text-card-foreground`}>
+        <p
+          className={`font-bold ${
+            colorScheme === 'dark' ? 'text-dark' : 'text-light'
+          }`}
+        >
           Welcome! Please authorize to continue.
         </p>
       </CardHeader>
@@ -75,7 +83,9 @@ const LoginForm = () => {
               <TabsTrigger
                 key={index}
                 value={nav.value}
-                className={`cursor-pointer p-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground`}
+                className={`cursor-pointer p-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white ${
+                  colorScheme === 'dark' ? 'bg-slate-900' : 'bg-slate-300/80'
+                }`}
               >
                 <nav.icon className="h-4 w-4 mr-2" />
                 {nav.name}
@@ -97,7 +107,7 @@ const LoginForm = () => {
                       email: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-input focus:border-primary transition-colors"
+                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
                 />
               </div>
               <div className="space-y-2">
@@ -113,13 +123,13 @@ const LoginForm = () => {
                       password: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-input focus:border-primary transition-colors"
+                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
                 />
               </div>
               <Button
                 disabled={isLoading}
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="gradient-button w-full"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
                 Sign In as Student
@@ -141,7 +151,7 @@ const LoginForm = () => {
                       email: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-input focus:border-primary transition-colors"
+                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
                 />
               </div>
               <div className="space-y-2">
@@ -157,13 +167,13 @@ const LoginForm = () => {
                       password: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-input focus:border-primary transition-colors"
+                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
                 />
               </div>
               <Button
                 disabled={isLoading}
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="gradient-button w-full"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
                 Sign In as Teacher
