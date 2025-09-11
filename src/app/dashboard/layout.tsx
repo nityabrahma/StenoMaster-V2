@@ -90,12 +90,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-        <div className={`min-h-screen w-full flex flex-col bg-gradient-to-br ${
+        <div className={`h-screen w-full flex flex-col bg-gradient-to-br ${
           colorScheme === 'dark'
             ? 'from-slate-900 via-slate-800 to-slate-900'
             : 'from-slate-50 via-blue-50 to-slate-100'
         }`}>
-            <nav className="border-b h-16 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">
+            <nav className="border-b h-16 flex-shrink-0 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">
                     <div className="flex items-center space-x-4">
                         <div className="md:hidden">
@@ -120,7 +120,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                 </div>
             </nav>
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 h-[calc(100vh-4rem)]">
                 <AppSidebar />
                 <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto size-full">
                     {children}
