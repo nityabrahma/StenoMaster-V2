@@ -20,10 +20,10 @@ export default function UserButton() {
     return null;
   }
 
-  const userInitials = user.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('');
+  const nameParts = user.name.split(' ');
+  const userInitials = nameParts.length > 1 
+    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}` 
+    : user.name.substring(0, 2);
 
   return (
     <DropdownMenu>

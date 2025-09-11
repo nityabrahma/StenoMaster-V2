@@ -47,10 +47,6 @@ export default function AppSidebar() {
   if (!user) return null;
 
   const links = user.role === 'teacher' ? teacherLinks : studentLinks;
-  const userInitials = user.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('');
 
   return (
     <Sidebar className="hidden md:flex md:flex-col md:border-r md:w-64">
@@ -84,25 +80,14 @@ export default function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarFooter>
-         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name}/>
-            <AvatarFallback>{userInitials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          </div>
-          <SidebarMenuButton
-            variant="ghost"
-            size="icon"
-            onClick={logout}
-            className="group-data-[collapsible=icon]:!size-8"
-            tooltip="Log Out"
-          >
-            <LogOut />
-          </SidebarMenuButton>
-        </div>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={logout} tooltip="Log out">
+                    <LogOut/>
+                    <span>Log Out</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
