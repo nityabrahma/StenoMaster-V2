@@ -10,6 +10,24 @@ import type { LoginCredentials, SignupCredentials, User } from './types';
 const JWT_SECRET = 'your-super-secret-key-that-is-at-least-32-characters-long';
 const MOCK_USERS_KEY = 'steno-mock-users';
 
+// Helper functions for URL-safe base64 encoding
+function base64UrlEncode(str: string): string {
+    return Buffer.from(str)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+}
+
+function base64UrlDecode(str: string): string {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) {
+        str += '=';
+    }
+    return Buffer.from(str, 'base64').toString('utf-8');
+}
+
+
 // Initialize mock users from data.ts if not already in localStorage
 function initializeMockUsers() {
     if (!localStorage.getItem(MOCK_USERS_KEY)) {
@@ -40,12 +58,12 @@ function sign(payload: object, secret: string, options: { expiresIn: string }): 
     
     const fullPayload = { ...payload, iat: now, exp: expiry };
 
-    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-    const encodedPayload = Buffer.from(JSON.stringify(fullPayload)).toString('base64url');
+    const encodedHeader = base64UrlEncode(JSON.stringify(header));
+    const encodedPayload = base64UrlEncode(JSON.stringify(fullPayload));
     
     // In a real JWT, you'd use crypto to create a signature. We'll just fake it.
     const signature = `${encodedHeader}.${encodedPayload}.${secret}`;
-    const encodedSignature = Buffer.from(signature).toString('base64url');
+    const encodedSignature = base64UrlEncode(signature);
 
     return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 }
@@ -62,7 +80,7 @@ export function decodeToken(token: string): object | null {
     if (!encodedPayload) {
         throw new Error('Invalid token format');
     }
-    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf-8'));
+    const payload = JSON.parse(base64UrlDecode(encodedPayload));
     return payload;
   } catch (error) {
     console.error('Failed to decode token:', error);
