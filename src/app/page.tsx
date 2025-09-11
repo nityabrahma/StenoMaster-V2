@@ -1,132 +1,340 @@
+
 'use client';
 
+import React, { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { CheckCircle, Feather, Users, Zap } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { ThemeToggle } from '@/components/theme-toggle';
+import LoginForm from '@/components/login-form';
+import { useTheme } from '@/hooks/use-theme';
+import Logo from '@/components/logo';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  Award,
+  BookOpen,
+  Clock,
+  GraduationCap,
+  Target,
+  Users,
+} from 'lucide-react';
 
-export default function Home() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === 'hero-1');
+function LoginDialogContent({
+  isLoginOpen,
+  setIsLoginOpen,
+}: {
+  isLoginOpen: boolean;
+  setIsLoginOpen: (open: boolean) => void;
+}) {
+  const searchParams = useSearchParams();
+  const { colorScheme } = useTheme();
+
+  useEffect(() => {
+    const showLogin = searchParams.get('showLogin') === 'true';
+    if (showLogin) {
+      setIsLoginOpen(showLogin);
+    }
+  }, [searchParams, setIsLoginOpen]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <Feather className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold font-headline">
-              StenoMaster
-            </span>
-          </Link>
-          <Button asChild>
-            <Link href="/login">Get Started</Link>
-          </Button>
-        </div>
-      </header>
+    <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+      <DialogTrigger asChild>
+        <Button className="gradient-button">Login</Button>
+      </DialogTrigger>
+      <DialogContent
+        className={`flex flex-col rounded-xl bg-gradient-to-br backdrop-blur-xl border-0 shadow-2xl ${
+          colorScheme === 'dark'
+            ? 'modal-gradient-dark-bg'
+            : 'modal-gradient-light-bg'
+        }`}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-center">
+            <Logo />
+          </DialogTitle>
+        </DialogHeader>
+        <LoginForm />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-      <main className="flex-grow">
-        <section className="relative w-full py-20 md:py-32 lg:py-40 bg-accent">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter">
-                Master the Art of Typing
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                StenoMaster is the ultimate platform for students and teachers to
-                improve typing speed and accuracy through targeted practice and
-                detailed analytics.
-              </p>
-              <Button size="lg" asChild>
-                <Link href="/login">Start Learning Now</Link>
-              </Button>
+const HomePageContent = () => {
+  const { colorScheme } = useTheme();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const router = useRouter();
+  const { isAuthenticated, user, firstLoadDone } = useAuth();
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: 'Interactive Assignments',
+      description:
+        'Practice with real stenography assignments uploaded by your teachers',
+      gradient: 'from-blue-500 to-purple-500',
+    },
+    {
+      icon: Users,
+      title: 'Class Management',
+      description:
+        'Teachers can create classes and manage students efficiently',
+      gradient: 'from-purple-500 to-pink-500',
+    },
+    {
+      icon: Target,
+      title: 'Real-time Feedback',
+      description:
+        'Get instant accuracy and WPM feedback on your typing practice',
+      gradient: 'from-green-500 to-teal-500',
+    },
+    {
+      icon: Award,
+      title: 'Progress Tracking',
+      description: 'Monitor your improvement over time with detailed analytics',
+      gradient: 'from-orange-500 to-red-500',
+    },
+    {
+      icon: Clock,
+      title: 'Timed Practice',
+      description:
+        'Practice with time constraints to improve speed and accuracy',
+      gradient: 'from-indigo-500 to-blue-500',
+    },
+    {
+      icon: GraduationCap,
+      title: 'Educational Focus',
+      description:
+        'Designed specifically for stenography education and learning',
+      gradient: 'from-violet-500 to-purple-500',
+    },
+  ];
+
+  useEffect(() => {
+    if (firstLoadDone) {
+      if (isAuthenticated) {
+        if (user) {
+          router.push(`/dashboard`);
+        }
+      }
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user, router, firstLoadDone]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen p-20 bg-background">
+        <Card className="animate-bounce">
+          <CardContent className="flex flex-col gap-2 items-center justify-center p-20 h-full">
+            <div className="flex items-center space-x-3 justify-center">
+              <Logo />
             </div>
-            <div className="relative h-64 md:h-full w-full rounded-xl shadow-2xl overflow-hidden">
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  data-ai-hint={heroImage.imageHint}
-                  className="transform hover:scale-105 transition-transform duration-500 ease-in-out"
+            <p className={`text-lg font-bold text-muted-foreground`}>
+              Loading...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`min-h-screen ${
+        colorScheme === 'dark' ? 'gradient-card-dark' : 'gradient-card-light'
+      }`}
+    >
+      <nav
+        className={`border-b border-border/50 backdrop-blur-xl fixed w-full top-0 z-50 ${
+          colorScheme === 'dark'
+            ? 'gradient-section-dark'
+            : 'gradient-section-light'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3 justify-center">
+              <Logo />
+            </div>
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              <Suspense fallback={<Button disabled>Loading...</Button>}>
+                <LoginDialogContent
+                    isLoginOpen={isLoginOpen}
+                    setIsLoginOpen={setIsLoginOpen}
                 />
-              )}
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="pt-16">
+        <section className="py-22 sm:py-32 lg:py-32 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-indigo-600/20 blur-3xl"></div>
+              <div className="relative">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 gradient-text leading-tight">
+                  Master Stenography
+                  <br />
+                  <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+                    with Interactive Learning
+                  </span>
+                </h2>
+                <p
+                  className={`text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed ${
+                    colorScheme === 'dark' ? 'text-dark' : 'text-light'
+                  }`}
+                >
+                  A comprehensive platform for learning stenography with
+                  real-time feedback, progress tracking, and interactive
+                  assignments designed for both teachers and students.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    size="lg"
+                    className="gradient-button w-full sm:w-auto font-bold"
+                    onClick={() => setIsLoginOpen(true)}
+                  >
+                    Get Started
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="py-20 md:py-28">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold font-headline">
+        <section
+          className={`py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 backdrop-blur-sm ${
+            colorScheme === 'dark' ? 'bg-black/20' : 'bg-white/20'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12 sm:mb-16">
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">
                 Why Choose StenoMaster?
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Our platform is designed with both educators and learners in
-                mind, providing a seamless experience for all.
+              </h3>
+              <p
+                className={`text-lg font-medium sm:text-xl ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
+              >
+                Everything you need to excel in stenography education
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <Card className="text-center hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
-                    <Users className="w-8 h-8" />
-                  </div>
-                  <CardTitle className="font-headline pt-4">
-                    For Teachers & Students
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Manage classes, create assignments, and track progress with
-                    our role-based system.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-center hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
-                    <Zap className="w-8 h-8" />
-                  </div>
-                  <CardTitle className="font-headline pt-4">
-                    Performance Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Get detailed insights on typing speed (WPM), accuracy, and
-                    common mistakes.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-center hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
-                    <CheckCircle className="w-8 h-8" />
-                  </div>
-                  <CardTitle className="font-headline pt-4">
-                    Customized Practice
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Practice with pre-defined texts or custom assignments created
-                    by teachers.
-                  </p>
-                </CardContent>
-              </Card>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <Card
+                    key={index}
+                    className={`relative overflow-hidden bg-gradient-to-br backdrop-blur-xl border-0 group ${
+                        colorScheme === 'dark'
+                          ? 'from-gray-900/80 via-blue-950/60 to-purple-950/60'
+                          : 'from-white/80 via-blue-50/60 to-purple-50/60'
+                      }`}
+                  >
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}
+                    ></div>
+                    <CardHeader className="relative z-10">
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`p-3 rounded-lg bg-gradient-to-br ${feature.gradient} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                        >
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <CardTitle
+                          className={`text-lg sm:text-xl ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
+                        >
+                          {feature.title}
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                      <p
+                        className={`leading-relaxed ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
+                      >
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
+          </div>
+        </section>
+
+        <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <Card
+              className={`relative overflow-hidden backdrop-blur-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                colorScheme === 'dark'
+                  ? 'gradient-card-cta-dark'
+                  : 'gradient-card-cta-light'
+              }`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10"></div>
+              <CardContent className="py-12 sm:py-16 relative z-10">
+                <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">
+                  Ready to Start Learning?
+                </h3>
+                <p
+                  className={`text-lg sm:text-xl mb-8 leading-relaxed ${colorScheme === "dark" ? "text-dark" : "text-light"}`}
+                >
+                  Join thousands of students and teachers already using
+                  StenoMaster to master stenography
+                </p>
+                <Button
+                  size="lg"
+                  className="gradient-button"
+                  onClick={() => setIsLoginOpen(true)}
+                >
+                  Login to Your Account
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>
 
-      <footer className="bg-muted py-6">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} StenoMaster. All rights reserved.</p>
-        </div>
+      <footer
+        className={`border-t border-border/50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 p-1 bg-gradient-to-r ${
+            colorScheme == 'dark'
+              ? 'from-blue-950/50 via-purple-950/30 to-indigo-950/50'
+              : 'from-white/50 via-purple-50/30 to-indigo-50/50'
+          }`}
+      >
+        <span
+          className={`justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message ${
+            colorScheme == 'dark' ? 'text-dark-muted' : 'text-light-muted'
+          }`}
+        >
+          <p>Copyright © {new Date().getFullYear()}</p>
+          <p className="font-normal hidden sm:flex">|</p>
+          <p>Powered By Shubham Mishra</p>
+        </span>
       </footer>
     </div>
   );
+};
+
+
+export default function Home() {
+    return <HomePageContent />
 }
