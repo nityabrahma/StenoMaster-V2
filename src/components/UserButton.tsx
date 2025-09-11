@@ -21,18 +21,15 @@ export default function UserButton() {
   }
 
   const nameParts = user.name.split(' ');
-  const userInitials = nameParts.length > 1 
-    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}` 
+  const userInitials = nameParts.length > 1
+    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
     : user.name.substring(0, 2);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-            <AvatarFallback>{userInitials}</AvatarFallback>
-            </Avatar>
+        <Button variant="ghost" className="relative dark:bg-background bg-background h-10 w-10 rounded-full">
+          {userInitials}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

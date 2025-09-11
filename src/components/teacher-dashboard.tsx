@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { students, classes, assignments, submissions } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
+import { useTheme } from '@/hooks/use-theme';
 
 const chartData = [
   { class: 'Intro to Steno', avgWpm: 45 },
@@ -43,6 +44,7 @@ const chartConfig = {
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
+  const { colorScheme } = useTheme();
 
   if (!user || user.role !== 'teacher') return null;
 
@@ -56,6 +58,12 @@ export default function TeacherDashboard() {
       return { ...sub, student, assignment };
   });
 
+  const stats = [
+    { title: 'Total Students', value: totalStudents, icon: Users, color: 'from-blue-500 to-sky-500' },
+    { title: 'Your Classes', value: totalClasses, icon: Book, color: 'from-violet-500 to-purple-500' },
+    { title: 'Active Assignments', value: totalAssignments, icon: ClipboardCheck, color: 'from-emerald-500 to-green-500' },
+  ];
+
   return (
     <div className="flex flex-1 flex-col p-4 md:p-8">
       <header className="mb-8">
@@ -64,33 +72,23 @@ export default function TeacherDashboard() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalStudents}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Your Classes</CardTitle>
-            <Book className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClasses}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
-            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalAssignments}</div>
-          </CardContent>
-        </Card>
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="group relative overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                    <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} shadow-lg`}>
+                        <Icon className="h-4 w-4 text-white" />
+                    </div>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 mt-8">

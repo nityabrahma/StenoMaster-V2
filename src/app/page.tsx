@@ -243,11 +243,7 @@ const HomePageContent = () => {
                 return (
                   <Card
                     key={index}
-                    className={`relative overflow-hidden bg-gradient-to-br backdrop-blur-xl border-0 group ${
-                        colorScheme === 'dark'
-                          ? 'from-gray-900/80 via-blue-950/60 to-purple-950/60'
-                          : 'from-white/80 via-blue-50/60 to-purple-50/60'
-                      }`}
+                    className={`relative overflow-hidden bg-transparent group`}
                   >
                     <div
                       className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}

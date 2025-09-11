@@ -105,20 +105,30 @@ function StudentAssignments() {
   const student = students.find(s => s.id === user?.id);
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
   const mySubmissions = submissions.filter(s => s.studentId === user?.id);
+  
+  const assignmentColors = [
+    'from-blue-500 to-sky-500',
+    'from-violet-500 to-purple-500',
+    'from-emerald-500 to-green-500',
+    'from-amber-500 to-yellow-500',
+    'from-rose-500 to-red-500',
+  ];
 
   return (
     <div>
         <h1 className="text-3xl font-bold font-headline mb-2">My Assignments</h1>
         <p className="text-muted-foreground mb-6">Here are all your assignments. Keep up the great work!</p>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {myAssignments.map(assignment => {
+        {myAssignments.map((assignment, index) => {
             const submission = mySubmissions.find(s => s.assignmentId === assignment.id);
             const isCompleted = !!submission;
             const isPastDue = new Date(assignment.deadline) < new Date() && !isCompleted;
+            const color = assignmentColors[index % assignmentColors.length];
 
             return (
-                <Card key={assignment.id} className="flex flex-col">
-                    <CardHeader>
+                <Card key={assignment.id} className="flex flex-col relative overflow-hidden group">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                    <CardHeader className="relative z-10">
                         <div className="flex justify-between items-start">
                             <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
                             {isCompleted ? (
@@ -135,7 +145,7 @@ function StudentAssignments() {
                             Due {format(new Date(assignment.deadline), 'PPp')}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-grow">
+                    <CardContent className="flex-grow relative z-10">
                         {isCompleted && submission ? (
                              <div className="text-sm space-y-2">
                                 <p><span className="font-semibold">Submitted:</span> {format(new Date(submission.submittedAt), 'PP')}</p>
@@ -145,7 +155,7 @@ function StudentAssignments() {
                             <p className="text-sm text-muted-foreground">This assignment is pending. Complete it to see your score.</p>
                         )}
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="relative z-10">
                         {!isCompleted && (
                             <Button asChild className="w-full">
                                 <Link href={`/dashboard/assignments/${assignment.id}`}>

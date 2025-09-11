@@ -21,6 +21,11 @@ export default function StudentDashboard() {
 
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
   const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
+  
+  const stats = [
+    { title: 'Average WPM', value: avgWpm, icon: Zap, color: 'from-blue-500 to-sky-500' },
+    { title: 'Average Accuracy', value: `${avgAccuracy}%`, icon: Target, color: 'from-violet-500 to-purple-500' },
+  ];
 
   return (
     <div className="flex flex-1 flex-col p-4 md:p-8">
@@ -30,38 +35,36 @@ export default function StudentDashboard() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average WPM</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgWpm}</div>
-            <p className="text-xs text-muted-foreground">Your all-time average speed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Accuracy</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgAccuracy}%</div>
-             <p className="text-xs text-muted-foreground">Your all-time average accuracy</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader className="pb-2">
-            <CardTitle className="font-headline">Ready for a challenge?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-primary-foreground/80">Take a random typing test to warm up.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="secondary" asChild>
-              <Link href="/dashboard/typing-test">Start Typing Test</Link>
-            </Button>
-          </CardFooter>
+        {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+                <Card key={index} className="group relative overflow-hidden">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                    <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} shadow-lg`}>
+                            <Icon className="h-4 w-4 text-white" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                    </CardContent>
+                </Card>
+            )
+        })}
+        <Card className="bg-primary text-primary-foreground group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
+            <CardHeader className="pb-2 relative z-10">
+                <CardTitle className="font-headline">Ready for a challenge?</CardTitle>
+            </CardHeader>
+            <CardContent className="relative z-10">
+                <p className="text-sm text-primary-foreground/80">Take a random typing test to warm up.</p>
+            </CardContent>
+            <CardFooter className="relative z-10">
+                <Button variant="secondary" asChild>
+                <Link href="/dashboard/typing-test">Start Typing Test</Link>
+                </Button>
+            </CardFooter>
         </Card>
       </div>
 
@@ -70,18 +73,19 @@ export default function StudentDashboard() {
         {pendingAssignments.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {pendingAssignments.map(assignment => (
-              <Card key={assignment.id}>
-                <CardHeader>
+              <Card key={assignment.id} className="relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-600 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
+                <CardHeader className="relative z-10">
                   <CardTitle className="truncate">{assignment.title}</CardTitle>
                   <CardDescription>Due {formatDistanceToNow(new Date(assignment.deadline), { addSuffix: true })}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative z-10">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="h-4 w-4" />
                     <span>{assignment.text.split(' ').length} words</span>
                   </div>
                 </CardContent>
-                 <CardFooter>
+                 <CardFooter className="relative z-10">
                     <Button asChild className="w-full">
                         <Link href={`/dashboard/assignments/${assignment.id}`}>Start Assignment</Link>
                     </Button>
@@ -90,9 +94,10 @@ export default function StudentDashboard() {
             ))}
           </div>
         ) : (
-          <Card className="flex flex-col items-center justify-center p-12 text-center">
-             <CardTitle className="font-headline">All Caught Up!</CardTitle>
-             <CardDescription className="mt-2">You have no pending assignments. Great job!</CardDescription>
+          <Card className="flex flex-col items-center justify-center p-12 text-center relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
+             <CardTitle className="font-headline relative z-10">All Caught Up!</CardTitle>
+             <CardDescription className="mt-2 relative z-10">You have no pending assignments. Great job!</CardDescription>
           </Card>
         )}
       </div>
