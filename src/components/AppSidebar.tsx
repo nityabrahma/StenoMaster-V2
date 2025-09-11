@@ -62,7 +62,7 @@ export default function AppSidebar() {
         </SidebarHeader>
       )}
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
           {links.map((link) => (
             <SidebarMenuItem key={link.href}>
