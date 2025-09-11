@@ -92,7 +92,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     <SidebarProvider>
         <div className={`h-screen w-full flex flex-col bg-gradient-to-br ${
           colorScheme === 'dark'
-            ? 'from-slate-900 via-slate-800 to-slate-900'
+            ? 'from-slate-900 via-blue-900 to-slate-900'
             : 'from-slate-50 via-blue-50 to-slate-100'
         }`}>
             <nav className="border-b h-16 flex-shrink-0 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">

@@ -30,20 +30,22 @@ function base64UrlDecode(str: string): string {
 
 // Initialize mock users from data.ts if not already in localStorage
 function initializeMockUsers() {
-    if (!localStorage.getItem(MOCK_USERS_KEY)) {
-        // Start with an empty array of users. The teacher can be registered.
-        const initialUsers: User[] = [];
+    if (typeof window !== 'undefined' && !localStorage.getItem(MOCK_USERS_KEY)) {
+        const initialUsers: User[] = [...teachers, ...students];
         localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initialUsers));
     }
 }
 
 function getMockUsers(): User[] {
+    if (typeof window === 'undefined') return [];
     const users = localStorage.getItem(MOCK_USERS_KEY);
     return users ? JSON.parse(users) : [];
 }
 
 function saveMockUsers(users: User[]) {
-    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+     if (typeof window !== 'undefined') {
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+    }
 }
 
 
