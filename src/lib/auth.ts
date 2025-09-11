@@ -38,7 +38,6 @@ function initializeMockUsers() {
 }
 
 function getMockUsers(): User[] {
-    initializeMockUsers();
     const users = localStorage.getItem(MOCK_USERS_KEY);
     return users ? JSON.parse(users) : [];
 }
@@ -115,6 +114,7 @@ function parseExpiry(expiresIn: string): number {
 export async function signIn(credentials: LoginCredentials): Promise<string> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
+            initializeMockUsers(); // Ensure localStorage is initialized.
             const userList: User[] = getMockUsers();
             const user = userList.find((u) => u.email === credentials.email && u.role === credentials.role);
 
@@ -147,6 +147,7 @@ export async function signIn(credentials: LoginCredentials): Promise<string> {
 export async function signUp(credentials: SignupCredentials): Promise<void> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
+            initializeMockUsers(); // Ensure localStorage is initialized.
             const users = getMockUsers();
             const existingUser = users.find(u => u.email === credentials.email);
 
