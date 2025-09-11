@@ -23,13 +23,52 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   const isAssignmentPage = pathname.startsWith('/dashboard/assignments/');
 
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const {
+    fetchAssignments,
+    fetchClasses,
+    setAssignments,
+    fetchScores,
+    fetchClassesForTeacher,
+    fetchStudentsInClass,
+    fetchScoresForTeacher,
+  } = useScore();
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/?showLogin=true');
     }
   }, [loading, isAuthenticated, router]);
   
-  if (loading || !user) {
+  useEffect(() => {
+    const loadData = async () => {
+      if (user && isAuthenticated && initialLoad) {
+        if (user.role === 'student') {
+          const studentClasses = await fetchClasses();
+          await fetchScores(user.id);
+          if (studentClasses.length > 0) {
+            await fetchAssignments(studentClasses[0].id);
+          } else {
+            setAssignments([]);
+          }
+        } else if (user.role === 'teacher') {
+          const teacherClasses: Class[] = await fetchClassesForTeacher();
+          if (teacherClasses.length > 0) {
+            for (const c of teacherClasses) {
+              await fetchStudentsInClass(c.id);
+            }
+            await fetchScoresForTeacher();
+          }
+          await fetchAssignments();
+        }
+        setInitialLoad(false);
+      }
+    };
+    loadData();
+  }, [user, isAuthenticated, initialLoad]);
+
+  if (loading || !user || initialLoad) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <div className="flex flex-col items-center gap-4">

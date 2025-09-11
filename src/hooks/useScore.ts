@@ -14,6 +14,7 @@ interface ScoreState {
   fetchClasses: () => Promise<Class[]>;
   fetchClassesForTeacher: () => Promise<Class[]>;
   fetchStudentsInClass: (classId: string) => Promise<User[]>;
+  fetchScoresForTeacher: () => Promise<void>;
   fetchScores: (studentId: string) => Promise<void>;
   setAssignments: (assignments: Assignment[]) => void;
 }
@@ -78,6 +79,20 @@ export const useScore = create<ScoreState>((set, get) => ({
     const classStudents = students.filter(s => targetClass.studentIds.includes(s.id));
     set(state => ({ students: [...state.students, ...classStudents], loading: false }));
     return classStudents;
+  },
+
+  fetchScoresForTeacher: async () => {
+    set({ loading: true });
+    const { user } = useAuth.getState();
+    await new Promise(res => setTimeout(res, 300));
+    if (!user || user.role !== 'teacher') {
+        set({ scores: [], loading: false });
+        return;
+    }
+    const teacherClasses = classes.filter(c => c.teacherId === user.id);
+    const studentIdsInTeacherClasses = new Set(teacherClasses.flatMap(c => c.studentIds));
+    const teacherScores = submissions.filter(s => studentIdsInTeacherClasses.has(s.studentId));
+    set({ scores: teacherScores, loading: false });
   },
 
   fetchScores: async (studentId: string) => {
