@@ -18,24 +18,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
     DropdownMenu,
@@ -44,73 +26,14 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-function CreateClassDialog() {
-    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  
-    const handleStudentSelect = (studentId: string) => {
-      setSelectedStudents(prev => 
-        prev.includes(studentId) ? prev.filter(id => id !== studentId) : [...prev, studentId]
-      );
-    };
-  
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Class
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create New Class</DialogTitle>
-            <DialogDescription>
-              Fill in the details for your new class and assign students.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Class Name
-              </Label>
-              <Input id="name" placeholder="e.g., Advanced Stenography" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">Students</Label>
-                <div className="col-span-3 space-y-2 max-h-60 overflow-y-auto">
-                    {students.map(student => (
-                        <div key={student.id} className="flex items-center space-x-2">
-                             <Checkbox
-                                id={`student-${student.id}`}
-                                checked={selectedStudents.includes(student.id)}
-                                onCheckedChange={() => handleStudentSelect(student.id)}
-                            />
-                            <label
-                                htmlFor={`student-${student.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                {student.name}
-                            </label>
-                        </div>
-                    ))}
-                </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Create Class</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
 export default function ClassesPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
@@ -124,7 +47,10 @@ export default function ClassesPage() {
               <CardTitle className="font-headline text-2xl">Your Classes</CardTitle>
               <CardDescription>View and manage your class rosters.</CardDescription>
             </div>
-            <CreateClassDialog />
+            <Button onClick={() => router.push('/dashboard/classes/new')}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Class
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

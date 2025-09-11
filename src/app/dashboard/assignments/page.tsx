@@ -29,10 +29,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
+import { useRouter } from 'next/navigation';
 
 // Teacher's View
 function TeacherAssignments() {
   const { user } = useAuth();
+  const router = useRouter();
   const teacherClasses = classes.filter(c => c.teacherId === user?.id);
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
 
@@ -44,7 +46,7 @@ function TeacherAssignments() {
                     <CardTitle className="font-headline text-2xl">Manage Assignments</CardTitle>
                     <CardDescription>Create, view, and manage assignments for your classes.</CardDescription>
                 </div>
-                <Button>
+                <Button onClick={() => router.push('/dashboard/assignments/new')}>
                     <PlusCircle className="mr-2 h-4 w-4"/>
                     New Assignment
                 </Button>
