@@ -45,7 +45,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const loadData = async () => {
       if (user && isAuthenticated && initialLoad) {
         if (user.role === 'student') {
-          const studentClasses = await fetchClasses();
+          const studentClasses = await fetchClasses(user);
           await fetchScores(user.id);
           if (studentClasses.length > 0) {
             await fetchAssignments(studentClasses[0].id);
@@ -53,12 +53,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             setAssignments([]);
           }
         } else if (user.role === 'teacher') {
-          const teacherClasses: Class[] = await fetchClassesForTeacher();
+          const teacherClasses: Class[] = await fetchClassesForTeacher(user);
           if (teacherClasses.length > 0) {
             for (const c of teacherClasses) {
               await fetchStudentsInClass(c.id);
             }
-            await fetchScoresForTeacher();
+            await fetchScoresForTeacher(user);
           }
           await fetchAssignments();
         }
@@ -66,7 +66,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       }
     };
     loadData();
-  }, [user, isAuthenticated, initialLoad]);
+  }, [user, isAuthenticated, initialLoad, fetchClasses, fetchScores, fetchAssignments, setAssignments, fetchClassesForTeacher, fetchStudentsInClass, fetchScoresForTeacher]);
 
   if (loading || !user || initialLoad) {
     return (
@@ -123,8 +123,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    // Wrapping with AuthProvider might be redundant if it's already in a higher-level layout
-    // but we'll follow the user's provided structure.
     return (
         <AuthProvider>
             <DashboardLayout>{children}</DashboardLayout>

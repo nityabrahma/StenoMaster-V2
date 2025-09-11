@@ -2,7 +2,6 @@
 import { create } from 'zustand';
 import { assignments, classes, students, submissions } from '@/lib/data';
 import type { Assignment, Class, Submission, User } from '@/lib/types';
-import { useAuth } from './use-auth';
 
 interface ScoreState {
   assignments: Assignment[];
@@ -11,10 +10,10 @@ interface ScoreState {
   scores: Submission[];
   loading: boolean;
   fetchAssignments: (classId?: string) => Promise<void>;
-  fetchClasses: () => Promise<Class[]>;
-  fetchClassesForTeacher: () => Promise<Class[]>;
+  fetchClasses: (user: User | null) => Promise<Class[]>;
+  fetchClassesForTeacher: (user: User | null) => Promise<Class[]>;
   fetchStudentsInClass: (classId: string) => Promise<User[]>;
-  fetchScoresForTeacher: () => Promise<void>;
+  fetchScoresForTeacher: (user: User | null) => Promise<void>;
   fetchScores: (studentId: string) => Promise<void>;
   setAssignments: (assignments: Assignment[]) => void;
 }
@@ -41,9 +40,8 @@ export const useScore = create<ScoreState>((set, get) => ({
     set({ assignments: fetchedAssignments, loading: false });
   },
 
-  fetchClasses: async () => {
+  fetchClasses: async (user: User | null) => {
     set({ loading: true });
-    const { user } = useAuth.getState();
     await new Promise(res => setTimeout(res, 300));
     if (!user) {
         set({ classes: [], loading: false });
@@ -55,9 +53,8 @@ export const useScore = create<ScoreState>((set, get) => ({
     return fetchedClasses;
   },
 
-  fetchClassesForTeacher: async () => {
+  fetchClassesForTeacher: async (user: User | null) => {
     set({ loading: true });
-    const { user } = useAuth.getState();
     await new Promise(res => setTimeout(res, 300));
      if (!user || user.role !== 'teacher') {
         set({ classes: [], loading: false });
@@ -81,9 +78,8 @@ export const useScore = create<ScoreState>((set, get) => ({
     return classStudents;
   },
 
-  fetchScoresForTeacher: async () => {
+  fetchScoresForTeacher: async (user: User | null) => {
     set({ loading: true });
-    const { user } = useAuth.getState();
     await new Promise(res => setTimeout(res, 300));
     if (!user || user.role !== 'teacher') {
         set({ scores: [], loading: false });
