@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -46,4 +47,11 @@ export type LoginCredentials = {
     // In a real app, you would send this to the server for verification.
     password?: string; 
     role: 'student' | 'teacher';
+}
+
+export type SignupCredentials = {
+  name: string;
+  email: string;
+  password?: string;
+  role: 'student' | 'teacher';
 }

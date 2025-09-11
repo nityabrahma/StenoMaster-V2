@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -8,8 +9,8 @@ import {
 } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
-import type { User, LoginCredentials } from '@/lib/types';
-import { signIn, decodeToken, isTokenExpired } from '@/lib/auth';
+import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
+import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
@@ -84,11 +85,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router, toast]
   );
   
+  const signup = useCallback(
+    async (credentials: SignupCredentials) => {
+        setLoading(true);
+        try {
+            await signUp(credentials);
+        } catch (error: any) {
+            console.error("Signup failed", error);
+            // The toast is now thrown from the signup function itself
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    },
+    []
+  );
+
   const isAuthenticated = !!user;
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, isAuthenticated, firstLoadDone }),
-    [user, loading, login, logout, isAuthenticated, firstLoadDone]
+    () => ({ user, loading, login, logout, isAuthenticated, firstLoadDone, signup }),
+    [user, loading, login, logout, isAuthenticated, firstLoadDone, signup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

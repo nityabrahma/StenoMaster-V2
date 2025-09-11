@@ -1,10 +1,11 @@
+
 'use client';
 
 import {
   createContext,
   useContext,
 } from 'react';
-import type { User, LoginCredentials } from '@/lib/types';
+import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 
 
 type AuthContextType = {
@@ -13,6 +14,7 @@ type AuthContextType = {
   firstLoadDone: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => void;
 };
 
