@@ -10,7 +10,7 @@ import type { User } from '@/lib/types';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (userId: string) => void;
+  login: (userId: string) => Promise<void>;
   logout: () => void;
 };
 

@@ -20,16 +20,25 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { students, teachers } from '@/lib/data';
-import { Feather } from 'lucide-react';
+import { Feather, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (selectedUserId) {
-      login(selectedUserId);
+      setIsLoading(true);
+      try {
+        await login(selectedUserId);
+        // The redirect is handled by the AuthProvider now
+      } catch (error) {
+        console.error("Login failed:", error);
+        // Optionally, show an error toast to the user
+        setIsLoading(false);
+      }
     }
   };
 
@@ -52,7 +61,7 @@ export default function LoginPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user-profile">User Profile</Label>
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId} disabled={isLoading}>
               <SelectTrigger id="user-profile">
                 <SelectValue placeholder="Select a user..." />
               </SelectTrigger>
@@ -67,8 +76,9 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handleLogin} disabled={!selectedUserId}>
-            Log In
+          <Button className="w-full" onClick={handleLogin} disabled={!selectedUserId || isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? 'Logging In...' : 'Log In'}
           </Button>
         </CardFooter>
       </Card>

@@ -3,65 +3,62 @@
 import {
   useMemo,
   useCallback,
+  useState,
+  useEffect
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, AuthContext } from '@/hooks/use-auth';
-
-// This component is kept separate in case we need to add more providers
-// or logic around the AuthProvider in the root layout.
-// For now, it re-exports the functionality from the hook.
-
-// Note: The main implementation is now inside `use-auth.tsx` to co-locate
-// the context definition and the provider logic. This file structure is
-// maintained for potential future expansion.
-
-// Let's move the logic here to keep the hook file clean.
-
-import {
-  useState,
-  useEffect,
-} from 'react';
+import { AuthContext } from '@/hooks/use-auth';
 import type { User } from '@/lib/types';
-import { students, teachers } from '@/lib/data';
+import { signIn, decodeToken, isTokenExpired } from '@/lib/auth';
 
+const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    router.push('/login');
+  }, [router]);
+
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('steno-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (storedToken) {
+        if (isTokenExpired(storedToken)) {
+            console.log("Token expired, logging out.");
+            logout();
+        } else {
+            const decodedUser = decodeToken(storedToken);
+            setUser(decodedUser as User);
+        }
       }
     } catch (error) {
-      console.error('Failed to parse user from localStorage', error);
-      localStorage.removeItem('steno-user');
+      console.error('Failed to process token from localStorage', error);
+      logout();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [logout]);
 
   const login = useCallback(
-    (userId: string) => {
-      const allUsers: User[] = [...teachers, ...students];
-      const foundUser = allUsers.find((u) => u.id === userId);
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem('steno-user', JSON.stringify(foundUser));
-        router.push('/dashboard');
-      }
+    async (userId: string) => {
+        try {
+            const token = await signIn(userId);
+            const decodedUser = decodeToken(token);
+            setUser(decodedUser as User);
+            localStorage.setItem(TOKEN_STORAGE_KEY, token);
+            router.push('/dashboard');
+        } catch (error) {
+            console.error("Authentication failed", error);
+            throw error; // Re-throw to be caught by the login page
+        }
     },
     [router]
   );
-
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('steno-user');
-    router.push('/login');
-  }, [router]);
 
   const value = useMemo(
     () => ({ user, loading, login, logout }),
