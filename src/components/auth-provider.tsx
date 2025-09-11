@@ -6,26 +6,33 @@ import {
   useState,
   useEffect
 } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
-import type { User } from '@/lib/types';
+import type { User, LoginCredentials } from '@/lib/types';
 import { signIn, decodeToken, isTokenExpired } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firstLoadDone, setFirstLoadDone] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
-    router.push('/login');
-  }, [router]);
+    if(pathname !== '/') {
+        router.push('/');
+    }
+  }, [router, pathname]);
 
   useEffect(() => {
     try {
+      setLoading(true);
       const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
       if (storedToken) {
         if (isTokenExpired(storedToken)) {
@@ -33,7 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             logout();
         } else {
             const decodedUser = decodeToken(storedToken);
-            setUser(decodedUser as User);
+            if (decodedUser) {
+                setUser(decodedUser as User);
+            } else {
+                logout();
+            }
         }
       }
     } catch (error) {
@@ -41,28 +52,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout();
     } finally {
       setLoading(false);
+      setFirstLoadDone(true);
     }
   }, [logout]);
 
   const login = useCallback(
-    async (userId: string) => {
+    async (credentials: LoginCredentials) => {
         try {
-            const token = await signIn(userId);
+            setLoading(true);
+            const token = await signIn(credentials);
             const decodedUser = decodeToken(token);
-            setUser(decodedUser as User);
-            localStorage.setItem(TOKEN_STORAGE_KEY, token);
-            router.push('/dashboard');
-        } catch (error) {
+             if (decodedUser) {
+                setUser(decodedUser as User);
+                localStorage.setItem(TOKEN_STORAGE_KEY, token);
+                router.push('/dashboard');
+            } else {
+                throw new Error("Failed to decode token");
+            }
+        } catch (error: any) {
             console.error("Authentication failed", error);
-            throw error; // Re-throw to be caught by the login page
+            toast({
+                title: 'Login Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive'
+            });
+            throw error;
+        } finally {
+            setLoading(false);
         }
     },
-    [router]
+    [router, toast]
   );
+  
+  const isAuthenticated = !!user;
 
   const value = useMemo(
-    () => ({ user, loading, login, logout }),
-    [user, loading, login, logout]
+    () => ({ user, loading, login, logout, isAuthenticated, firstLoadDone }),
+    [user, loading, login, logout, isAuthenticated, firstLoadDone]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

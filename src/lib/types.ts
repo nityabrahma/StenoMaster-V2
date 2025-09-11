@@ -39,3 +39,11 @@ export type Submission = {
   accuracy: number;
   mistakes: number;
 };
+
+export type LoginCredentials = {
+    email: string;
+    // For simplicity, we are not actually checking passwords.
+    // In a real app, you would send this to the server for verification.
+    password?: string; 
+    role: 'student' | 'teacher';
+}

@@ -3,7 +3,7 @@
  * In a real application, you would make API calls to a backend service.
  */
 import { students, teachers } from './data';
-import type { User } from './types';
+import type { LoginCredentials, User } from './types';
 
 // In a real app, this would be a secret key stored on the server.
 const JWT_SECRET = 'your-super-secret-key-that-is-at-least-32-characters-long';
@@ -37,8 +37,8 @@ function sign(payload: object, secret: string, options: { expiresIn: string }): 
  */
 export function decodeToken(token: string): object | null {
   try {
-    const [encodedHeader, encodedPayload] = token.split('.');
-    if (!encodedHeader || !encodedPayload) {
+    const [, encodedPayload] = token.split('.');
+    if (!encodedPayload) {
         throw new Error('Invalid token format');
     }
     const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf-8'));
@@ -72,15 +72,18 @@ function parseExpiry(expiresIn: string): number {
  * Simulates a sign-in API call.
  * Finds the user and returns a JWT.
  */
-export async function signIn(userId: string): Promise<string> {
+export async function signIn(credentials: LoginCredentials): Promise<string> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            const allUsers: User[] = [...teachers, ...students];
-            const user = allUsers.find((u) => u.id === userId);
+            const userList: User[] = credentials.role === 'teacher' ? teachers : students;
+            const user = userList.find((u) => u.email === credentials.email);
 
             if (!user) {
-                return reject(new Error('User not found'));
+                return reject(new Error('User not found or invalid credentials.'));
             }
+
+            // In a real app, you would verify the password here.
+            // For this simulation, we'll just check if the user exists.
 
             // Don't include sensitive data in the token payload.
             const payload = {

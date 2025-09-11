@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/components/auth-provider';
+import { ThemeProvider } from '@/hooks/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'StenoMaster',
@@ -28,10 +30,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Suspense>{children}</Suspense>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

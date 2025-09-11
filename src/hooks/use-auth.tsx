@@ -4,13 +4,15 @@ import {
   createContext,
   useContext,
 } from 'react';
-import type { User } from '@/lib/types';
+import type { User, LoginCredentials } from '@/lib/types';
 
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (userId: string) => Promise<void>;
+  firstLoadDone: boolean;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
 };
 
