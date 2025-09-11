@@ -31,8 +31,9 @@ function base64UrlDecode(str: string): string {
 // Initialize mock users from data.ts if not already in localStorage
 function initializeMockUsers() {
     if (!localStorage.getItem(MOCK_USERS_KEY)) {
-        const allUsers = [...teachers, ...students];
-        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(allUsers));
+        // Start with an empty array of users. The teacher can be registered.
+        const initialUsers: User[] = [];
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initialUsers));
     }
 }
 

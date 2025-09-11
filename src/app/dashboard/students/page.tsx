@@ -1,6 +1,7 @@
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
-import { classes, students, submissions } from '@/lib/data';
+import { classes, students as mockStudents, submissions } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -37,9 +38,47 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 function CreateStudentDialog() {
+    const { signup } = useAuth();
+    const { toast } = useToast();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name || !email || !password) {
+            toast({
+                title: 'Error',
+                description: 'Please fill out all fields.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            await signup({ name, email, password, role: 'student' });
+            toast({
+                title: 'Success',
+                description: `Student account for ${name} created.`,
+            });
+            // TODO: close dialog and refresh student list
+            setName('');
+            setEmail('');
+            setPassword('');
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.message,
+                variant: 'destructive',
+            });
+        }
+    };
+
     return (
       <Dialog>
         <DialogTrigger asChild>
@@ -49,29 +88,37 @@ function CreateStudentDialog() {
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create Student Account</DialogTitle>
-            <DialogDescription>
-              Enter the student's details to create a new account.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Full Name
-              </Label>
-              <Input id="name" placeholder="e.g., John Doe" className="col-span-3" />
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+                <DialogTitle>Create Student Account</DialogTitle>
+                <DialogDescription>
+                Enter the student's details to create a new account.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                    Full Name
+                </Label>
+                <Input id="name" placeholder="e.g., John Doe" className="col-span-3" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                    Email
+                </Label>
+                <Input id="email" type="email" placeholder="e.g., j.doe@school.edu" className="col-span-3" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">
+                    Password
+                </Label>
+                <Input id="password" type="password" placeholder="Min. 6 characters" className="col-span-3" value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input id="email" type="email" placeholder="e.g., j.doe@school.edu" className="col-span-3" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Create Account</Button>
-          </DialogFooter>
+            <DialogFooter>
+                <Button type="submit">Create Account</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     );
@@ -79,6 +126,9 @@ function CreateStudentDialog() {
 
 export default function StudentsPage() {
   const { user } = useAuth();
+  // For now, we continue to use mockStudents for display until the auth state manages all users
+  const [students, setStudents] = useState(mockStudents);
+
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
   return (
