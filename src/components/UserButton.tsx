@@ -1,3 +1,4 @@
+
 'use client';
 
 import { LogOut, User as UserIcon } from 'lucide-react';
@@ -28,8 +29,11 @@ export default function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative dark:bg-background bg-background h-10 w-10 rounded-full">
-          {userInitials}
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+           <Avatar className="h-10 w-10">
+              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+              <AvatarFallback>{userInitials}</AvatarFallback>
+            </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

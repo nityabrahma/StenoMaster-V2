@@ -1,3 +1,4 @@
+
 'use client';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -16,7 +17,8 @@ export const useClasses = create<ClassesState>()(
     (set, get) => ({
       classes: [],
       loadClasses: async () => {
-        if (get().classes.length === 0) {
+        const state = get();
+        if (state.classes.length === 0) {
           set({ classes: initialClasses });
         }
       },

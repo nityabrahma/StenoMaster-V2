@@ -21,7 +21,10 @@ export const useAssignments = create<AssignmentsState>()(
       assignments: [],
       submissions: [],
       loadAssignments: async () => {
-        if (get().assignments.length === 0 && get().submissions.length === 0) {
+        const state = get();
+        // This check is to see if zustand has rehydrated from local storage yet.
+        // If the arrays are empty, we populate with initial data.
+        if (state.assignments.length === 0 && state.submissions.length === 0) {
             set({ assignments: initialAssignments, submissions: initialSubmissions });
         }
       },
