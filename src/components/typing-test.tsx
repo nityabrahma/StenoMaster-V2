@@ -20,7 +20,7 @@ type TypingTestProps = {
 // This advanced status array function will handle insertions/deletions gracefully.
 function getStatusArray(
   original: string,
-  typed: string,
+  typed: string = '',
   lookahead = 4
 ): ("correct" | "wrong" | "pending")[] {
   const oChars = original.split("");
@@ -39,30 +39,25 @@ function getStatusArray(
         oIndex++;
         tIndex++;
       } else {
-        // Mistake found, look ahead to see if we can resync
         let found = false;
         for (let la = 1; la <= lookahead; la++) {
-          // Check for insertion in typed text (tIndex moves, oIndex stays)
           if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
-            // The characters typed in between are wrong relative to the original text's flow
             statusArray[oIndex] = "wrong";
-            tIndex += la; // Jump ahead in typed text
+            tIndex += la;
             found = true;
             break; 
           }
-          // Check for deletion in typed text (oIndex moves, tIndex stays)
           if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
             for (let k = 0; k < la; k++) {
               statusArray[oIndex + k] = "wrong";
             }
-            oIndex += la; // Jump ahead in original text
+            oIndex += la;
             found = true;
             break;
           }
         }
 
         if (!found) {
-          // Cannot resync, mark as wrong and advance both
           statusArray[oIndex] = "wrong";
           oIndex++;
           tIndex++;
