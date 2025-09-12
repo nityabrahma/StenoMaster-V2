@@ -23,47 +23,42 @@ interface SubmissionReviewModalProps {
 }
 
 const renderTextWithDiff = (originalText: string, userInput: string = '') => {
-  const output: React.ReactNode[] = [];
-  const maxLength = Math.max(originalText.length, userInput.length);
-
-  for (let i = 0; i < maxLength; i++) {
-    const originalChar = originalText[i];
-    const userChar = userInput[i];
-
-    if (i < originalText.length) {
-      if (i >= userInput.length) {
-        // Untyped characters
-        output.push(
-          <span key={`untyped-${i}`} className="text-muted-foreground/50">
-            {originalChar}
-          </span>
-        );
-      } else if (originalChar === userChar) {
-        // Correct characters
-        output.push(
-          <span key={`correct-${i}`} className="text-green-600 dark:text-green-500">
-            {originalChar}
-          </span>
-        );
-      } else {
-        // Incorrect characters
-        output.push(
-          <span key={`incorrect-${i}`} className="text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm">
-            {originalChar}
-          </span>
-        );
-      }
-    } else {
-        // Extra characters typed by user
-         output.push(
-          <span key={`extra-${i}`} className="text-red-600 dark:text-red-500 bg-red-500/20 underline decoration-wavy rounded-sm">
-            {userChar}
-          </span>
-        );
+  const originalWords = originalText.split(/(\s+)/);
+  const userWords = userInput.split(/(\s+)/);
+  
+  return originalWords.map((word, index) => {
+    if (index >= userWords.length) {
+      // Untyped words
+      return (
+        <span key={`untyped-${index}`} className="text-muted-foreground/50">
+          {word}
+        </span>
+      );
     }
-  }
 
-  return output;
+    const userWord = userWords[index];
+
+    if (word.trim() === '' && userWord.trim() === '') {
+        // This is a whitespace node, render it as is.
+        return <span key={`space-${index}`}>{word}</span>
+    }
+
+    if (word === userWord) {
+      // Correct words
+      return (
+        <span key={`correct-${index}`} className="text-green-600 dark:text-green-500">
+          {word}
+        </span>
+      );
+    } else {
+      // Incorrect words
+      return (
+        <span key={`incorrect-${index}`} className="text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm">
+          {userWord}
+        </span>
+      );
+    }
+  });
 };
 
 
