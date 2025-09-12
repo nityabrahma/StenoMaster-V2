@@ -17,6 +17,63 @@ type TypingTestProps = {
   onComplete: (result: SubmissionResult) => void;
 };
 
+// This advanced status array function will handle insertions/deletions gracefully.
+function getStatusArray(
+  original: string,
+  typed: string,
+  lookahead = 4
+): ("correct" | "wrong" | "pending")[] {
+  const oChars = original.split("");
+  const tChars = typed.split("");
+
+  let oIndex = 0;
+  let tIndex = 0;
+
+  const statusArray: ("correct" | "wrong" | "pending")[] = new Array(
+    oChars.length
+  ).fill("pending");
+
+  while (oIndex < oChars.length && tIndex < tChars.length) {
+      if (oChars[oIndex] === tChars[tIndex]) {
+        statusArray[oIndex] = "correct";
+        oIndex++;
+        tIndex++;
+      } else {
+        // Mistake found, look ahead to see if we can resync
+        let found = false;
+        for (let la = 1; la <= lookahead; la++) {
+          // Check for insertion in typed text (tIndex moves, oIndex stays)
+          if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
+            // The characters typed in between are wrong relative to the original text's flow
+            statusArray[oIndex] = "wrong";
+            tIndex += la; // Jump ahead in typed text
+            found = true;
+            break; 
+          }
+          // Check for deletion in typed text (oIndex moves, tIndex stays)
+          if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
+            for (let k = 0; k < la; k++) {
+              statusArray[oIndex + k] = "wrong";
+            }
+            oIndex += la; // Jump ahead in original text
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          // Cannot resync, mark as wrong and advance both
+          statusArray[oIndex] = "wrong";
+          oIndex++;
+          tIndex++;
+        }
+      }
+  }
+
+  return statusArray;
+}
+
+
 export default function TypingTest({ text, onComplete }: TypingTestProps) {
   const [userInput, setUserInput] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -24,24 +81,15 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
   const [isFinished, setIsFinished] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const calculateMistakes = useCallback((currentInput: string) => {
-    let errorCount = 0;
-    currentInput.split('').forEach((char, index) => {
-      if (text[index] !== char) {
-        errorCount++;
-      }
-    });
-    return errorCount;
-  }, [text]);
+  const statusArray = getStatusArray(text, userInput);
+  const correctChars = statusArray.filter(s => s === 'correct').length;
+  const mistakes = statusArray.slice(0, userInput.length).filter(s => s === 'wrong').length;
   
-  const [mistakes, setMistakes] = useState(0);
-
   const resetTest = useCallback(() => {
     setUserInput('');
     setStartTime(null);
     setElapsedTime(0);
     setIsFinished(false);
-    setMistakes(0);
     inputRef.current?.focus();
   }, []);
 
@@ -67,27 +115,24 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
       setStartTime(Date.now());
     }
     setUserInput(value);
-    setMistakes(calculateMistakes(value));
   };
   
   const finishTest = useCallback(() => {
     if (isFinished || !startTime) return;
 
     setIsFinished(true);
-    setStartTime(null); // Stops the timer
-
     const finalElapsedTime = (Date.now() - startTime) / 1000;
     setElapsedTime(finalElapsedTime);
     
-    const finalMistakes = calculateMistakes(userInput);
-    setMistakes(finalMistakes);
-
+    const finalStatusArray = getStatusArray(text, userInput);
+    const finalMistakes = finalStatusArray.filter(s => s === 'wrong').length;
+    
     const wordsTyped = text.length / 5;
     const wpm = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
     const accuracy = ((text.length - finalMistakes) / text.length) * 100;
     
     onComplete({ wpm, accuracy, mistakes: finalMistakes, userInput });
-  }, [isFinished, startTime, userInput, text, calculateMistakes, onComplete]);
+  }, [isFinished, startTime, userInput, text, onComplete]);
   
   useEffect(() => {
     if (userInput.length >= text.length && !isFinished) {
@@ -98,9 +143,14 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
   const renderText = () => {
     return text.split('').map((char, index) => {
       let className = 'text-muted-foreground';
-      if (index < userInput.length) {
-        className = char === userInput[index] ? 'text-foreground' : 'text-destructive';
+      const status = statusArray[index];
+      
+      if (status === 'correct') {
+          className = 'text-foreground';
+      } else if (status === 'wrong') {
+          className = 'text-destructive';
       }
+      
       if (index === userInput.length) {
         className += ' animate-pulse border-b-2 border-primary';
       }
@@ -110,7 +160,7 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
 
   const wordsTyped = userInput.length / 5;
   const wpm = elapsedTime > 0 ? Math.round((wordsTyped / elapsedTime) * 60) : 0;
-  const accuracy = userInput.length > 0 ? Math.max(0, ((userInput.length - mistakes) / userInput.length) * 100) : 100;
+  const accuracy = userInput.length > 0 ? Math.max(0, (correctChars / userInput.length) * 100) : 100;
 
   return (
     <div className="space-y-4">
@@ -127,7 +177,6 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
             className="absolute inset-0 opacity-0 cursor-text"
             autoFocus
             disabled={isFinished}
-            maxLength={text.length + 20} // Allow some extra chars
           />
         </CardContent>
       </Card>

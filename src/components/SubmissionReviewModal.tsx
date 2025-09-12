@@ -22,60 +22,79 @@ interface SubmissionReviewModalProps {
   assignment: Assignment;
 }
 
-const renderTextWithDiff = (originalText: string, userInput: string = '') => {
-  const originalWords = originalText.split(/(\s+)/);
-  const userWords = userInput.split(/(\s+)/);
-  let userWordIndex = 0;
+function getStatusArray(
+  original: string,
+  typed: string = '',
+  lookahead = 4
+): ("correct" | "wrong" | "pending")[] {
+  const oChars = original.split("");
+  const tChars = typed.split("");
 
-  const result = originalWords.map((originalWord, originalIndex) => {
-    // If it's just whitespace, return it.
-    if (originalWord.trim() === '') {
-      return <span key={`space-o-${originalIndex}`}>{originalWord}</span>;
-    }
+  let oIndex = 0;
+  let tIndex = 0;
 
-    // Find the corresponding word in the user's input
-    let currentUserWord = '';
-    let foundMatch = false;
+  const statusArray: ("correct" | "wrong" | "pending")[] = new Array(
+    oChars.length
+  ).fill("pending");
 
-    // This loop is to find the next non-whitespace word in the user's input
-    while(userWordIndex < userWords.length) {
-        currentUserWord = userWords[userWordIndex];
-        if(currentUserWord.trim() !== '') {
-            break; // Found a word to compare
+  while (oIndex < oChars.length && tIndex < tChars.length) {
+      if (oChars[oIndex] === tChars[tIndex]) {
+        statusArray[oIndex] = "correct";
+        oIndex++;
+        tIndex++;
+      } else {
+        let found = false;
+        for (let la = 1; la <= lookahead; la++) {
+          if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
+            statusArray[oIndex] = "wrong";
+            tIndex += la;
+            found = true;
+            break; 
+          }
+          if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
+            for (let k = 0; k < la; k++) {
+              statusArray[oIndex + k] = "wrong";
+            }
+            oIndex += la;
+            found = true;
+            break;
+          }
         }
-        // It's whitespace, render and continue
-        userWordIndex++;
-    }
-    
-    if (userWordIndex >= userWords.length) {
-      // This and all subsequent words are untyped
-      return (
-        <span key={`untyped-${originalIndex}`} className="text-muted-foreground/50">
-          {originalWord}
-        </span>
-      );
-    }
-    
-    userWordIndex++;
 
-    if (originalWord === currentUserWord) {
-      // Perfect match
-      return (
-        <span key={`correct-${originalIndex}`} className="text-green-600 dark:text-green-500">
-          {originalWord}
-        </span>
-      );
-    } else {
-        // Incorrect word, render the user's word with error styling
-        return (
-            <span key={`incorrect-${originalIndex}`} className="text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm">
-                {currentUserWord}
-            </span>
-        );
-    }
-  });
+        if (!found) {
+          statusArray[oIndex] = "wrong";
+          oIndex++;
+          tIndex++;
+        }
+      }
+  }
 
-  return result;
+  return statusArray;
+}
+
+const renderTextWithDiff = (originalText: string, userInput: string = '') => {
+    const statusArray = getStatusArray(originalText, userInput);
+    
+    return originalText.split('').map((char, index) => {
+        const status = statusArray[index];
+        let className = '';
+
+        switch (status) {
+            case 'correct':
+                className = 'text-green-600 dark:text-green-500';
+                break;
+            case 'wrong':
+                className = 'text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm';
+                break;
+            case 'pending':
+                className = 'text-muted-foreground/50';
+                break;
+            default:
+                break;
+        }
+        
+        return <span key={`char-${index}`} className={className}>{char}</span>
+    })
 };
 
 
