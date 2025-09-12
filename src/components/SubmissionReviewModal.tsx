@@ -25,40 +25,57 @@ interface SubmissionReviewModalProps {
 const renderTextWithDiff = (originalText: string, userInput: string = '') => {
   const originalWords = originalText.split(/(\s+)/);
   const userWords = userInput.split(/(\s+)/);
-  
-  return originalWords.map((word, index) => {
-    if (index >= userWords.length) {
-      // Untyped words
+  let userWordIndex = 0;
+
+  const result = originalWords.map((originalWord, originalIndex) => {
+    // If it's just whitespace, return it.
+    if (originalWord.trim() === '') {
+      return <span key={`space-o-${originalIndex}`}>{originalWord}</span>;
+    }
+
+    // Find the corresponding word in the user's input
+    let currentUserWord = '';
+    let foundMatch = false;
+
+    // This loop is to find the next non-whitespace word in the user's input
+    while(userWordIndex < userWords.length) {
+        currentUserWord = userWords[userWordIndex];
+        if(currentUserWord.trim() !== '') {
+            break; // Found a word to compare
+        }
+        // It's whitespace, render and continue
+        userWordIndex++;
+    }
+    
+    if (userWordIndex >= userWords.length) {
+      // This and all subsequent words are untyped
       return (
-        <span key={`untyped-${index}`} className="text-muted-foreground/50">
-          {word}
+        <span key={`untyped-${originalIndex}`} className="text-muted-foreground/50">
+          {originalWord}
         </span>
       );
     }
+    
+    userWordIndex++;
 
-    const userWord = userWords[index];
-
-    if (word.trim() === '' && userWord.trim() === '') {
-        // This is a whitespace node, render it as is.
-        return <span key={`space-${index}`}>{word}</span>
-    }
-
-    if (word === userWord) {
-      // Correct words
+    if (originalWord === currentUserWord) {
+      // Perfect match
       return (
-        <span key={`correct-${index}`} className="text-green-600 dark:text-green-500">
-          {word}
+        <span key={`correct-${originalIndex}`} className="text-green-600 dark:text-green-500">
+          {originalWord}
         </span>
       );
     } else {
-      // Incorrect words
-      return (
-        <span key={`incorrect-${index}`} className="text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm">
-          {userWord}
-        </span>
-      );
+        // Incorrect word, render the user's word with error styling
+        return (
+            <span key={`incorrect-${originalIndex}`} className="text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm">
+                {currentUserWord}
+            </span>
+        );
     }
   });
+
+  return result;
 };
 
 
