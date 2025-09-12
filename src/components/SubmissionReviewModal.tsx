@@ -22,7 +22,7 @@ interface SubmissionReviewModalProps {
   assignment: Assignment;
 }
 
-const renderTextWithDiff = (originalText: string, userInput: string) => {
+const renderTextWithDiff = (originalText: string, userInput: string = '') => {
   const output: React.ReactNode[] = [];
   const maxLength = Math.max(originalText.length, userInput.length);
 
