@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -11,7 +12,7 @@ import { BookOpen, GraduationCap, LogIn, Loader2 } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/hooks/use-toast';
 
-const LoginForm = () => {
+const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
   const userTypesNav = [
     { name: 'Student', value: 'student', icon: BookOpen },
     { name: 'Teacher', value: 'teacher', icon: GraduationCap },
@@ -52,6 +53,7 @@ const LoginForm = () => {
             password: credentials.password,
             role,
         });
+        onLoginSuccess?.();
     } catch (error) {
         // Error toast is handled in the auth provider
     } finally {

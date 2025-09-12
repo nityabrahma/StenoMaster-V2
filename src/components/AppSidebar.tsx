@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -10,9 +11,8 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -27,14 +27,14 @@ import Logo from './logo';
 import { useSidebar } from './ui/sidebar';
 
 const teacherLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard?role=teacher', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/classes', label: 'Classes', icon: Users },
   { href: '/dashboard/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/dashboard/students', label: 'Students', icon: BarChart2 },
 ];
 
 const studentLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard?role=student', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/assignments', label: 'My Assignments', icon: ClipboardList },
   { href: '/dashboard/typing-test', label: 'Typing Practice', icon: Book },
 ];
@@ -42,11 +42,21 @@ const studentLinks = [
 export default function AppSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isMobile } = useSidebar();
+  const role = searchParams.get('role');
 
   if (!user) return null;
 
-  const links = user.role === 'teacher' ? teacherLinks : studentLinks;
+  const links = role === 'teacher' ? teacherLinks : studentLinks;
+
+  const isLinkActive = (href: string) => {
+    const isDashboard = href.startsWith('/dashboard?');
+    if (isDashboard) {
+        return pathname === '/dashboard' && href.endsWith(`role=${role}`);
+    }
+    return pathname.startsWith(href) && !isDashboard;
+  }
 
   return (
     <Sidebar className="hidden md:flex md:flex-col md:border-r md:w-64">
@@ -64,7 +74,7 @@ export default function AppSidebar() {
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === link.href}
+                isActive={isLinkActive(link.href)}
                 tooltip={link.label}
               >
                 <Link href={link.href}>

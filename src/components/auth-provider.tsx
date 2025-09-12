@@ -7,7 +7,7 @@ import {
   useState,
   useEffect
 } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firstLoadDone, setFirstLoadDone] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const logout = useCallback(() => {
@@ -30,7 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('assignments-storage');
     localStorage.removeItem('classes-storage');
     localStorage.removeItem('students-storage');
-    if(pathname !== '/') {
+    
+    // If on a protected page, redirect to home. Otherwise, stay.
+    if(pathname.startsWith('/dashboard')) {
         router.push('/');
     }
   }, [router, pathname]);
@@ -60,6 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setFirstLoadDone(true);
     }
   }, [logout]);
+  
+  const isAuthenticated = !!user;
+
+  // Protected route handling
+  useEffect(() => {
+    if (!loading && !isAuthenticated && pathname.startsWith('/dashboard')) {
+        const redirectUrl = `/?showLogin=true&redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
+        router.push(redirectUrl);
+    }
+  }, [loading, isAuthenticated, pathname, router, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -70,7 +83,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
              if (decodedUser) {
                 setUser(decodedUser as User);
                 localStorage.setItem(TOKEN_STORAGE_KEY, token);
-                router.push('/dashboard');
+
+                const redirectPath = searchParams.get('redirect');
+                if (redirectPath) {
+                    router.push(redirectPath);
+                } else {
+                    router.push(`/dashboard?role=${(decodedUser as User).role}`);
+                }
             } else {
                 throw new Error("Failed to decode token");
             }
@@ -86,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
         }
     },
-    [router, toast]
+    [router, toast, searchParams]
   );
   
   const signup = useCallback(
@@ -105,8 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     []
   );
-
-  const isAuthenticated = !!user;
 
   const value = useMemo(
     () => ({ user, loading, login, logout, isAuthenticated, firstLoadDone, signup }),

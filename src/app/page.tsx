@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -66,7 +67,7 @@ function LoginDialogContent({
             <Logo />
           </DialogTitle>
         </DialogHeader>
-        <LoginForm />
+        <LoginForm onLoginSuccess={() => setIsLoginOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -127,12 +128,11 @@ const HomePageContent = () => {
 
   useEffect(() => {
     if (firstLoadDone) {
-      if (isAuthenticated) {
-        if (user) {
-          router.push(`/dashboard`);
-        }
+      if (isAuthenticated && user) {
+        router.push(`/dashboard?role=${user.role}`);
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
   }, [isAuthenticated, user, router, firstLoadDone]);
 
@@ -331,6 +331,14 @@ const HomePageContent = () => {
 };
 
 
+function HomePageWithSuspense() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <HomePageContent />
+        </Suspense>
+    )
+}
+
 export default function Home() {
-    return <HomePageContent />
+    return <HomePageWithSuspense />
 }
