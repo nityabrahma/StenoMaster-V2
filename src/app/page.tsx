@@ -32,6 +32,8 @@ import {
   Target,
   Users,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 function LoginDialogContent({
   isLoginOpen,
@@ -135,19 +137,16 @@ const HomePageContent = () => {
     }
   }, [isAuthenticated, user, router, firstLoadDone, mounted]);
 
-  if (!mounted || !firstLoadDone) {
+  if (!firstLoadDone || !mounted) {
     return (
       <div className="flex justify-center items-center h-screen p-20 bg-background">
-        <Card className="animate-bounce">
-          <CardContent className="flex flex-col gap-2 items-center justify-center p-20 h-full">
-            <div className="flex items-center space-x-3 justify-center">
-              <Logo />
+        <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
             </div>
-            <p className={`text-lg font-bold text-muted-foreground`}>
-              Loading...
-            </p>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     );
   }
