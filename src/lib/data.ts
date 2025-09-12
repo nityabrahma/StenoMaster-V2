@@ -1,3 +1,4 @@
+
 import type { Teacher, Student, Class, Assignment, Submission } from './types';
 
 export const teachers: Teacher[] = [
@@ -51,7 +52,8 @@ export const submissions: Submission[] = [
         submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         wpm: 52,
         accuracy: 95.2,
-        mistakes: 5
+        mistakes: 5,
+        userInput: 'When in the Course of human events, it becomes necessary for one people to dissolve the political bands which have connected them with another, and to assume among the powers of the earth, the separate and equal station to which the Laws of Nature and of Nature\'s God entitle them, a decent respect to the opinions of mankind requires that they shoud declare the causes which impel them to the separation.'
     },
     {
         id: 'sub-2',
@@ -60,6 +62,7 @@ export const submissions: Submission[] = [
         submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         wpm: 68,
         accuracy: 98.1,
-        mistakes: 2
+        mistakes: 2,
+        userInput: 'When in the Course of human events, it becomes necessary for one people to dissolve the political bands which have connected them with another, and to assume among the powers of the earth, the separate and equal station to which the Laws of Nature and of Nature\'s God entitle them, a decent respect to the opinions of mankind requires that they should declare the causes which impel them to the separation.'
     }
 ];

@@ -1,15 +1,18 @@
+
 'use client';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Assignment, Submission } from '@/lib/types';
 import { assignments as initialAssignments, submissions as initialSubmissions } from '@/lib/data';
 
+type NewSubmission = Omit<Submission, 'id'>;
+
 interface AssignmentsState {
   assignments: Assignment[];
   submissions: Submission[];
   loadAssignments: () => Promise<void>;
   addAssignment: (assignment: Omit<Assignment, 'id'>) => Promise<Assignment>;
-  addSubmission: (submission: Omit<Submission, 'id' | 'submittedAt'> & { submittedAt: string }) => Promise<Submission>;
+  addSubmission: (submission: NewSubmission) => Promise<Submission>;
 }
 
 export const useAssignments = create<AssignmentsState>()(
@@ -18,8 +21,6 @@ export const useAssignments = create<AssignmentsState>()(
       assignments: [],
       submissions: [],
       loadAssignments: async () => {
-        // In a real app, this would be an API call.
-        // For now, we'll check if localStorage is already seeded.
         if (get().assignments.length === 0 && get().submissions.length === 0) {
             set({ assignments: initialAssignments, submissions: initialSubmissions });
         }
@@ -37,7 +38,11 @@ export const useAssignments = create<AssignmentsState>()(
             ...submission,
             id: `sub-${Date.now()}`
         };
-        set(state => ({ submissions: [newSubmission, ...state.submissions.filter(s => s.assignmentId !== newSubmission.assignmentId || s.studentId !== newSubmission.studentId)] }));
+        // Remove any previous submission for the same assignment by the same student
+        const otherSubmissions = get().submissions.filter(s => 
+            !(s.assignmentId === newSubmission.assignmentId && s.studentId === newSubmission.studentId)
+        );
+        set({ submissions: [newSubmission, ...otherSubmissions] });
         return newSubmission;
       }
     }),

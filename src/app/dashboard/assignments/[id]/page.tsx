@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { useAssignments } from '@/hooks/use-assignments';
+import type { SubmissionResult } from '@/components/typing-test';
 
 export default function AssignmentPage() {
   const { user } = useAuth();
@@ -25,7 +27,7 @@ export default function AssignmentPage() {
     notFound();
   }
 
-  const handleSubmit = async (result: { wpm: number; accuracy: number; mistakes: number }) => {
+  const handleSubmit = async (result: SubmissionResult) => {
     if (!user) return;
 
     await addSubmission({

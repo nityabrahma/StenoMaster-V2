@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   name: string;
@@ -39,6 +40,7 @@ export type Submission = {
   wpm: number;
   accuracy: number;
   mistakes: number;
+  userInput: string; // The full text entered by the user
 };
 
 export type LoginCredentials = {
