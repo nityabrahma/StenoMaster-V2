@@ -1,8 +1,10 @@
+
 'use client';
-import { Zap, Target, BookOpen, Clock } from 'lucide-react';
+import { Zap, Target, BookOpen, Clock, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { assignments, submissions, students } from '@/lib/data';
+import { useAssignments } from '@/hooks/use-assignments';
+import { useStudents } from '@/hooks/use-students';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
 import Link from 'next/link';
@@ -10,6 +12,8 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const { students } = useStudents();
+  const { assignments, submissions } = useAssignments();
   
   if (!user || user.role !== 'student') return null;
 
@@ -25,6 +29,7 @@ export default function StudentDashboard() {
   const stats = [
     { title: 'Average WPM', value: avgWpm, icon: Zap, color: 'from-blue-500 to-sky-500' },
     { title: 'Average Accuracy', value: `${avgAccuracy}%`, icon: Target, color: 'from-violet-500 to-purple-500' },
+    { title: 'Completed Assignments', value: mySubmissions.length, icon: ClipboardCheck, color: 'from-emerald-500 to-green-500' },
   ];
 
   return (
@@ -52,8 +57,8 @@ export default function StudentDashboard() {
                 </Card>
             )
         })}
-        <Card className="bg-primary text-primary-foreground group relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
+        <Card className="bg-primary text-primary-foreground group relative overflow-hidden md:col-span-2 lg:col-span-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-500 opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
             <CardHeader className="pb-2 relative z-10">
                 <CardTitle className="font-headline">Ready for a challenge?</CardTitle>
             </CardHeader>
