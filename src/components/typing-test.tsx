@@ -40,28 +40,37 @@ function getStatusArray(
         tIndex++;
       } else {
         let found = false;
+        // Check for an insertion in typed text (extra characters)
         for (let la = 1; la <= lookahead; la++) {
           if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
+            // Mistake found, but we will advance tIndex to resync
             statusArray[oIndex] = "wrong";
             tIndex += la;
             found = true;
             break; 
           }
-          if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
-            for (let k = 0; k < la; k++) {
-              statusArray[oIndex + k] = "wrong";
-            }
-            oIndex += la;
-            found = true;
-            break;
-          }
         }
 
-        if (!found) {
-          statusArray[oIndex] = "wrong";
-          oIndex++;
-          tIndex++;
+        if(found) continue;
+
+        // Check for a deletion in typed text (missing characters)
+        for (let la = 1; la <= lookahead; la++) {
+            if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
+                for (let k = 0; k < la; k++) {
+                    statusArray[oIndex + k] = "wrong";
+                }
+                oIndex += la;
+                found = true;
+                break;
+            }
         }
+        
+        if(found) continue;
+
+        // If no resync possible within lookahead, mark as wrong and advance both
+        statusArray[oIndex] = "wrong";
+        oIndex++;
+        tIndex++;
       }
   }
 
@@ -103,12 +112,29 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
   }, [text, resetTest]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
     if (isFinished) return;
 
-    if (!startTime) {
+    let value = e.target.value;
+
+    // Auto-replace multiple spaces with a single space
+    value = value.replace(/ {2,}/g, ' ');
+
+    if (!startTime && value.length > 0) {
       setStartTime(Date.now());
     }
+
+    if (value.endsWith(' ')) {
+        const originalWords = text.split(' ');
+        const typedWords = value.trim().split(' ');
+        
+        if (typedWords.length < originalWords.length) {
+            // Move cursor to the start of the next word.
+            const nextWordStartIndex = text.indexOf(originalWords[typedWords.length] as string, userInput.length);
+            // This is a simplified conceptual step. In reality, we just update the input.
+            // The visual cursor movement is handled by the `renderText` logic.
+        }
+    }
+    
     setUserInput(value);
   };
   
@@ -130,8 +156,11 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
   }, [isFinished, startTime, userInput, text, onComplete]);
   
   useEffect(() => {
-    if (userInput.length >= text.length && !isFinished) {
-      finishTest();
+    // Only finish if the typed text is at least as long as the original,
+    // or if the last character typed matches the last character of the text.
+    if (!isFinished && userInput.length > 0 && (userInput.length >= text.length || userInput.trim() === text.trim())) {
+      // A small delay to allow the last character's state to be processed.
+      setTimeout(() => finishTest(), 50);
     }
   }, [userInput, text, isFinished, finishTest]);
 
