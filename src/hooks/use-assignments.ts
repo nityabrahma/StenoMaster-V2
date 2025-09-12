@@ -9,7 +9,7 @@ interface AssignmentsState {
   submissions: Submission[];
   loadAssignments: () => Promise<void>;
   addAssignment: (assignment: Omit<Assignment, 'id'>) => Promise<Assignment>;
-  addSubmission: (submission: Omit<Submission, 'id'>) => Promise<Submission>;
+  addSubmission: (submission: Omit<Submission, 'id' | 'submittedAt'> & { submittedAt: string }) => Promise<Submission>;
 }
 
 export const useAssignments = create<AssignmentsState>()(
@@ -20,7 +20,7 @@ export const useAssignments = create<AssignmentsState>()(
       loadAssignments: async () => {
         // In a real app, this would be an API call.
         // For now, we'll check if localStorage is already seeded.
-        if (get().assignments.length === 0) {
+        if (get().assignments.length === 0 && get().submissions.length === 0) {
             set({ assignments: initialAssignments, submissions: initialSubmissions });
         }
       },
@@ -37,7 +37,7 @@ export const useAssignments = create<AssignmentsState>()(
             ...submission,
             id: `sub-${Date.now()}`
         };
-        set(state => ({ submissions: [...state.submissions, newSubmission] }));
+        set(state => ({ submissions: [newSubmission, ...state.submissions.filter(s => s.assignmentId !== newSubmission.assignmentId || s.studentId !== newSubmission.studentId)] }));
         return newSubmission;
       }
     }),

@@ -1,8 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { assignments } from '@/lib/data';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -10,21 +9,29 @@ import TypingTest from '@/components/typing-test';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { useAssignments } from '@/hooks/use-assignments';
 
-export default function AssignmentPage({ params }: { params: { id: string } }) {
+export default function AssignmentPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
-  const assignment = assignments.find((a) => a.id === params.id);
+  const { assignments, addSubmission } = useAssignments();
+
+  const assignmentId = typeof params.id === 'string' ? params.id : '';
+  const assignment = assignments.find((a) => a.id === assignmentId);
 
   if (!assignment) {
     notFound();
   }
 
-  const handleSubmit = (result: { wpm: number; accuracy: number; mistakes: number }) => {
-    console.log('Submitting assignment:', {
+  const handleSubmit = async (result: { wpm: number; accuracy: number; mistakes: number }) => {
+    if (!user) return;
+
+    await addSubmission({
       assignmentId: assignment.id,
-      studentId: user?.id,
+      studentId: user.id,
+      submittedAt: new Date().toISOString(),
       ...result,
     });
     
