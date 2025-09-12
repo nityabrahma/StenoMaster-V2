@@ -77,8 +77,6 @@ const HomePageContent = () => {
   const { colorScheme } = useTheme();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
-
   const router = useRouter();
   const { isAuthenticated, user, firstLoadDone } = useAuth();
 
@@ -127,16 +125,12 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    if (firstLoadDone) {
-      if (isAuthenticated && user) {
+    if (firstLoadDone && isAuthenticated && user) {
         router.push(`/dashboard?role=${user.role}`);
-      } else {
-        setIsLoading(false);
-      }
     }
   }, [isAuthenticated, user, router, firstLoadDone]);
 
-  if (isLoading) {
+  if (!firstLoadDone) {
     return (
       <div className="flex justify-center items-center h-screen p-20 bg-background">
         <Card className="animate-bounce">
