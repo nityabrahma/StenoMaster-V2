@@ -55,7 +55,12 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar className="hidden md:flex md:flex-col md:border-r border-white/10 md:w-64 bg-sidebar/60 backdrop-blur-lg">
+    <Sidebar 
+        className="hidden md:flex md:flex-col md:w-64 bg-gray-900/30"
+        style={{
+            backdropFilter: "blur(1px)"
+        }}
+    >
       {isMobile && (
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">

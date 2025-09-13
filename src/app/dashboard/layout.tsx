@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -66,7 +67,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
         <div className="h-screen w-full flex flex-col bg-transparent">
-            <nav className="border-b border-white/10 h-16 flex-shrink-0 bg-card/60 backdrop-blur-lg sticky top-0 z-20">
+            <nav 
+                className="h-16 flex-shrink-0 sticky top-0 z-20 bg-gray-900/30"
+                style={{
+                    backdropFilter: "blur(1px)"
+                }}
+            >
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">
                     <div className="flex items-center space-x-4">
                         <div className="md:hidden">

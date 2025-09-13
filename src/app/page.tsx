@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -68,9 +69,10 @@ function LoginDialogContent({
 
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { isAuthenticated, user, firstLoadDone } = useAuth();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, user, firstLoadDone } = useAuth();
+  
 
   const features = [
     {
@@ -126,7 +128,7 @@ const HomePageContent = () => {
     }
   }, [isAuthenticated, user, router, firstLoadDone, mounted]);
 
-  if (!mounted || !firstLoadDone) {
+  if (!mounted || (isAuthenticated === null && firstLoadDone)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -146,7 +148,10 @@ const HomePageContent = () => {
       className="min-h-screen"
     >
       <nav
-        className="bg-transparent backdrop-blur-lg border-b border-white/10 fixed w-full top-0 z-50"
+        className="bg-gray-900/30 fixed w-full top-0 z-50"
+        style={{
+          backdropFilter: "blur(1px)",
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
