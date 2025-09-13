@@ -24,6 +24,7 @@ import {
 } from './ui/sidebar';
 import Logo from './logo';
 import { useSidebar } from './ui/sidebar';
+import { cn } from '@/lib/utils';
 
 const teacherLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -71,13 +72,26 @@ export default function AppSidebar() {
 
       <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
-          {links.map((link) => (
+          {links.map((link) => {
+            const active = isLinkActive(link.href);
+            return (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild
-                isActive={isLinkActive(link.href)}
+                isActive={active}
                 tooltip={link.label}
-                className="data-[active=true]:bg-sidebar-accent/80"
+                className={cn(
+                    "rounded-lg transition-all duration-300",
+                    active 
+                    ? "bg-gray-900/30 border-2 border-white/20" 
+                    : "border-2 border-transparent hover:bg-gray-900/30 hover:border-white/20"
+                )}
+                 style={
+                  active ? {
+                    backdropFilter: "blur(1px)",
+                    boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.2)"
+                  } : {}
+                }
               >
                 <Link href={link.href}>
                   <link.icon />
@@ -85,7 +99,7 @@ export default function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
+          )})}
         </SidebarMenu>
       </SidebarContent>
 
