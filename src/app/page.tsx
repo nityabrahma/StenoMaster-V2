@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -9,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Card,
