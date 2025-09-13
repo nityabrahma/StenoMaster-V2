@@ -122,9 +122,9 @@ const HomePageContent = () => {
     }
   }, [isAuthenticated, user, router, firstLoadDone]);
 
-  if (!firstLoadDone || (isAuthenticated && user)) {
+  if (!firstLoadDone) {
     return (
-      <div className="flex justify-center items-center h-screen p-20">
+      <div className="flex justify-center items-center h-screen">
         <div className="flex flex-col items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
@@ -135,6 +135,7 @@ const HomePageContent = () => {
       </div>
     );
   }
+
 
   return (
     <div
