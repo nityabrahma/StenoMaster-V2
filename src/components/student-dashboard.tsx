@@ -1,14 +1,14 @@
 
 'use client';
-import { Zap, Target, BookOpen, Clock, ClipboardCheck } from 'lucide-react';
+import { Zap, Target, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useStudents } from '@/hooks/use-students';
-import { Progress } from './ui/progress';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { BookOpen } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -27,9 +27,9 @@ export default function StudentDashboard() {
   const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
   
   const stats = [
-    { title: 'Average WPM', value: avgWpm, icon: Zap, color: 'from-blue-500 to-sky-500' },
-    { title: 'Average Accuracy', value: `${avgAccuracy}%`, icon: Target, color: 'from-violet-500 to-purple-500' },
-    { title: 'Completed Assignments', value: mySubmissions.length, icon: ClipboardCheck, color: 'from-emerald-500 to-green-500' },
+    { title: 'Average WPM', value: avgWpm, icon: Zap, color: 'from-blue-400 to-sky-400' },
+    { title: 'Average Accuracy', value: `${avgAccuracy}%`, icon: Target, color: 'from-violet-400 to-purple-400' },
+    { title: 'Completed', value: mySubmissions.length, icon: ClipboardCheck, color: 'from-emerald-400 to-green-400' },
   ];
 
   return (
@@ -43,54 +43,53 @@ export default function StudentDashboard() {
         {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-                <Card key={index} className="group relative overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                    <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
+                <Card key={index} className="border-white/10">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                         <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} shadow-lg`}>
                             <Icon className="h-4 w-4 text-white" />
                         </div>
                     </CardHeader>
-                    <CardContent className="relative z-10">
+                    <CardContent>
                         <div className="text-2xl font-bold">{stat.value}</div>
                     </CardContent>
                 </Card>
             )
         })}
-        <Card className="bg-primary text-primary-foreground group relative overflow-hidden md:col-span-2 lg:col-span-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-500 opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
-            <CardHeader className="pb-2 relative z-10">
-                <CardTitle className="font-headline">Ready for a challenge?</CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-                <p className="text-sm text-primary-foreground/80">Take a random typing test to warm up.</p>
-            </CardContent>
-            <CardFooter className="relative z-10">
-                <Button variant="secondary" asChild>
-                <Link href="/dashboard/typing-test">Start Typing Test</Link>
-                </Button>
-            </CardFooter>
-        </Card>
       </div>
+      
+      <Card className="mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground border-none">
+        <CardHeader>
+            <CardTitle className="font-headline">Ready for a challenge?</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-sm text-blue-100">Take a random typing test to warm up.</p>
+        </CardContent>
+        <CardFooter>
+            <Button variant="secondary" asChild>
+            <Link href="/dashboard/typing-test">Start Typing Test</Link>
+            </Button>
+        </CardFooter>
+      </Card>
+
 
       <div className="mt-8">
         <h2 className="text-2xl font-bold font-headline mb-4">Pending Assignments</h2>
         {pendingAssignments.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {pendingAssignments.map(assignment => (
-              <Card key={assignment.id} className="relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-600 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-                <CardHeader className="relative z-10">
+              <Card key={assignment.id}>
+                <CardHeader>
                   <CardTitle className="truncate">{assignment.title}</CardTitle>
                   <CardDescription>Due {formatDistanceToNow(new Date(assignment.deadline), { addSuffix: true })}</CardDescription>
                 </CardHeader>
-                <CardContent className="relative z-10">
+                <CardContent>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="h-4 w-4" />
                     <span>{assignment.text.split(' ').length} words</span>
                   </div>
                 </CardContent>
-                 <CardFooter className="relative z-10">
+                 <CardFooter>
                     <Button asChild className="w-full">
                         <Link href={`/dashboard/assignments/${assignment.id}`}>Start Assignment</Link>
                     </Button>
@@ -99,10 +98,9 @@ export default function StudentDashboard() {
             ))}
           </div>
         ) : (
-          <Card className="flex flex-col items-center justify-center p-12 text-center relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-             <CardTitle className="font-headline relative z-10">All Caught Up!</CardTitle>
-             <CardDescription className="mt-2 relative z-10">You have no pending assignments. Great job!</CardDescription>
+          <Card className="flex flex-col items-center justify-center p-12 text-center">
+             <CardTitle className="font-headline">All Caught Up!</CardTitle>
+             <CardDescription className="mt-2">You have no pending assignments. Great job!</CardDescription>
           </Card>
         )}
       </div>

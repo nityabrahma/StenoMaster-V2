@@ -5,7 +5,6 @@ import {
   BarChart2,
   Book,
   ClipboardList,
-  Feather,
   LayoutDashboard,
   LogOut,
   Users,
@@ -56,7 +55,7 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar className="hidden md:flex md:flex-col md:border-r md:w-64">
+    <Sidebar className="hidden md:flex md:flex-col md:border-r border-white/10 md:w-64 bg-sidebar/60 backdrop-blur-lg">
       {isMobile && (
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
@@ -73,6 +72,7 @@ export default function AppSidebar() {
                 asChild
                 isActive={isLinkActive(link.href)}
                 tooltip={link.label}
+                className="data-[active=true]:bg-sidebar-accent/80"
               >
                 <Link href={link.href}>
                   <link.icon />

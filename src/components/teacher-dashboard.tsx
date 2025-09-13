@@ -1,6 +1,6 @@
 
 'use client';
-import { BarChart, Book, Users, ClipboardCheck } from 'lucide-react';
+import { Users, Book, ClipboardCheck } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -29,7 +29,6 @@ import { useClasses } from '@/hooks/use-classes';
 import { useAssignments } from '@/hooks/use-assignments';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { useTheme } from '@/hooks/use-theme';
 import { useMemo } from 'react';
 
 const chartConfig = {
@@ -41,7 +40,6 @@ const chartConfig = {
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
-  const { colorScheme } = useTheme();
   const { students } = useStudents();
   const { classes } = useClasses();
   const { assignments, submissions } = useAssignments();
@@ -84,9 +82,9 @@ export default function TeacherDashboard() {
   });
 
   const stats = [
-    { title: 'Total Students', value: teacherStudents.length, icon: Users, color: 'from-blue-500 to-sky-500' },
-    { title: 'Your Classes', value: teacherClasses.length, icon: Book, color: 'from-violet-500 to-purple-500' },
-    { title: 'Active Assignments', value: teacherAssignments.length, icon: ClipboardCheck, color: 'from-emerald-500 to-green-500' },
+    { title: 'Total Students', value: teacherStudents.length, icon: Users, color: 'from-blue-400 to-sky-400' },
+    { title: 'Your Classes', value: teacherClasses.length, icon: Book, color: 'from-violet-400 to-purple-400' },
+    { title: 'Active Assignments', value: teacherAssignments.length, icon: ClipboardCheck, color: 'from-emerald-400 to-green-400' },
   ];
 
   return (
@@ -100,15 +98,14 @@ export default function TeacherDashboard() {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="group relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card key={index} className="border-white/10">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                     <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} shadow-lg`}>
                         <Icon className="h-4 w-4 text-white" />
                     </div>
                 </CardHeader>
-                <CardContent className="relative z-10">
+                <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
                 </CardContent>
             </Card>
@@ -125,12 +122,16 @@ export default function TeacherDashboard() {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
               <RechartsBarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="class" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                <YAxis />
+                <YAxis tickLine={false} axisLine={false} />
                 <ChartTooltip
                   cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
+                  content={<ChartTooltipContent 
+                    className="glass-card"
+                    labelClassName="font-bold"
+                    hideLabel 
+                   />}
                 />
                 <Bar dataKey="avgWpm" fill="var(--color-avgWpm)" radius={8} />
               </RechartsBarChart>

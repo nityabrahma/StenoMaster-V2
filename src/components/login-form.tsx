@@ -5,11 +5,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { BookOpen, GraduationCap, LogIn, Loader2 } from 'lucide-react';
-import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/hooks/use-toast';
 
 const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
@@ -28,7 +26,6 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
     password: '',
   });
   const [activeTab, setActiveTab] = useState('student');
-  const { colorScheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent, role: 'student' | 'teacher') => {
@@ -62,32 +59,22 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
   };
 
   return (
-    <Card
-      className={`w-full max-w-md mx-auto flex flex-col overflow-auto backdrop-blur-xl border shadow-xl ${
-        colorScheme === 'dark'
-          ? 'bg-black/20 border-white/10'
-          : 'bg-white/20 border-white/30'
-      }`}
+    <div
+      className="w-full max-w-md mx-auto flex flex-col"
     >
-      <CardHeader className="flex flex-col gap-2 justify-center items-center pb-2">
         <p
-          className={`font-bold ${
-            colorScheme === 'dark' ? 'text-dark' : 'text-light'
-          }`}
+          className="font-semibold text-center text-gray-300 pb-4"
         >
           Welcome! Please authorize to continue.
         </p>
-      </CardHeader>
-      <CardContent>
+      
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 gap-2">
+          <TabsList className="grid w-full grid-cols-2 gap-2 bg-black/20">
             {userTypesNav.map((nav, index) => (
               <TabsTrigger
                 key={index}
                 value={nav.value}
-                className={`cursor-pointer p-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white ${
-                  colorScheme === 'dark' ? 'bg-slate-900' : 'bg-slate-300/80'
-                }`}
+                className="cursor-pointer p-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white text-gray-300"
               >
                 <nav.icon className="h-4 w-4 mr-2" />
                 {nav.name}
@@ -95,7 +82,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
             ))}
           </TabsList>
           <TabsContent value="student">
-            <form onSubmit={(e) => handleLogin(e, 'student')} className="space-y-4 mt-2">
+            <form onSubmit={(e) => handleLogin(e, 'student')} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="student-email">Email</Label>
                 <Input
@@ -109,7 +96,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                       email: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
+                  className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
                 />
               </div>
               <div className="space-y-2">
@@ -125,7 +112,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                       password: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
+                  className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
                 />
               </div>
               <Button
@@ -139,7 +126,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
             </form>
           </TabsContent>
           <TabsContent value="teacher">
-            <form onSubmit={(e) => handleLogin(e, 'teacher')} className="space-y-4 mt-2">
+            <form onSubmit={(e) => handleLogin(e, 'teacher')} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="teacher-email">Email</Label>
                 <Input
@@ -153,7 +140,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                       email: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
+                  className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
                 />
               </div>
               <div className="space-y-2">
@@ -169,7 +156,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                       password: e.target.value,
                     }))
                   }
-                  className="bg-background/50 border-muted focus:border-blue-500 transition-colors"
+                  className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
                 />
               </div>
               <Button
@@ -183,8 +170,7 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
             </form>
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 

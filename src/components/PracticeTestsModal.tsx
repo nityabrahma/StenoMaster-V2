@@ -12,7 +12,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Submission } from '@/lib/types';
 import { format } from 'date-fns';
-import { useTheme } from '@/hooks/use-theme';
 
 interface PracticeTestsModalProps {
   isOpen: boolean;
@@ -27,15 +26,10 @@ export default function PracticeTestsModal({
   submissions,
   onSelectSubmission,
 }: PracticeTestsModalProps) {
-  const { colorScheme } = useTheme();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`max-w-2xl w-full rounded-xl bg-gradient-to-br backdrop-blur-xl border-0 shadow-2xl ${
-          colorScheme === 'dark'
-            ? 'modal-gradient-dark-bg'
-            : 'modal-gradient-light-bg'
-        }`}>
+      <DialogContent className="glass-card max-w-2xl w-full">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Practice Test History</DialogTitle>
           <DialogDescription>
@@ -50,7 +44,7 @@ export default function PracticeTestsModal({
                 .map((submission) => (
                     <Card
                         key={submission.id}
-                        className="cursor-pointer hover:bg-accent/50 transition-colors"
+                        className="cursor-pointer bg-card/70 hover:bg-card/90 transition-colors"
                         onClick={() => onSelectSubmission(submission)}
                     >
                         <CardContent className="p-4 flex justify-between items-center">

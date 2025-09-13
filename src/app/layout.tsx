@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/components/auth-provider';
-import { ThemeProvider } from '@/hooks/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { Suspense } from 'react';
@@ -17,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -31,14 +30,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider>
-          <LoadingProvider>
-            <AuthProvider>
-              <Suspense>{children}</Suspense>
-              <Toaster />
-            </AuthProvider>
-          </LoadingProvider>
-        </ThemeProvider>
+        <LoadingProvider>
+          <AuthProvider>
+            <Suspense>{children}</Suspense>
+            <Toaster />
+          </AuthProvider>
+        </LoadingProvider>
       </body>
     </html>
   );

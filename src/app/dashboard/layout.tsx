@@ -3,14 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { useTheme } from '@/hooks/use-theme';
 import Logo from '@/components/logo';
 import { useAuth } from '@/hooks/use-auth';
 import { usePathname, useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import UserButton from '@/components/UserButton';
-import type { User, Class } from '@/lib/types';
 import { AuthProvider } from '@/components/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -20,12 +16,8 @@ import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { colorScheme } = useTheme();
   const { user, loading, isAuthenticated } = useAuth();
-  const pathname = usePathname();
   const router = useRouter();
-
-  const isAssignmentPage = pathname.startsWith('/dashboard/assignments/');
 
   const [initialLoad, setInitialLoad] = useState(true);
   
@@ -55,7 +47,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (loading || !user || initialLoad) {
     return (
-        <div className="flex h-screen w-full items-center justify-center">
+        <div className="flex h-screen w-full items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
@@ -73,21 +65,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-        <div className={`h-screen w-full flex flex-col bg-gradient-to-br ${
-          colorScheme === 'dark'
-            ? 'from-slate-900 via-blue-900 to-slate-900'
-            : 'from-slate-50 via-blue-50 to-slate-100'
-        }`}>
-            <nav className="border-b h-16 flex-shrink-0 border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">
+        <div className="h-screen w-full flex flex-col bg-background">
+            <nav className="border-b border-white/10 h-16 flex-shrink-0 bg-card/60 backdrop-blur-lg sticky top-0 z-20">
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">
                     <div className="flex items-center space-x-4">
                         <div className="md:hidden">
                             <SidebarTrigger
-                                className={`h-9 w-9 cursor-pointer ${
-                                colorScheme === 'dark'
-                                    ? 'bg-slate-900/70 hover:bg-black/60'
-                                    : 'bg-slate-200 hover:bg-slate-300'
-                                }`}
+                                className="h-9 w-9 cursor-pointer bg-card/80 hover:bg-black/60"
                             />
                         </div>
                         <div className="hidden md:flex items-center gap-2">
@@ -98,7 +82,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                         </Button>
                     </div>
                     <div className="flex items-center space-x-2 lg:space-x-4">
-                        <ThemeToggle />
                         <UserButton />
                     </div>
                 </div>

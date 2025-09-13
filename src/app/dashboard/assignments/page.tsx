@@ -36,7 +36,6 @@ import { useStudents } from '@/hooks/use-students';
 import { useState } from 'react';
 import type { Assignment, Submission } from '@/lib/types';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
-import { useTheme } from '@/hooks/use-theme';
 
 // Teacher's View
 function TeacherAssignments() {
@@ -44,23 +43,14 @@ function TeacherAssignments() {
   const router = useRouter();
   const { assignments, submissions } = useAssignments();
   const { classes } = useClasses();
-  const { colorScheme } = useTheme();
 
   if(!user) return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
   
-  const cardColors = [
-    "from-blue-500 to-sky-500",
-    "from-violet-500 to-purple-500",
-    "from-emerald-500 to-green-500",
-    "from-amber-500 to-yellow-500",
-    "from-rose-500 to-red-500",
-  ];
-
   return (
-    <Card className="shadow-lg">
+    <Card>
         <CardHeader>
             <div className="flex justify-between items-start">
                 <div>
@@ -127,7 +117,6 @@ function StudentAssignments() {
   const { user } = useAuth();
   const { students } = useStudents();
   const { assignments, submissions } = useAssignments();
-  const { colorScheme } = useTheme();
   
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
@@ -141,14 +130,6 @@ function StudentAssignments() {
   const completedAssignments = myAssignments.filter(a => mySubmissions.some(s => s.assignmentId === a.id));
   const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
   
-  const cardColors = [
-    'from-blue-500 to-sky-500',
-    'from-violet-500 to-purple-500',
-    'from-emerald-500 to-green-500',
-    'from-amber-500 to-yellow-500',
-    'from-rose-500 to-red-500',
-  ];
-
   const handleCardClick = (assignment: Assignment, submission?: Submission) => {
     if (submission) {
       setSelectedAssignment(assignment);
@@ -166,14 +147,12 @@ function StudentAssignments() {
         <h2 className="text-2xl font-bold font-headline mb-4">Pending</h2>
         {pendingAssignments.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {pendingAssignments.map((assignment, index) => {
+            {pendingAssignments.map((assignment) => {
               const isPastDue = new Date(assignment.deadline) < new Date();
-              const color = cardColors[index % cardColors.length];
               return (
                 <Link key={assignment.id} href={`/dashboard/assignments/${assignment.id}`} passHref>
-                  <Card className="flex flex-col relative overflow-hidden group h-full cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                    <CardHeader className="relative z-10">
+                  <Card className="flex flex-col h-full cursor-pointer">
+                    <CardHeader>
                       <div className="flex justify-between items-start">
                         <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
                         {isPastDue ? (
@@ -186,10 +165,10 @@ function StudentAssignments() {
                         Due {format(new Date(assignment.deadline), 'PPp')}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-grow relative z-10">
+                    <CardContent className="flex-grow">
                       <p className="text-sm text-muted-foreground">Click to start this assignment.</p>
                     </CardContent>
-                    <CardFooter className="relative z-10">
+                    <CardFooter>
                       <Button asChild className="w-full">
                         <span>{isPastDue ? 'Submit Late' : 'Start Assignment'}</span>
                       </Button>
@@ -209,13 +188,11 @@ function StudentAssignments() {
         <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
         {completedAssignments.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {completedAssignments.map((assignment, index) => {
+            {completedAssignments.map((assignment) => {
               const submission = mySubmissions.find(s => s.assignmentId === assignment.id)!;
-              const color = cardColors[(index + 2) % cardColors.length];
               return (
-                <Card key={assignment.id} onClick={() => handleCardClick(assignment, submission)} className="flex flex-col relative overflow-hidden group cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                  <CardHeader className="relative z-10">
+                <Card key={assignment.id} onClick={() => handleCardClick(assignment, submission)} className="flex flex-col cursor-pointer">
+                  <CardHeader>
                     <div className="flex justify-between items-start">
                         <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
                         <Badge variant="default" className="bg-green-600">
@@ -226,13 +203,13 @@ function StudentAssignments() {
                       Submitted {format(new Date(submission.submittedAt), 'PP')}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-grow relative z-10">
+                  <CardContent className="flex-grow">
                     <div className="text-sm space-y-2">
                         <p><span className="font-semibold">Score:</span> {submission.wpm} WPM</p>
                         <p><span className="font-semibold">Accuracy:</span> {submission.accuracy.toFixed(1)}%</p>
                     </div>
                   </CardContent>
-                  <CardFooter className="relative z-10">
+                  <CardFooter>
                     <p className="text-xs text-muted-foreground w-full text-center">Click to review submission</p>
                   </CardFooter>
                 </Card>

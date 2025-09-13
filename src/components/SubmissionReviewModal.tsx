@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useTheme } from '@/hooks/use-theme';
 import type { Submission, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 
@@ -81,10 +80,10 @@ const renderTextWithDiff = (originalText: string, userInput: string = '') => {
 
         switch (status) {
             case 'correct':
-                className = 'text-green-600 dark:text-green-500';
+                className = 'text-green-400';
                 break;
             case 'wrong':
-                className = 'text-red-600 dark:text-red-500 bg-red-500/10 rounded-sm';
+                className = 'text-red-400 bg-red-500/20 rounded-sm';
                 break;
             case 'pending':
                 className = 'text-muted-foreground/50';
@@ -104,17 +103,12 @@ export default function SubmissionReviewModal({
   submission,
   assignment,
 }: SubmissionReviewModalProps) {
-  const { colorScheme } = useTheme();
   
   if (!submission || !assignment) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`max-w-3xl w-full rounded-xl bg-gradient-to-br backdrop-blur-xl border-0 shadow-2xl ${
-          colorScheme === 'dark'
-            ? 'modal-gradient-dark-bg'
-            : 'modal-gradient-light-bg'
-        }`}>
+      <DialogContent className="glass-card max-w-3xl w-full">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">
             Review: {assignment.title}
@@ -125,7 +119,7 @@ export default function SubmissionReviewModal({
         </DialogHeader>
         
         <div className="grid grid-cols-3 gap-4 my-4">
-            <Card className="bg-transparent">
+            <Card className="bg-card/70 border-none">
                 <CardContent className="p-4 flex items-center gap-4">
                     <Zap className="h-6 w-6 text-primary"/>
                     <div>
@@ -134,7 +128,7 @@ export default function SubmissionReviewModal({
                     </div>
                 </CardContent>
             </Card>
-            <Card className="bg-transparent">
+            <Card className="bg-card/70 border-none">
                 <CardContent className="p-4 flex items-center gap-4">
                     <Target className="h-6 w-6 text-primary"/>
                     <div>
@@ -143,7 +137,7 @@ export default function SubmissionReviewModal({
                     </div>
                 </CardContent>
             </Card>
-            <Card className="bg-transparent">
+            <Card className="bg-card/70 border-none">
                 <CardContent className="p-4 flex items-center gap-4">
                     <AlertCircle className="h-6 w-6 text-destructive"/>
                     <div>
@@ -154,7 +148,7 @@ export default function SubmissionReviewModal({
             </Card>
         </div>
 
-        <Card className="max-h-[40vh] overflow-y-auto bg-background/50">
+        <Card className="max-h-[40vh] overflow-y-auto bg-background/80">
           <CardContent className="p-4">
             <p className="font-code text-base leading-relaxed tracking-wide whitespace-pre-wrap">
               {renderTextWithDiff(assignment.text, submission.userInput)}
