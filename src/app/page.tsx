@@ -122,9 +122,9 @@ const HomePageContent = () => {
     }
   }, [isAuthenticated, user, router, firstLoadDone]);
 
-  if (!firstLoadDone) {
+  if (!firstLoadDone || (isAuthenticated && user)) {
     return (
-      <div className="flex justify-center items-center h-screen p-20 bg-background">
+      <div className="flex justify-center items-center h-screen p-20">
         <div className="flex flex-col items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
@@ -138,10 +138,10 @@ const HomePageContent = () => {
 
   return (
     <div
-      className="min-h-screen bg-background"
+      className="min-h-screen"
     >
       <nav
-        className="bg-background/60 backdrop-blur-lg border-b border-white/10 fixed w-full top-0 z-50"
+        className="bg-background/30 backdrop-blur-lg border-b border-white/10 fixed w-full top-0 z-50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -164,7 +164,6 @@ const HomePageContent = () => {
         <section className="py-22 sm:py-32 lg:py-32 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-indigo-600/20 blur-3xl"></div>
               <div className="relative">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 primary-gradient-text leading-tight font-headline">
                   Master Stenography
@@ -195,7 +194,7 @@ const HomePageContent = () => {
         </section>
 
         <section
-          className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-black/20"
+          className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8"
         >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12 sm:mb-16">
@@ -267,7 +266,7 @@ const HomePageContent = () => {
       </main>
 
       <footer
-        className="border-t border-white/10 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-background/50"
+        className="border-t border-white/10 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-transparent"
       >
         <span
           className="justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message text-gray-400"

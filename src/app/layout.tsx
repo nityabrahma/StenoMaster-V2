@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { Suspense } from 'react';
 import { LoadingProvider } from '@/components/loading-provider';
+import BackgroundStars from '@/components/background-stars';
+import CursorGlow from '@/components/cursor-glow';
 
 export const metadata: Metadata = {
   title: 'StenoMaster',
@@ -30,6 +32,8 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
+        <BackgroundStars />
+        <CursorGlow />
         <LoadingProvider>
           <AuthProvider>
             <Suspense>{children}</Suspense>
