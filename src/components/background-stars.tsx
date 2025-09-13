@@ -31,50 +31,42 @@ const Star = ({ star, mouseX, mouseY, isMouseMoving }: StarProps) => {
   const animatedX = useMotionValue(star.x);
   const animatedY = useMotionValue(star.y);
   const driftControls = useAnimation();
-  const [isDrifting, setIsDrifting] = useState(true);
 
   const startDrift = useCallback(async () => {
-    setIsDrifting(true);
     await driftControls.start({
       x: [star.x, star.x - window.innerWidth * 1.5],
       y: [star.y, star.y + window.innerHeight * 1.5],
       transition: {
-        duration: 40 + Math.random() * 40, // Increased speed
+        duration: 40 + Math.random() * 40,
         repeat: Infinity,
         repeatType: 'loop',
         ease: 'linear',
       },
     });
-  }, [driftControls, star.x, star.y]);
+  }, [driftControls, star.x, star.y, animatedX, animatedY]);
 
   const stopDrift = useCallback(() => {
-    setIsDrifting(false);
     driftControls.stop();
     // Capture current position from motion values
-    animatedX.set(driftControls.get().x || animatedX.get());
-    animatedY.set(driftControls.get().y || animatedY.get());
+    animatedX.set(animatedX.get());
+    animatedY.set(animatedY.get());
   }, [driftControls, animatedX, animatedY]);
 
   useEffect(() => {
     if (isMouseMoving) {
-      if (isDrifting) stopDrift();
+      stopDrift();
     } else {
-      if (!isDrifting) startDrift();
+      startDrift();
     }
-  }, [isMouseMoving, isDrifting, startDrift, stopDrift]);
-
-  useEffect(() => {
-    startDrift();
-    return () => stopDrift();
-  }, [startDrift, stopDrift]);
+  }, [isMouseMoving, startDrift, stopDrift]);
 
   const parallaxX = useTransform(
     useMotionValue(mouseX),
-    (latest) => star.x + (latest - window.innerWidth / 2) * star.parallaxFactor
+    (latest) => animatedX.get() + (latest - window.innerWidth / 2) * star.parallaxFactor
   );
   const parallaxY = useTransform(
     useMotionValue(mouseY),
-    (latest) => star.y + (latest - window.innerHeight / 2) * star.parallaxFactor
+    (latest) => animatedY.get() + (latest - window.innerHeight / 2) * star.parallaxFactor
   );
 
   return (
@@ -83,8 +75,8 @@ const Star = ({ star, mouseX, mouseY, isMouseMoving }: StarProps) => {
       style={{
         width: star.size,
         height: star.size,
-        x: isMouseMoving ? parallaxX : driftControls.get().x || animatedX,
-        y: isMouseMoving ? parallaxY : driftControls.get().y || animatedY,
+        x: isMouseMoving ? parallaxX : animatedX,
+        y: isMouseMoving ? parallaxY : animatedY,
         animationName: 'twinkle',
         animationDuration: `${Math.random() * 3 + 2}s`,
         animationTimingFunction: 'ease-in-out',
@@ -118,7 +110,7 @@ const BackgroundStars = () => {
       y: Math.random() * window.innerHeight * 1.5 - window.innerHeight * 0.5,
       size: Math.random() * 2 + 0.5,
       delay: Math.random() * 5,
-      parallaxFactor: Math.random() * 0.04 + 0.02, // Increased follow distance
+      parallaxFactor: Math.random() * 0.04 + 0.02,
     }));
 
     setStars(generatedStars);
@@ -134,7 +126,7 @@ const BackgroundStars = () => {
       
       movementTimeout.current = setTimeout(() => {
         setIsMouseMoving(false);
-      }, 150); // Inactivity timer
+      }, 150);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -143,7 +135,7 @@ const BackgroundStars = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (movementTimeout.current) clearTimeout(movementTimeout.current);
     };
-  }, [isClient, isMouseMoving]);
+  }, [isClient]);
 
   if (!isClient) return null;
 
