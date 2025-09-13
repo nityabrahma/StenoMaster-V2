@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Card,
@@ -78,7 +76,6 @@ function LoginDialogContent({
 const HomePageContent = () => {
   const { colorScheme } = useTheme();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const router = useRouter();
   const { isAuthenticated, user, firstLoadDone } = useAuth();
@@ -128,16 +125,12 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && firstLoadDone && isAuthenticated && user) {
-        router.push(`/dashboard?role=${user.role}`);
+    if (firstLoadDone && isAuthenticated && user) {
+        router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router, firstLoadDone, mounted]);
+  }, [isAuthenticated, user, router, firstLoadDone]);
 
-  if (!firstLoadDone || !mounted) {
+  if (!firstLoadDone) {
     return (
       <div className="flex justify-center items-center h-screen p-20 bg-background">
         <div className="flex flex-col items-center gap-4">

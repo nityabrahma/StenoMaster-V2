@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (redirectPath) {
                     router.push(redirectPath);
                 } else {
-                    router.push(`/dashboard?role=${(decodedUser as User).role}`);
+                    router.push('/dashboard');
                 }
             } else {
                 throw new Error("Failed to decode token");

@@ -11,7 +11,7 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Sidebar,
@@ -27,14 +27,14 @@ import Logo from './logo';
 import { useSidebar } from './ui/sidebar';
 
 const teacherLinks = [
-  { href: '/dashboard?role=teacher', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/classes', label: 'Classes', icon: Users },
   { href: '/dashboard/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/dashboard/students', label: 'Students', icon: BarChart2 },
 ];
 
 const studentLinks = [
-  { href: '/dashboard?role=student', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/assignments', label: 'My Assignments', icon: ClipboardList },
   { href: '/dashboard/typing-test', label: 'Typing Practice', icon: Book },
 ];
@@ -42,20 +42,17 @@ const studentLinks = [
 export default function AppSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { isMobile } = useSidebar();
-  const role = searchParams.get('role');
 
   if (!user) return null;
 
-  const links = role === 'teacher' ? teacherLinks : studentLinks;
+  const links = user.role === 'teacher' ? teacherLinks : studentLinks;
 
   const isLinkActive = (href: string) => {
-    const isDashboard = href.startsWith('/dashboard?');
-    if (isDashboard) {
-        return pathname === '/dashboard' && href.endsWith(`role=${role}`);
+    if (href === '/dashboard') {
+        return pathname === '/dashboard';
     }
-    return pathname.startsWith(href) && !isDashboard;
+    return pathname.startsWith(href);
   }
 
   return (
