@@ -28,14 +28,20 @@ const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
   const starX = useMotionValue(star.x);
   const starY = useMotionValue(star.y);
 
-  // Parallax transformations
-  const parallaxX = useTransform(mouseX, (val) => isClient ? (val - window.innerWidth / 2) * star.parallaxFactor : 0);
-  const parallaxY = useTransform(mouseY, (val) => isClient ? (val - window.innerHeight / 2) * star.parallaxFactor : 0);
+  // Parallax transformations that are active only when interacting
+  const parallaxX = useTransform(mouseX, (val) => {
+    if (!isClient || !isInteracting) return 0;
+    return (val - window.innerWidth / 2) * star.parallaxFactor;
+  });
+  const parallaxY = useTransform(mouseY, (val) => {
+    if (!isClient || !isInteracting) return 0;
+    return (val - window.innerHeight / 2) * star.parallaxFactor;
+  });
 
   useEffect(() => {
     setIsClient(true);
     // Initial animation for drifting
-    const controls = animate(starX, [star.x, star.x - window.innerWidth * 1.5], {
+    const controlsX = animate(starX, [star.x, star.x - window.innerWidth * 1.5], {
         duration: 50 + Math.random() * 50,
         repeat: Infinity,
         repeatType: 'loop',
@@ -47,39 +53,14 @@ const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
     });
 
     return () => {
-        controls.stop();
+        controlsX.stop();
         controlsY.stop();
     }
   }, [star.x, star.y, starX, starY]);
 
-  useEffect(() => {
-    if (isInteracting) {
-      // When interacting, stop the drift animation and let parallax take over
-      starX.stop();
-      starY.stop();
-      starX.set(star.x); // Reset to base position for parallax calculation
-      starY.set(star.y);
-    } else {
-       // When not interacting, restart the drift animation
-      const controls = animate(starX, [star.x, star.x - window.innerWidth * 1.5], {
-          duration: 50 + Math.random() * 50,
-          repeat: Infinity,
-          repeatType: 'loop',
-      });
-      const controlsY = animate(starY, [star.y, star.y + window.innerHeight * 1.5], {
-          duration: 50 + Math.random() * 50,
-          repeat: Infinity,
-          repeatType: 'loop',
-      });
-      return () => {
-          controls.stop();
-          controlsY.stop();
-      }
-    }
-  }, [isInteracting, star.x, star.y, starX, starY]);
-
-  const x = useTransform([starX, parallaxX], ([latestStarX, latestParallaxX]) => isInteracting ? latestStarX + latestParallaxX : latestStarX);
-  const y = useTransform([starY, parallaxY], ([latestStarY, latestParallaxY]) => isInteracting ? latestStarY + latestParallaxY : latestStarY);
+  // The final position is the sum of the drifting animation and the interactive parallax
+  const x = useTransform([starX, parallaxX], ([base, parallax]) => base + parallax);
+  const y = useTransform([starY, parallaxY], ([base, parallax]) => base + parallax);
 
   if (!isClient) {
     return null;
