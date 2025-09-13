@@ -12,6 +12,7 @@ import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useLoading } from '@/components/loading-provider';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { setIsLoading } = useLoading();
 
   const logout = useCallback(() => {
     setUser(null);
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (credentials: LoginCredentials) => {
         try {
-            setLoading(true);
+            setIsLoading(true);
             const token = await signIn(credentials);
             const decodedUser = decodeToken(token);
              if (decodedUser) {
@@ -102,15 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
             throw error;
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     },
-    [router, toast, searchParams]
+    [router, toast, searchParams, setIsLoading]
   );
   
   const signup = useCallback(
     async (credentials: SignupCredentials): Promise<User> => {
-        setLoading(true);
+        setIsLoading(true);
         try {
             const newUser = await signUp(credentials);
             return newUser;
@@ -119,10 +121,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // The toast is now thrown from the signup function itself
             throw error;
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     },
-    []
+    [setIsLoading]
   );
 
   const value = useMemo(

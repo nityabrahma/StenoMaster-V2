@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/hooks/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { Suspense } from 'react';
+import { LoadingProvider } from '@/components/loading-provider';
 
 export const metadata: Metadata = {
   title: 'StenoMaster',
@@ -31,10 +32,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
-          <AuthProvider>
-            <Suspense>{children}</Suspense>
-            <Toaster />
-          </AuthProvider>
+          <LoadingProvider>
+            <AuthProvider>
+              <Suspense>{children}</Suspense>
+              <Toaster />
+            </AuthProvider>
+          </LoadingProvider>
         </ThemeProvider>
       </body>
     </html>
