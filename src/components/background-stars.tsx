@@ -93,7 +93,7 @@ const BackgroundStars = () => {
   }
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+    <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none bg-background">
       {stars.map((star) => (
         <Star key={star.id} star={star} mouseX={mouseX} mouseY={mouseY} />
       ))}

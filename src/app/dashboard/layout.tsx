@@ -47,7 +47,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (loading || !user || initialLoad) {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex h-screen w-full items-center justify-center bg-transparent">
             <div className="flex flex-col items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
@@ -65,7 +65,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-        <div className="h-screen w-full flex flex-col bg-background">
+        <div className="h-screen w-full flex flex-col bg-transparent">
             <nav className="border-b border-white/10 h-16 flex-shrink-0 bg-card/60 backdrop-blur-lg sticky top-0 z-20">
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">
                     <div className="flex items-center space-x-4">
