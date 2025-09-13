@@ -68,7 +68,7 @@ function LoginDialogContent({
 
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { isAuthenticated, user, firstLoadDone } = useAuth();
 
@@ -117,12 +117,16 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    if (firstLoadDone && isAuthenticated && user) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && firstLoadDone && isAuthenticated && user) {
         router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router, firstLoadDone]);
+  }, [isAuthenticated, user, router, firstLoadDone, mounted]);
 
-  if (!firstLoadDone) {
+  if (!mounted || !firstLoadDone) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="flex flex-col items-center gap-4">
