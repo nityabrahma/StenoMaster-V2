@@ -16,10 +16,9 @@ export const useStudents = create<StudentsState>()(
     (set, get) => ({
       students: [],
       loadStudents: async () => {
-        const state = get();
-        if (state.students.length === 0) {
-          set({ students: initialStudents });
-        }
+        // This function is now a no-op but is kept for potential future use,
+        // for example, loading data from an API.
+        // The persisted state will be loaded automatically by zustand middleware.
       },
       addStudent: async (studentData) => {
         const newStudent: Student = {

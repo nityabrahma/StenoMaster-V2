@@ -20,12 +20,12 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
 
   const { login } = useAuth();
   const [studentCredentials, setStudentCredentials] = useState({
-    email: 'a.johnson@school.edu',
-    password: 'password123',
+    email: '',
+    password: '',
   });
   const [teacherCredentials, setTeacherCredentials] = useState({
-    email: 'e.reed@school.edu',
-    password: 'password123',
+    email: '',
+    password: '',
   });
   const [activeTab, setActiveTab] = useState('student');
   const { colorScheme } = useTheme();

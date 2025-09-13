@@ -17,10 +17,9 @@ export const useClasses = create<ClassesState>()(
     (set, get) => ({
       classes: [],
       loadClasses: async () => {
-        const state = get();
-        if (state.classes.length === 0) {
-          set({ classes: initialClasses });
-        }
+        // This function is now a no-op but is kept for potential future use,
+        // for example, loading data from an API.
+        // The persisted state will be loaded automatically by zustand middleware.
       },
       addClass: async (classData) => {
         const newClass: Class = {
