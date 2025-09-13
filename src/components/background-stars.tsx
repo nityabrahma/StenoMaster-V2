@@ -7,6 +7,7 @@ import {
   animate,
   useAnimation,
   useTransform,
+  AnimationPlaybackControls,
 } from 'framer-motion';
 
 const NUM_STARS = 250;
@@ -47,9 +48,8 @@ const Star = ({ star, mouseX, mouseY, isMouseMoving }: StarProps) => {
 
   const stopDrift = useCallback(() => {
     driftControls.stop();
-    // Capture current position from motion values
-    animatedX.set(animatedX.get());
-    animatedY.set(animatedY.get());
+    animatedX.set(driftControls.get().x || animatedX.get());
+    animatedY.set(driftControls.get().y || animatedY.get());
   }, [driftControls, animatedX, animatedY]);
 
   useEffect(() => {
