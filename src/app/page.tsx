@@ -53,7 +53,7 @@ function LoginDialogContent({
         <Button className="gradient-button">Login</Button>
       </DialogTrigger>
       <DialogContent
-        className="glass-card w-full max-w-md"
+        className="w-full max-w-md"
       >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
