@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useEffect, useState } from 'react';
-import { motion, useMotionValue, useTransform, MotionValue } from 'framer-motion';
+import { motion, useMotionValue, useTransform, MotionValue, animate } from 'framer-motion';
 
 const NUM_STARS = 150;
 
@@ -18,19 +18,69 @@ interface StarProps {
   star: StarData;
   mouseX: MotionValue<number>;
   mouseY: MotionValue<number>;
+  isInteracting: boolean;
 }
 
-const Star = ({ star, mouseX, mouseY }: StarProps) => {
+const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
   const [isClient, setIsClient] = useState(false);
+  
+  // Motion values for the star's base position
+  const starX = useMotionValue(star.x);
+  const starY = useMotionValue(star.y);
+
+  // Parallax transformations
+  const parallaxX = useTransform(mouseX, (val) => isClient ? (val - window.innerWidth / 2) * star.parallaxFactor : 0);
+  const parallaxY = useTransform(mouseY, (val) => isClient ? (val - window.innerHeight / 2) * star.parallaxFactor : 0);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // Initial animation for drifting
+    const controls = animate(starX, [star.x, star.x - window.innerWidth * 1.5], {
+        duration: 50 + Math.random() * 50,
+        repeat: Infinity,
+        repeatType: 'loop',
+    });
+    const controlsY = animate(starY, [star.y, star.y + window.innerHeight * 1.5], {
+        duration: 50 + Math.random() * 50,
+        repeat: Infinity,
+        repeatType: 'loop',
+    });
 
-  // Ensure window is only accessed on the client
-  const x = useTransform(mouseX, (val) => isClient ? star.x + (val - window.innerWidth / 2) * star.parallaxFactor : star.x);
-  const y = useTransform(mouseY, (val) => isClient ? star.y + (val - window.innerHeight / 2) * star.parallaxFactor : star.y);
-  
+    return () => {
+        controls.stop();
+        controlsY.stop();
+    }
+  }, [star.x, star.y, starX, starY]);
+
+  useEffect(() => {
+    if (isInteracting) {
+      // When interacting, stop the drift animation and let parallax take over
+      starX.stop();
+      starY.stop();
+      starX.set(star.x); // Reset to base position for parallax calculation
+      starY.set(star.y);
+    } else {
+       // When not interacting, restart the drift animation
+      const controls = animate(starX, [star.x, star.x - window.innerWidth * 1.5], {
+          duration: 50 + Math.random() * 50,
+          repeat: Infinity,
+          repeatType: 'loop',
+      });
+      const controlsY = animate(starY, [star.y, star.y + window.innerHeight * 1.5], {
+          duration: 50 + Math.random() * 50,
+          repeat: Infinity,
+          repeatType: 'loop',
+      });
+      return () => {
+          controls.stop();
+          controlsY.stop();
+      }
+    }
+  }, [isInteracting, star.x, star.y, starX, starY]);
+
+  const x = useTransform([starX, parallaxX], ([latestStarX, latestParallaxX]) => isInteracting ? latestStarX + latestParallaxX : latestStarX);
+  const y = useTransform([starY, parallaxY], ([latestStarY, latestParallaxY]) => isInteracting ? latestStarY + latestParallaxY : latestStarY);
+
   if (!isClient) {
     return null;
   }
@@ -58,6 +108,7 @@ const Star = ({ star, mouseX, mouseY }: StarProps) => {
 const BackgroundStars = () => {
   const [stars, setStars] = useState<StarData[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -71,8 +122,8 @@ const BackgroundStars = () => {
 
     const generatedStars = Array.from({ length: NUM_STARS }).map(() => ({
       id: Math.random().toString(36).substring(2, 9),
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+      x: Math.random() * window.innerWidth * 1.5,
+      y: Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.5),
       size: Math.random() * 2 + 0.5,
       delay: Math.random() * 5,
       parallaxFactor: Math.random() * 0.02 + 0.01,
@@ -83,9 +134,19 @@ const BackgroundStars = () => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
     };
+    
+    const handleMouseEnter = () => setIsInteracting(true);
+    const handleMouseLeave = () => setIsInteracting(false);
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseenter', handleMouseEnter);
+    window.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseenter', handleMouseEnter);
+        window.removeEventListener('mouseleave', handleMouseLeave);
+    }
   }, [isClient, mouseX, mouseY]);
 
   if (!isClient) {
@@ -95,7 +156,7 @@ const BackgroundStars = () => {
   return (
     <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none bg-background">
       {stars.map((star) => (
-        <Star key={star.id} star={star} mouseX={mouseX} mouseY={mouseY} />
+        <Star key={star.id} star={star} mouseX={mouseX} mouseY={mouseY} isInteracting={isInteracting} />
       ))}
     </div>
   );
