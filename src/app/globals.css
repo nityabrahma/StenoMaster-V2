@@ -101,10 +101,6 @@
 }
 
 @layer components {
-    .glass-card:hover {
-        @apply shadow-2xl border-white/20 -translate-y-1;
-    }
-    
     .gradient-text {
         @apply bg-gradient-to-r from-gray-200 via-gray-300 to-gray-400 bg-clip-text text-transparent;
     }
