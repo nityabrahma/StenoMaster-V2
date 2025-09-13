@@ -1,10 +1,11 @@
+
 'use client';
 import React, { useEffect, useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useTransform, MotionValue } from 'framer-motion';
 
 const NUM_STARS = 150;
 
-interface Star {
+interface StarData {
   id: string;
   x: number;
   y: number;
@@ -13,8 +14,49 @@ interface Star {
   parallaxFactor: number;
 }
 
+interface StarProps {
+  star: StarData;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
+}
+
+const Star = ({ star, mouseX, mouseY }: StarProps) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Ensure window is only accessed on the client
+  const x = useTransform(mouseX, (val) => isClient ? star.x + (val - window.innerWidth / 2) * star.parallaxFactor : star.x);
+  const y = useTransform(mouseY, (val) => isClient ? star.y + (val - window.innerHeight / 2) * star.parallaxFactor : star.y);
+  
+  if (!isClient) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      key={star.id}
+      className="star absolute bg-white rounded-full"
+      style={{
+        width: star.size,
+        height: star.size,
+        x,
+        y,
+        animationName: 'twinkle',
+        animationDuration: `${Math.random() * 3 + 2}s`,
+        animationTimingFunction: 'ease-in-out',
+        animationIterationCount: 'infinite',
+        animationDelay: `${star.delay}s`,
+      }}
+    />
+  );
+};
+
+
 const BackgroundStars = () => {
-  const [stars, setStars] = useState<Star[]>([]);
+  const [stars, setStars] = useState<StarData[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   const mouseX = useMotionValue(0);
@@ -33,7 +75,7 @@ const BackgroundStars = () => {
       y: Math.random() * window.innerHeight,
       size: Math.random() * 2 + 0.5,
       delay: Math.random() * 5,
-      parallaxFactor: Math.random() * 0.02 + 0.01, // Different parallax effect per star
+      parallaxFactor: Math.random() * 0.02 + 0.01,
     }));
     setStars(generatedStars);
 
@@ -52,28 +94,9 @@ const BackgroundStars = () => {
 
   return (
     <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
-      {stars.map((star) => {
-        const x = useTransform(mouseX, (val) => star.x + (val - window.innerWidth / 2) * star.parallaxFactor);
-        const y = useTransform(mouseY, (val) => star.y + (val - window.innerHeight / 2) * star.parallaxFactor);
-
-        return (
-          <motion.div
-            key={star.id}
-            className="star absolute bg-white rounded-full"
-            style={{
-              width: star.size,
-              height: star.size,
-              x,
-              y,
-              animationName: 'twinkle',
-              animationDuration: `${Math.random() * 3 + 2}s`,
-              animationTimingFunction: 'ease-in-out',
-              animationIterationCount: 'infinite',
-              animationDelay: `${star.delay}s`,
-            }}
-          />
-        );
-      })}
+      {stars.map((star) => (
+        <Star key={star.id} star={star} mouseX={mouseX} mouseY={mouseY} />
+      ))}
     </div>
   );
 };
