@@ -1,12 +1,12 @@
 
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   motion,
   useMotionValue,
   MotionValue,
   animate,
-  AnimationControls,
+  AnimationPlaybackControls,
 } from 'framer-motion';
 
 const NUM_STARS = 250;
@@ -24,69 +24,58 @@ interface StarProps {
   star: StarData;
   mouseX: MotionValue<number>;
   mouseY: MotionValue<number>;
-  isInteracting: boolean;
+  isMoving: boolean;
 }
 
-const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
+const Star = ({ star, mouseX, mouseY, isMoving }: StarProps) => {
   const [isClient, setIsClient] = useState(false);
   
   const animatedX = useMotionValue(star.x);
   const animatedY = useMotionValue(star.y);
+  
+  const [driftAnimation, setDriftAnimation] = useState<AnimationPlaybackControls | null>(null);
+
+  const startDrift = useCallback(() => {
+    const anim = animate(
+        [
+            [animatedX, [star.x, star.x - window.innerWidth * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear" }],
+            [animatedY, [star.y, star.y + window.innerHeight * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear" }],
+        ]
+    );
+    setDriftAnimation(anim);
+  }, [animatedX, animatedY, star.x, star.y]);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    startDrift();
+  }, [startDrift]);
 
   useEffect(() => {
-    let controlsX: AnimationControls | undefined;
-    let controlsY: AnimationControls | undefined;
-
-    const startDrift = () => {
-        const driftX = animate(animatedX, [animatedX.get(), star.x - window.innerWidth * 1.5], {
-            duration: 50 + Math.random() * 50,
-            repeat: Infinity,
-            repeatType: 'loop',
-            ease: 'linear',
+    if (isClient) {
+      if (isMoving) {
+        if (driftAnimation) {
+          driftAnimation.stop();
+          setDriftAnimation(null);
+        }
+        const unsubscribeX = mouseX.on('change', (latest) => {
+          const targetX = animatedX.get() + (latest - window.innerWidth / 2) * star.parallaxFactor * 0.1;
+          animate(animatedX, targetX, { duration: 0.05, ease: "linear"});
         });
-        const driftY = animate(animatedY, [animatedY.get(), star.y + window.innerHeight * 1.5], {
-            duration: 50 + Math.random() * 50,
-            repeat: Infinity,
-            repeatType: 'loop',
-            ease: 'linear',
+        const unsubscribeY = mouseY.on('change', (latest) => {
+          const targetY = animatedY.get() + (latest - window.innerHeight / 2) * star.parallaxFactor * 0.1;
+          animate(animatedY, targetY, { duration: 0.05, ease: "linear"});
         });
-        
-        return { driftX, driftY };
-    };
 
-    if (isClient && !isInteracting) {
-      const { driftX, driftY } = startDrift();
-      
-      return () => {
-          driftX.stop();
-          driftY.stop();
-      };
+        return () => {
+          unsubscribeX();
+          unsubscribeY();
+        };
+
+      } else if (!driftAnimation) {
+        startDrift();
+      }
     }
-  }, [isClient, isInteracting, animatedX, animatedY, star.x, star.y]);
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    if (isInteracting) {
-      const unsubscribeX = mouseX.on('change', (latest) => {
-        const targetX = animatedX.get() + (latest - window.innerWidth / 2) * star.parallaxFactor;
-         animate(animatedX, targetX, { duration: 0.05, ease: "linear"});
-      });
-      const unsubscribeY = mouseY.on('change', (latest) => {
-        const targetY = animatedY.get() + (latest - window.innerHeight / 2) * star.parallaxFactor;
-        animate(animatedY, targetY, { duration: 0.05, ease: "linear"});
-      });
-
-      return () => {
-        unsubscribeX();
-        unsubscribeY();
-      };
-    }
-  }, [isClient, isInteracting, mouseX, mouseY, star.parallaxFactor, animatedX, animatedY]);
+  }, [isClient, isMoving, driftAnimation, startDrift, mouseX, mouseY, animatedX, animatedY, star.parallaxFactor]);
   
   if (!isClient) return null;
 
@@ -112,7 +101,8 @@ const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
 const BackgroundStars = () => {
   const [stars, setStars] = useState<StarData[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [isInteracting, setIsInteracting] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const moveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -139,21 +129,29 @@ const BackgroundStars = () => {
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
+
+      if (!isMoving) {
+        setIsMoving(true);
+      }
+
+      if (moveTimeoutRef.current) {
+        clearTimeout(moveTimeoutRef.current);
+      }
+
+      moveTimeoutRef.current = setTimeout(() => {
+        setIsMoving(false);
+      }, 100);
     };
 
-    const handleMouseEnter = () => setIsInteracting(true);
-    const handleMouseLeave = () => setIsInteracting(false);
-
     window.addEventListener('mousemove', handleMouseMove);
-    document.body.addEventListener('mouseenter', handleMouseEnter);
-    document.body.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      document.body.removeEventListener('mouseenter', handleMouseEnter);
-      document.body.removeEventListener('mouseleave', handleMouseLeave);
+      if (moveTimeoutRef.current) {
+        clearTimeout(moveTimeoutRef.current);
+      }
     };
-  }, [isClient, mouseX, mouseY]);
+  }, [isClient, mouseX, mouseY, isMoving]);
 
   if (!isClient) return null;
 
@@ -165,7 +163,7 @@ const BackgroundStars = () => {
           star={star}
           mouseX={mouseX}
           mouseY={mouseY}
-          isInteracting={isInteracting}
+          isMoving={isMoving}
         />
       ))}
     </div>
