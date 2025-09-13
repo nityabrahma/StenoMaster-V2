@@ -81,7 +81,7 @@ export default function AppSidebar() {
                 isActive={active}
                 tooltip={link.label}
                 className={cn(
-                    "rounded-lg transition-all duration-300",
+                    "rounded-2xl transition-all duration-300",
                     active 
                     ? "bg-gray-900/30 border-2 border-white/20" 
                     : "border-2 border-transparent hover:bg-gray-900/30 hover:border-white/20"
@@ -118,3 +118,4 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
+
