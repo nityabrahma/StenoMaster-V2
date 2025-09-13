@@ -126,12 +126,12 @@
 }
 
 @layer utilities {
-  @keyframes anim-stars {
-    from {
-      transform: translateY(0px);
+  @keyframes twinkle {
+    0%, 100% {
+      opacity: 0.3;
     }
-    to {
-      transform: translateY(-2000px);
+    50% {
+      opacity: 1;
     }
   }
 }
