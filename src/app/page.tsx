@@ -213,7 +213,7 @@ const HomePageContent = () => {
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <Card key={index} className="p-6 transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:-translate-y-1">
+                  <Card key={index} className="p-6 ">
                     <div className="flex items-center space-x-4">
                         <div
                           className={`p-3 rounded-lg bg-gradient-to-br ${feature.gradient} shadow-lg`}
