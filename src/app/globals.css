@@ -92,10 +92,11 @@
   }
   body {
     @apply text-foreground;
+    background-color: transparent;
   }
 
   html {
-    /* background-color: hsl(var(--background)); */
+    background-color: hsl(var(--background));
   }
 }
 

@@ -142,7 +142,7 @@ const HomePageContent = () => {
       className="min-h-screen"
     >
       <nav
-        className="bg-background/30 backdrop-blur-lg border-b border-white/10 fixed w-full top-0 z-50"
+        className="bg-transparent backdrop-blur-lg border-b border-white/10 fixed w-full top-0 z-50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -213,7 +213,7 @@ const HomePageContent = () => {
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={index} className="glass-card p-6">
+                  <Card key={index} className="p-6 transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:-translate-y-1">
                     <div className="flex items-center space-x-4">
                         <div
                           className={`p-3 rounded-lg bg-gradient-to-br ${feature.gradient} shadow-lg`}
@@ -231,7 +231,7 @@ const HomePageContent = () => {
                     >
                         {feature.description}
                     </p>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
@@ -240,9 +240,7 @@ const HomePageContent = () => {
 
         <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div
-              className="glass-card"
-            >
+            <Card>
               <div className="py-12 sm:py-16 relative z-10">
                 <h3 className="text-2xl sm:text-3xl font-bold mb-4 primary-gradient-text">
                   Ready to Start Learning?
@@ -261,7 +259,7 @@ const HomePageContent = () => {
                   Login to Your Account
                 </Button>
               </div>
-            </div>
+            </Card>
           </div>
         </section>
       </main>
