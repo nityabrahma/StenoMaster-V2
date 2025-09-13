@@ -7,6 +7,7 @@ import {
   MotionValue,
   animate,
   AnimationPlaybackControls,
+  useTransform,
 } from 'framer-motion';
 
 const NUM_STARS = 250;
@@ -38,8 +39,8 @@ const Star = ({ star, mouseX, mouseY, isMoving }: StarProps) => {
   const startDrift = useCallback(() => {
     const anim = animate(
         [
-            [animatedX, [star.x, star.x - window.innerWidth * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear" }],
-            [animatedY, [star.y, star.y + window.innerHeight * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear" }],
+            [animatedX, [star.x, star.x - window.innerWidth * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear", repeatType: "loop" }],
+            [animatedY, [star.y, star.y + window.innerHeight * 1.5], { duration: 50 + Math.random() * 50, repeat: Infinity, ease: "linear", repeatType: "loop" }],
         ]
     );
     setDriftAnimation(anim);
@@ -151,7 +152,7 @@ const BackgroundStars = () => {
         clearTimeout(moveTimeoutRef.current);
       }
     };
-  }, [isClient, mouseX, mouseY, isMoving]);
+  }, [isClient]);
 
   if (!isClient) return null;
 
