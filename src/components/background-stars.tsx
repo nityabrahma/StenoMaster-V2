@@ -9,7 +9,7 @@ import {
   AnimationControls,
 } from 'framer-motion';
 
-const NUM_STARS = 150;
+const NUM_STARS = 250;
 
 interface StarData {
   id: string;
@@ -29,7 +29,6 @@ interface StarProps {
 
 const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
   const [isClient, setIsClient] = useState(false);
-  const [position, setPosition] = useState({ x: star.x, y: star.y });
   
   const animatedX = useMotionValue(star.x);
   const animatedY = useMotionValue(star.y);
@@ -73,14 +72,13 @@ const Star = ({ star, mouseX, mouseY, isInteracting }: StarProps) => {
     if (!isClient) return;
 
     if (isInteracting) {
-      // Smoothly animate to parallax position
       const unsubscribeX = mouseX.on('change', (latest) => {
         const targetX = animatedX.get() + (latest - window.innerWidth / 2) * star.parallaxFactor;
-         animate(animatedX, targetX, { duration: 0.1, ease: "linear"});
+         animate(animatedX, targetX, { duration: 0.05, ease: "linear"});
       });
       const unsubscribeY = mouseY.on('change', (latest) => {
         const targetY = animatedY.get() + (latest - window.innerHeight / 2) * star.parallaxFactor;
-        animate(animatedY, targetY, { duration: 0.1, ease: "linear"});
+        animate(animatedY, targetY, { duration: 0.05, ease: "linear"});
       });
 
       return () => {
@@ -134,7 +132,7 @@ const BackgroundStars = () => {
         window.innerHeight * 0.5,
       size: Math.random() * 2 + 0.5,
       delay: Math.random() * 5,
-      parallaxFactor: Math.random() * 0.02 + 0.01,
+      parallaxFactor: Math.random() * 0.03 + 0.02,
     }));
     setStars(generatedStars);
 
