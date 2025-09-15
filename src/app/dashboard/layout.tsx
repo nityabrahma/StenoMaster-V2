@@ -81,7 +81,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </nav>
             <div className="flex flex-1 h-[calc(100vh-4rem)]">
                 <AppSidebar />
-                <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto size-full">
+                <main className="flex-1 p-1 sm:p-2 lg:p-3 overflow-auto size-full">
                     {children}
                 </main>
             </div>

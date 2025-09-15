@@ -28,13 +28,9 @@ import { BookOpen, CheckCircle } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Submission, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
-import { Button } from '@/components/ui/button';
-import { useAppRouter } from '@/hooks/use-app-router';
-import { ArrowLeft } from 'lucide-react';
 
 export default function StudentPerformancePage() {
   const params = useParams();
-  const router = useAppRouter();
   const { user } = useAuth();
   const { students } = useStudents();
   const { assignments, submissions } = useAssignments();
@@ -107,10 +103,6 @@ export default function StudentPerformancePage() {
         />
       )}
       <div className="container mx-auto p-4 md:p-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-        </Button>
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
