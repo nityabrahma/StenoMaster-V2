@@ -40,62 +40,62 @@ const studentLinks = [
 
 
 const MobileSidebar = () => {
-    const { user } = useAuth();
-    const { openMobile, setOpenMobile } = useSidebar();
-    const pathname = usePathname();
-    const router = useAppRouter();
+  const { user } = useAuth();
+  const { openMobile, setOpenMobile } = useSidebar();
+  const pathname = usePathname();
+  const router = useAppRouter();
 
-    const links = user?.role === 'teacher' ? teacherLinks : studentLinks;
+  const links = user?.role === 'teacher' ? teacherLinks : studentLinks;
 
-    const isLinkActive = (href: string) => {
-        if (href === '/dashboard') {
-            return pathname === '/dashboard';
-        }
-        return pathname.startsWith(href);
+  const isLinkActive = (href: string) => {
+    if (href === '/dashboard') {
+      return pathname === '/dashboard';
     }
-    
-    const handleNavigation = (href: string) => {
-        router.push(href);
-        setOpenMobile(false);
-    }
+    return pathname.startsWith(href);
+  }
 
-    return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-            <SheetContent
-                side="left"
-                className="w-[18rem] bg-card p-0 text-card-foreground [&>button]:hidden"
-            >
-                 <SheetHeader className="p-2 border-b">
-                    <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
-                    <SheetDescription className='sr-only'>Main navigation for StenoMaster</SheetDescription>
-                     <div
-                        className="flex items-center cursor-pointer"
-                        onClick={() => handleNavigation('/dashboard')}
-                    >
-                        <Logo />
-                    </div>
-                </SheetHeader>
-                <SidebarContent className="p-2">
-                    <SidebarMenu>
-                    {links.map((link) => (
-                        <SidebarMenuItem key={link.href}>
-                            <SidebarMenuButton
-                                isActive={isLinkActive(link.href)}
-                                onClick={() => handleNavigation(link.href)}
-                            >
-                                <link.icon />
-                                <span>{link.label}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
-                    </SidebarMenu>
-                </SidebarContent>
-                 <div className="p-2 border-t mt-auto">
-                    <UserButton />
-                </div>
-            </SheetContent>
-      </Sheet>
-    )
+  const handleNavigation = (href: string) => {
+    router.push(href);
+    setOpenMobile(false);
+  }
+
+  return (
+    <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+      <SheetContent
+        side="left"
+        className="w-[18rem] bg-card p-0 text-card-foreground [&>button]:hidden"
+      >
+        <SheetHeader className="p-2 border-b">
+          <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
+          <SheetDescription className='sr-only'>Main navigation for StenoMaster</SheetDescription>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => handleNavigation('/dashboard')}
+          >
+            <Logo />
+          </div>
+        </SheetHeader>
+        <SidebarContent className="p-2">
+          <SidebarMenu>
+            {links.map((link) => (
+              <SidebarMenuItem key={link.href}>
+                <SidebarMenuButton
+                  isActive={isLinkActive(link.href)}
+                  onClick={() => handleNavigation(link.href)}
+                >
+                  <link.icon />
+                  <span>{link.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <div className="p-2 border-t mt-auto">
+          <UserButton />
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
 }
 
 export default function AppSidebar() {
@@ -103,7 +103,7 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
   const router = useAppRouter();
-  
+
   if (isMobile) {
     return <MobileSidebar />;
   }
@@ -114,23 +114,19 @@ export default function AppSidebar() {
 
   const isLinkActive = (href: string) => {
     if (href === '/dashboard') {
-        return pathname === '/dashboard';
+      return pathname === '/dashboard';
     }
     return pathname.startsWith(href);
   }
 
   return (
-    <Sidebar 
-        collapsible="icon"
-        className="flex-shrink-0 md:flex md:flex-col bg-gray-900/30"
-        style={{
-            backdropFilter: "blur(1px)"
-        }}
+    <Sidebar
+      collapsible="icon"
+      className="flex-shrink-0 md:flex md:flex-col bg-gray-900/30"
+      style={{
+        backdropFilter: "blur(1px)"
+      }}
     >
-      <SidebarHeader className="p-2 justify-center">
-          <Logo />
-      </SidebarHeader>
-
       <SidebarContent className="flex-1 p-2 mt-4">
         <SidebarMenu>
           {links.map((link) => (
@@ -140,8 +136,8 @@ export default function AppSidebar() {
                 tooltip={link.label}
                 onClick={() => router.push(link.href)}
               >
-                  <link.icon />
-                  <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
+                <link.icon />
+                <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

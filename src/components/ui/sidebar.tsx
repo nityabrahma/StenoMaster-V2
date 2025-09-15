@@ -72,7 +72,7 @@ const SidebarProvider = React.forwardRef<
 
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
-    
+
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -90,12 +90,12 @@ const SidebarProvider = React.forwardRef<
 
     // Load state from local storage on initial mount
     React.useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const storedState = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-            if (storedState !== null) {
-                _setOpen(JSON.parse(storedState));
-            }
+      if (typeof window !== 'undefined') {
+        const storedState = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+        if (storedState !== null) {
+          _setOpen(JSON.parse(storedState));
         }
+      }
     }, []);
 
     const toggleSidebar = React.useCallback(() => {
@@ -197,7 +197,7 @@ const Sidebar = React.forwardRef<
             side={side}
           >
             <SheetHeader className="p-2">
-                <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
+              <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
             </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
@@ -209,9 +209,9 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-            "group peer hidden md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out",
-            "data-[state=expanded]:w-[var(--sidebar-width)] data-[state=collapsed]:w-[var(--sidebar-width-icon)]",
-            className
+          "group peer hidden md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out",
+          "data-[state=expanded]:w-[var(--sidebar-width)] data-[state=collapsed]:w-[var(--sidebar-width-icon)]",
+          className
         )}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
@@ -326,7 +326,7 @@ const SidebarHeader = React.forwardRef<
         "flex h-16 flex-col gap-2 overflow-hidden p-2 transition-all duration-300 ease-in-out",
         "group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2",
         className
-        )}
+      )}
       {...props}
     />
   )
@@ -534,21 +534,21 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className)}
+        className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className, "rounded-2xl border-2 transition-all duration-300 border-transparent hover:border-white/20 px-4 py-6", isActive && "bg-gray-800/50 border-white/20")}
         style={isActive ? {
-          backdropFilter: "blur(1px)",
-          boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.2)"
+          backdropFilter: "blur(2px)",
+          boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.9)"
         } : {}}
         {...props}
       >
         {children}
-        </Comp>
+      </Comp>
     )
 
     if (!tooltip) {
       return button
     }
-    
+
     if (typeof tooltip === "string") {
       tooltip = {
         children: tooltip,
@@ -593,7 +593,7 @@ const SidebarMenuAction = React.forwardRef<
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
+        "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
         className
       )}
       {...props}
@@ -741,6 +741,5 @@ export {
   useSidebar,
 }
 
-    
 
-    
+
