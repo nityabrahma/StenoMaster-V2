@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import type { Student } from '@/lib/types';
+import type { Class } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -28,18 +28,21 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-import { useAppRouter } from '@/hooks/use-app-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import CreateClassModal from '@/components/CreateClassModal';
+import EditClassModal from '@/components/EditClassModal';
+import ManageStudentsModal from '@/components/ManageStudentsModal';
 
 export default function ClassesPage() {
   const { user } = useAuth();
-  const router = useAppRouter();
   const { classes } = useClasses();
   const { students } = useStudents();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [managingStudentsClass, setManagingStudentsClass] = useState<Class | null>(null);
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
@@ -48,18 +51,32 @@ export default function ClassesPage() {
   return (
     <>
       <CreateClassModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
+      {editingClass && (
+        <EditClassModal
+          isOpen={!!editingClass}
+          onClose={() => setEditingClass(null)}
+          classToEdit={editingClass}
+        />
+      )}
+      {managingStudentsClass && (
+        <ManageStudentsModal
+          isOpen={!!managingStudentsClass}
+          onClose={() => setManagingStudentsClass(null)}
+          classToManage={managingStudentsClass}
+        />
+      )}
       <div className="container mx-auto p-4 md:p-8">
         <Card>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="font-headline text-2xl">Your Classes</CardTitle>
-                <CardDescription>View and manage your class rosters.</CardDescription>
+                <CardDescription>View and manage students for each class.</CardDescription>
               </div>
-              <Button onClick={() => setIsModalOpen(true)}>
+              <Button onClick={() => setIsCreateModalOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   New Class
               </Button>
@@ -111,8 +128,8 @@ export default function ClassesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Manage Roster</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

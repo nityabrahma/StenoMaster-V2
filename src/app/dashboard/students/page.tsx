@@ -145,7 +145,7 @@ export default function StudentsPage() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="font-headline text-2xl">Student Roster</CardTitle>
+              <CardTitle className="font-headline text-2xl">All Students</CardTitle>
               <CardDescription>View and manage all students in the system.</CardDescription>
             </div>
             <CreateStudentDialog />
