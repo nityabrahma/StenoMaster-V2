@@ -89,7 +89,7 @@ export default function ClassesPage() {
                         {teacherClasses.map(cls => (
                         <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
                             <div className="font-medium truncate">{cls.name}</div>
-                            <div>
+                            <div className="min-w-0">
                                 <div className="flex -space-x-2 overflow-hidden">
                                     {cls.studentIds.slice(0, 5).map(studentId => {
                                         const student = students.find(s => s.id === studentId);

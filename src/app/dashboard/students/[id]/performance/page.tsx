@@ -147,7 +147,7 @@ export default function StudentPerformancePage() {
                                 </Badge>
                                 )}
                             </div>
-                            <div>{format(new Date(submission.submittedAt), 'PPp')}</div>
+                            <div className="truncate">{format(new Date(submission.submittedAt), 'PPp')}</div>
                             <div className="font-semibold text-right">{submission.wpm}</div>
                             <div className="text-right">{submission.accuracy.toFixed(1)}%</div>
                             <div className="text-right">{submission.mistakes}</div>

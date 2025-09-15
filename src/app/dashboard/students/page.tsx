@@ -208,26 +208,26 @@ export default function StudentsPage() {
 
                     return (
                     <div key={student.id} className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex items-center gap-3">
                                 <Avatar>
                                 <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
                                 <AvatarFallback>{studentInitials}</AvatarFallback>
                                 </Avatar>
-                                <div>
+                                <div className="min-w-0">
                                 <p className="font-medium truncate">{student.name}</p>
                                 <p className="text-sm text-muted-foreground truncate">{student.email}</p>
                                 </div>
                             </div>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex flex-wrap gap-1">
-                                {studentClasses.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)}
+                                {studentClasses.map(c => <Badge key={c.id} variant="secondary" className="truncate">{c.name}</Badge>)}
                                 {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
                             </div>
                         </div>
-                        <div className="truncate">{avgWpm}</div>
-                        <div className="truncate">{avgAccuracy}</div>
+                        <div className="truncate text-right">{avgWpm}</div>
+                        <div className="truncate text-right">{avgAccuracy}</div>
                         <div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

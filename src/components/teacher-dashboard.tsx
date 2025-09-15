@@ -149,7 +149,7 @@ export default function TeacherDashboard() {
                         <div className="divide-y divide-border">
                             {recentSubmissions.map(sub => (
                                 <div key={sub.id} className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 py-3 items-center">
-                                    <div className="flex items-center gap-2 truncate">
+                                    <div className="flex items-center gap-2 min-w-0">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={`https://avatar.vercel.sh/${sub.student?.email}.png`} />
                                             <AvatarFallback>{sub.student?.name.charAt(0)}</AvatarFallback>

@@ -83,8 +83,8 @@ function TeacherAssignments() {
                         return (
                             <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
                                 <div className="font-medium truncate">{assignment.title}</div>
-                                <div>{assignmentClass?.name}</div>
-                                <div>{format(new Date(assignment.deadline), 'PP')}</div>
+                                <div className="truncate">{assignmentClass?.name}</div>
+                                <div className="truncate">{format(new Date(assignment.deadline), 'PP')}</div>
                                 <div>
                                     <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
                                 </div>
