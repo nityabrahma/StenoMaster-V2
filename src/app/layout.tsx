@@ -1,9 +1,7 @@
-
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/hooks/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
-import { Suspense } from 'react';
 import { LoadingProvider } from '@/hooks/loading-provider';
 import BackgroundStars from '@/components/background-stars';
 import { AppRouterProvider } from '@/hooks/use-app-router';
@@ -37,7 +35,7 @@ export default function RootLayout({
         <LoadingProvider>
           <AppRouterProvider>
             <AuthProvider>
-              <Suspense>{children}</Suspense>
+              {children}
               <Toaster />
             </AuthProvider>
           </AppRouterProvider>
