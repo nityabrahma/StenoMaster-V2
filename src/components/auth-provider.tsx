@@ -34,12 +34,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('classes-storage');
     localStorage.removeItem('students-storage');
     
-    if(pathname.startsWith('/dashboard')) {
-        router.push('/');
-    } else {
-        setIsLoading(false);
-    }
-  }, [router, pathname, setIsLoading]);
+    // The redirect is now handled by the useEffect below
+    // which reacts to the change in `isAuthenticated`
+    setIsLoading(false);
+  }, [setIsLoading]);
 
   useEffect(() => {
     try {
