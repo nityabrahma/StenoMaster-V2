@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
 import Logo from '@/components/logo';
-import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Award,
@@ -38,14 +37,6 @@ function LoginDialogContent({
   isLoginOpen: boolean;
   setIsLoginOpen: (open: boolean) => void;
 }) {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const showLogin = searchParams.get('showLogin') === 'true';
-    if (showLogin) {
-      setIsLoginOpen(showLogin);
-    }
-  }, [searchParams, setIsLoginOpen]);
 
   return (
     <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
@@ -60,7 +51,7 @@ function LoginDialogContent({
             <Logo />
           </DialogTitle>
         </DialogHeader>
-        <LoginForm onLoginSuccess={() => setIsLoginOpen(false)} />
+        <LoginForm />
       </DialogContent>
     </Dialog>
   );
@@ -70,6 +61,7 @@ const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isAuthenticated, user, firstLoadDone } = useAuth();
   const router = useAppRouter();
+  const [visible, setVisible] = useState(false);
   
 
   const features = [
@@ -117,15 +109,18 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
+    // This effect ensures we don't try to redirect on the server or during the initial hydration.
+    // It also prevents a redirect loop by only running when isAuthenticated state changes.
     if (firstLoadDone && isAuthenticated && user) {
         router.push('/dashboard');
+    } else if (firstLoadDone && !isAuthenticated) {
+        // Only show the page content once we are sure the user is not logged in.
+        setVisible(true);
     }
-  }, [isAuthenticated, user, router, firstLoadDone]);
+  }, [isAuthenticated, user, firstLoadDone, router]);
 
-  // The global loading provider now handles the initial loading state.
-  // We only need to prevent rendering the page content until the auth state is resolved.
-  if (!firstLoadDone || isAuthenticated) {
-    return null; // or a minimal loading indicator if you prefer, but global one should cover it
+  if (!visible) {
+    return null; // The global loading provider will handle the loading state
   }
 
   return (
@@ -276,7 +271,7 @@ const HomePageContent = () => {
 
 function HomePageWithSuspense() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={null}>
             <HomePageContent />
         </Suspense>
     )

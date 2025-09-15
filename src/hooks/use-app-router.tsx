@@ -4,7 +4,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   ReactNode,
   useCallback,
 } from 'react';
@@ -37,11 +36,6 @@ export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { setIsLoading } = useLoading();
-
-  useEffect(() => {
-    // This effect runs when the page component has mounted after navigation.
-    setIsLoading(false);
-  }, [pathname, searchParams, setIsLoading]);
 
   const push = useCallback(
     (href: string) => {

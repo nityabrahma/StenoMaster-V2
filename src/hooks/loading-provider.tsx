@@ -1,8 +1,9 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import LogoStatic from '@/components/logo-static';
+import { cn } from '@/lib/utils';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -19,9 +20,12 @@ export const useLoading = () => {
   return context;
 };
 
-const LoadingOverlay = () => {
+const LoadingOverlay = ({ visible }: { visible: boolean }) => {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className={cn(
+            "fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-300",
+            visible ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
             <div className="w-full max-w-sm p-8 space-y-4 rounded-2xl bg-gray-700/10 bg-clip-padding backdrop-filter backdrop-blur-md border border-gray-100/20">
                 <div className="flex justify-center">
                     <LogoStatic />
@@ -32,13 +36,13 @@ const LoadingOverlay = () => {
     );
 };
 
-
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  // Start with loading true to prevent flashes of content on initial load
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
-      {isLoading && <LoadingOverlay />}
+      <LoadingOverlay visible={isLoading} />
       {children}
     </LoadingContext.Provider>
   );

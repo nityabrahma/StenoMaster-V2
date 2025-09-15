@@ -13,21 +13,20 @@ import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
-import { useAppRouter } from '@/hooks/use-app-router';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [firstLoadDone, setFirstLoadDone] = useState(false);
-  const router = useAppRouter();
-  const nextRouter = useRouter();
+  const router = useRouter(); // Using the standard Next.js router
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { isLoading, setIsLoading } = useLoading();
 
   const logout = useCallback(() => {
+    setIsLoading(true);
     setUser(null);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     // Also clear zustand stores
@@ -35,15 +34,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('classes-storage');
     localStorage.removeItem('students-storage');
     
-    // If on a protected page, redirect to home. Otherwise, stay.
     if(pathname.startsWith('/dashboard')) {
         router.push('/');
+    } else {
+        setIsLoading(false);
     }
-  }, [router, pathname]);
+  }, [router, pathname, setIsLoading]);
 
   useEffect(() => {
     try {
-      setIsLoading(true);
       const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
       if (storedToken) {
         if (isTokenExpired(storedToken)) {
@@ -54,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (decodedUser) {
                 setUser(decodedUser as User);
             } else {
-                logout();
+                logout(); // Token is invalid
             }
         }
       }
@@ -62,25 +61,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to process token from localStorage', error);
       logout();
     } finally {
-      setIsLoading(false);
       setFirstLoadDone(true);
+      // The loading state is managed by the router and initial load logic
     }
-  }, [logout, setIsLoading]);
+  }, [logout]);
   
   const isAuthenticated = !!user;
 
+  useEffect(() => {
+    if(firstLoadDone) {
+        setIsLoading(false);
+    }
+  }, [firstLoadDone, setIsLoading]);
+
   // Protected route handling
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
-        const redirectUrl = `/?showLogin=true&redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
-        nextRouter.push(redirectUrl);
+    if (firstLoadDone && !isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
+        const redirectUrl = `/?redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
+        router.push(redirectUrl);
     }
-  }, [isLoading, isAuthenticated, pathname, nextRouter, searchParams]);
+  }, [firstLoadDone, isLoading, isAuthenticated, pathname, router, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
+        setIsLoading(true);
         try {
-            setIsLoading(true);
             const token = await signIn(credentials);
             const decodedUser = decodeToken(token);
              if (decodedUser) {
@@ -106,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false); // Ensure loading is stopped on error
             throw error;
         } 
-        // No finally block here, loading is handled by the router
     },
     [router, toast, searchParams, setIsLoading]
   );
@@ -119,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return newUser;
         } catch (error: any) {
             console.error("Signup failed", error);
-            // The toast is now thrown from the signup function itself
             throw error;
         } finally {
             setIsLoading(false);

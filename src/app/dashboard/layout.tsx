@@ -6,10 +6,8 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import AppSidebar from '@/components/AppSidebar';
 import Logo from '@/components/logo';
 import { useAuth } from '@/hooks/use-auth';
-import { usePathname, useRouter } from 'next/navigation';
 import UserButton from '@/components/UserButton';
 import { AuthProvider } from '@/components/auth-provider';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAssignments } from '@/hooks/use-assignments';
@@ -18,48 +16,35 @@ import { useStudents } from '@/hooks/use-students';
 import { useAppRouter } from '@/hooks/use-app-router';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useAppRouter();
-  const nextRouter = useRouter();
-
-  const [initialLoad, setInitialLoad] = useState(true);
   
   const { loadAssignments } = useAssignments();
   const { loadClasses } = useClasses();
   const { loadStudents } = useStudents();
+  
+  // This state ensures data is loaded only once on initial mount
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      nextRouter.push('/?showLogin=true');
-    }
-  }, [loading, isAuthenticated, nextRouter]);
-  
-  useEffect(() => {
     const loadData = async () => {
-      if (user && isAuthenticated && initialLoad) {
+      if (isAuthenticated && !dataLoaded) {
         await Promise.all([
             loadAssignments(),
             loadClasses(),
             loadStudents()
         ]);
-        setInitialLoad(false);
+        setDataLoaded(true);
       }
     };
     loadData();
-  }, [user, isAuthenticated, initialLoad, loadAssignments, loadClasses, loadStudents]);
+  }, [isAuthenticated, dataLoaded, loadAssignments, loadClasses, loadStudents]);
 
-  if (loading || !user || initialLoad) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center bg-transparent">
-            <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-            </div>
-        </div>
-    );
+
+  // The global loading provider now handles all loading states.
+  // AuthProvider handles the redirect, so we just need to wait for the user.
+  if (!user) {
+    return null;
   }
 
   const handleBack = () => {

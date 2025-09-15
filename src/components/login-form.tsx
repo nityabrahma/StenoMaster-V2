@@ -10,13 +10,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { BookOpen, GraduationCap, LogIn, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
-const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
+const LoginForm = () => {
   const userTypesNav = [
     { name: 'Student', value: 'student', icon: BookOpen },
     { name: 'Teacher', value: 'teacher', icon: GraduationCap },
   ];
 
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const [studentCredentials, setStudentCredentials] = useState({
     email: '',
     password: '',
@@ -26,11 +26,9 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
     password: '',
   });
   const [activeTab, setActiveTab] = useState('student');
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent, role: 'student' | 'teacher') => {
     e.preventDefault();
-    setIsLoading(true);
 
     const credentials = role === 'student' ? studentCredentials : teacherCredentials;
 
@@ -40,7 +38,6 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
         description: 'Please enter both email and password.',
         variant: 'destructive',
       });
-      setIsLoading(false);
       return;
     }
     
@@ -50,11 +47,9 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
             password: credentials.password,
             role,
         });
-        onLoginSuccess?.();
+        // onLoginSuccess is handled by the AuthProvider now
     } catch (error) {
         // Error toast is handled in the auth provider
-    } finally {
-        setIsLoading(false);
     }
   };
 
@@ -116,11 +111,11 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                 />
               </div>
               <Button
-                disabled={isLoading}
+                disabled={loading}
                 type="submit"
                 className="gradient-button w-full"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
                 Sign In as Student
               </Button>
             </form>
@@ -160,11 +155,11 @@ const LoginForm = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
                 />
               </div>
               <Button
-                disabled={isLoading}
+                disabled={loading}
                 type="submit"
                 className="gradient-button w-full"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
                 Sign In as Teacher
               </Button>
             </form>
