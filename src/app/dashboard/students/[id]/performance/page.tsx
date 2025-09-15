@@ -91,6 +91,11 @@ export default function StudentPerformancePage() {
     setSelectedAssignment(null);
   };
 
+  const nameParts = student.name.split(' ');
+  const studentInitials = nameParts.length > 1
+    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+    : student.name.substring(0, 2);
+
   return (
     <>
       {selectedSubmission && selectedAssignment && (
@@ -111,7 +116,7 @@ export default function StudentPerformancePage() {
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                <AvatarFallback>{student.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                <AvatarFallback>{studentInitials}</AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle className="font-headline text-3xl">{student.name}</CardTitle>

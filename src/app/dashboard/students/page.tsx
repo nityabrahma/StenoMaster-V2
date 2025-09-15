@@ -208,13 +208,18 @@ export default function StudentsPage() {
                 const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
                 const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N_A';
                 const studentClasses = classes.filter(c => student.classIds.includes(c.id));
+                const nameParts = student.name.split(' ');
+                const studentInitials = nameParts.length > 1
+                    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                    : student.name.substring(0, 2);
+
                 return (
                   <TableRow key={student.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                          <AvatarFallback>{student.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                          <AvatarFallback>{studentInitials}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">{student.name}</p>

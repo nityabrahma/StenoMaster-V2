@@ -101,16 +101,20 @@ export default function ClassesPage() {
                           {cls.studentIds.slice(0, 5).map(studentId => {
                               const student = students.find(s => s.id === studentId);
                               if (!student) return null;
+                              const nameParts = student.name.split(' ');
+                              const studentInitials = nameParts.length > 1
+                                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                                : student.name.substring(0, 2);
                               return (
                                   <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
                                       <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                                      <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                      <AvatarFallback>{studentInitials}</AvatarFallback>
                                   </Avatar>
                               )
                           })}
                           {cls.studentIds.length > 5 && (
                               <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                                  +{cls.studentIds.length - 5}
+                                  <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
                               </Avatar>
                           )}
                       </div>
