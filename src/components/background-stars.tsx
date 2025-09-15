@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
@@ -55,6 +56,7 @@ const Star = ({ star, mouseX, mouseY, isMouseMoving }: StarProps) => {
 
   useEffect(() => {
     if (isMouseMoving) {
+      // smoothly interrupt drift and follow cursor
       stopDrift();
 
       const targetX =
@@ -62,9 +64,10 @@ const Star = ({ star, mouseX, mouseY, isMouseMoving }: StarProps) => {
       const targetY =
         star.y + (mouseY.get() - window.innerHeight / 2) * star.parallaxFactor;
 
-      animate(x, targetX, { type: 'spring', stiffness: 40, damping: 15 });
-      animate(y, targetY, { type: 'spring', stiffness: 40, damping: 15 });
+      x.set(targetX);
+      y.set(targetY);
     } else {
+      // smoothly transition back into drifting
       if (!drifting.current) {
         startDrift();
       }
@@ -131,7 +134,7 @@ const BackgroundStars = () => {
 
       timeoutRef.current = setTimeout(() => {
         setIsMouseMoving(false);
-      }, 150);
+      }, 150); // slightly longer delay makes smoother fallback
     };
 
     window.addEventListener('mousemove', handleMouseMove);

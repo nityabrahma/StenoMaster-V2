@@ -46,11 +46,13 @@ export default function NewClassPage() {
         return;
     }
     
-    const newClass = await addClass({
+    const newClass = {
+        id: `class-${Date.now()}`,
         name: className,
         teacherId: user.id,
         studentIds: selectedStudents,
-    });
+    };
+    addClass(newClass);
     
     toast({
         title: "Class Created!",

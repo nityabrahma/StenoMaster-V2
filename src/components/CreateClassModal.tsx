@@ -45,11 +45,13 @@ export default function CreateClassModal({
       return;
     }
 
-    const newClass = await addClass({
+    const newClass: Class = {
+      id: `class-${Date.now()}`,
       name: className,
       teacherId: user.id,
       studentIds: [],
-    });
+    };
+    addClass(newClass);
 
     toast({
       title: 'Class Created!',

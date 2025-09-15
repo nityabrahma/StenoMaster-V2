@@ -31,12 +31,15 @@ export default function AssignmentPage() {
   const handleSubmit = async (result: SubmissionResult) => {
     if (!user) return;
 
-    await addSubmission({
+    const newSubmission = {
+      id: `sub-${Date.now()}`,
       assignmentId: assignment.id,
       studentId: user.id,
       submittedAt: new Date().toISOString(),
       ...result,
-    });
+    };
+    
+    addSubmission(newSubmission);
     
     toast({
         title: "Assignment Submitted!",

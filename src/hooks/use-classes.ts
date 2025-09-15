@@ -1,34 +1,26 @@
 
-'use client';
+'use_client';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Class } from '@/lib/types';
-import { classes as initialClasses } from '@/lib/data';
 
 interface ClassesState {
   classes: Class[];
+  setClasses: (classes: Class[]) => void;
   loadClasses: () => Promise<void>;
-  addClass: (newClass: Omit<Class, 'id'>) => Promise<Class>;
-  updateClass: (updatedClass: Class) => Promise<void>;
+  addClass: (newClass: Class) => void;
+  updateClass: (updatedClass: Class) => void;
   removeStudentFromAllClasses: (studentId: string) => void;
 }
 
 export const useClasses = create<ClassesState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       classes: [],
-      loadClasses: async () => {
-        // This function is now a no-op but is kept for potential future use,
-        // for example, loading data from an API.
-        // The persisted state will be loaded automatically by zustand middleware.
-      },
-      addClass: async (classData) => {
-        const newClass: Class = {
-            ...classData,
-            id: `class-${Date.now()}`
-        };
+      setClasses: (classes) => set({ classes }),
+      loadClasses: async () => {},
+      addClass: (newClass) => {
         set(state => ({ classes: [...state.classes, newClass] }));
-        return newClass;
       },
       updateClass: async (updatedClass) => {
         set(state => ({

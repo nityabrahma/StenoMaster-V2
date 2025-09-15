@@ -48,14 +48,19 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
         }
 
         try {
-            const newUser = await signup({ name, email, password, role: 'student' });
-            const newStudent = await addStudent(newUser);
+            const signedUpUser = await signup({ name, email, password, role: 'student' });
+            const newStudent: Student = {
+                ...signedUpUser,
+                id: `student-${Date.now()}`,
+                classIds: [classToManage.id]
+            };
+            addStudent(newStudent);
 
             const updatedClass = {
                 ...classToManage,
                 studentIds: [...classToManage.studentIds, newStudent.id],
             };
-            await updateClass(updatedClass);
+            updateClass(updatedClass);
             
             toast({
                 title: 'Student Created and Enrolled!',
@@ -124,7 +129,7 @@ export default function ManageStudentsModal({
             studentIds: [...classToManage.studentIds, ...selectedStudents],
         };
         
-        await updateClass(updatedClass);
+        updateClass(updatedClass);
         
         toast({
             title: "Students Enrolled!",

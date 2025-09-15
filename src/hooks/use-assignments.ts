@@ -10,10 +10,12 @@ type NewSubmission = Omit<Submission, 'id'>;
 interface AssignmentsState {
   assignments: Assignment[];
   submissions: Submission[];
+  setAssignments: (assignments: Assignment[]) => void;
+  setSubmissions: (submissions: Submission[]) => void;
   loadAssignments: () => Promise<void>;
-  addAssignment: (assignment: Omit<Assignment, 'id'>) => Promise<Assignment>;
-  addSubmission: (submission: NewSubmission) => Promise<Submission>;
-  deleteAssignment: (assignmentId: string) => Promise<void>;
+  addAssignment: (assignment: Assignment) => void;
+  addSubmission: (submission: Submission) => void;
+  deleteAssignment: (assignmentId: string) => void;
 }
 
 export const useAssignments = create<AssignmentsState>()(
@@ -21,30 +23,22 @@ export const useAssignments = create<AssignmentsState>()(
     (set, get) => ({
       assignments: [],
       submissions: [],
+      setAssignments: (assignments) => set({ assignments }),
+      setSubmissions: (submissions) => set({ submissions }),
       loadAssignments: async () => {
         // This function is now a no-op but is kept for potential future use,
         // for example, loading data from an API.
         // The persisted state will be loaded automatically by zustand middleware.
       },
-      addAssignment: async (assignment) => {
-        const newAssignment: Assignment = {
-            ...assignment,
-            id: `assignment-${Date.now()}`
-        };
-        set(state => ({ assignments: [...state.assignments, newAssignment] }));
-        return newAssignment;
+      addAssignment: (assignment) => {
+        set(state => ({ assignments: [...state.assignments, assignment] }));
       },
-      addSubmission: async (submission) => {
-        const newSubmission: Submission = {
-            ...submission,
-            id: `sub-${Date.now()}`
-        };
+      addSubmission: (submission) => {
         // Remove any previous submission for the same assignment by the same student
         const otherSubmissions = get().submissions.filter(s => 
-            !(s.assignmentId === newSubmission.assignmentId && s.studentId === newSubmission.studentId)
+            !(s.assignmentId === submission.assignmentId && s.studentId === submission.studentId)
         );
-        set({ submissions: [newSubmission, ...otherSubmissions] });
-        return newSubmission;
+        set({ submissions: [submission, ...otherSubmissions] });
       },
       deleteAssignment: async (assignmentId: string) => {
         set(state => ({

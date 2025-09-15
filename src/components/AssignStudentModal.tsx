@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -54,13 +54,13 @@ export default function AssignStudentModal({
     if (!classToUpdate) return;
     
     // Add student to the new class
-    await updateClass({
+    updateClass({
         ...classToUpdate,
         studentIds: [...classToUpdate.studentIds, student.id]
     });
 
     // Update the student's classIds array
-    await updateStudent({
+    updateStudent({
         ...student,
         classIds: [...student.classIds, selectedClassId]
     });

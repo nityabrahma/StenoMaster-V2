@@ -74,7 +74,12 @@ function CreateStudentDialog() {
 
         try {
             const newUser = await signup({ name, email, password, role: 'student' });
-            await addStudent(newUser);
+            const newStudent = {
+                ...newUser,
+                id: `student-${Date.now()}`,
+                classIds: []
+            };
+            addStudent(newStudent);
             toast({
                 title: 'Success',
                 description: `Student account for ${name} created.`,
@@ -188,14 +193,14 @@ export default function StudentsPage() {
       <Card className="flex-1 min-h-0">
         <CardContent className="h-full p-6 flex flex-col">
             <div className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                <div>Student</div>
+                <div className="text-center">Student</div>
                 <div className="text-center">Classes</div>
                 <div className="text-right">Avg. WPM</div>
                 <div className="text-right">Avg. Accuracy</div>
                 <div className="w-8"><span className="sr-only">Actions</span></div>
             </div>
             {students.length === 0 ? (
-                <div className="text-center p-8 text-muted-foreground">
+                <div className="p-8 text-center text-muted-foreground">
                     No students have been created yet.
                 </div>
             ) : (

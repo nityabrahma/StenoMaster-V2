@@ -89,10 +89,12 @@ export default function NewAssignmentPageContent() {
   }, [searchParams, form]);
 
   const onSubmit = async (data: AssignmentFormValues) => {
-    await addAssignment({
+    const newAssignment = {
         ...data,
+        id: `assignment-${Date.now()}`,
         deadline: data.deadline.toISOString(),
-    });
+    };
+    addAssignment(newAssignment);
     toast({
         title: "Assignment Created!",
         description: `The assignment "${data.title}" has been successfully created.`,

@@ -28,12 +28,14 @@ export default function TypingTestPage() {
     const handleComplete = async (result: SubmissionResult) => {
         if (!user) return;
         
-        await addSubmission({
+        const newSubmission = {
+            id: `sub-${Date.now()}`,
             assignmentId: `practice-${currentTest.id}`,
             studentId: user.id,
             submittedAt: new Date().toISOString(),
             ...result,
-        });
+        };
+        addSubmission(newSubmission);
         
         toast({
             title: "Practice Complete!",
