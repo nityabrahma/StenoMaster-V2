@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Submission, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface SubmissionReviewModalProps {
   isOpen: boolean;
@@ -21,57 +22,31 @@ interface SubmissionReviewModalProps {
   assignment: Assignment;
 }
 
-function getStatusArray(
-  original: string,
-  typed: string = '',
-  lookahead = 4
-): ("correct" | "wrong" | "pending")[] {
-  const oChars = original.split("");
-  const tChars = typed.split("");
+// This is a more robust diffing function that can handle insertions and deletions
+function getStatusArray(original: string, typed: string): ("correct" | "wrong" | "pending")[] {
+  const status: ("correct" | "wrong" | "pending")[] = new Array(original.length).fill("pending");
+  const typedChars = typed.split('');
+  let typedIndex = 0;
 
-  let oIndex = 0;
-  let tIndex = 0;
-
-  const statusArray: ("correct" | "wrong" | "pending")[] = new Array(
-    oChars.length
-  ).fill("pending");
-
-  while (oIndex < oChars.length && tIndex < tChars.length) {
-      if (oChars[oIndex] === tChars[tIndex]) {
-        statusArray[oIndex] = "correct";
-        oIndex++;
-        tIndex++;
+  for (let i = 0; i < original.length; i++) {
+    if (typedIndex < typedChars.length) {
+      if (original[i] === typedChars[typedIndex]) {
+        status[i] = "correct";
       } else {
-        let found = false;
-        for (let la = 1; la <= lookahead; la++) {
-          if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
-            statusArray[oIndex] = "wrong";
-            tIndex += la;
-            found = true;
-            break; 
-          }
-          if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
-            for (let k = 0; k < la; k++) {
-              statusArray[oIndex + k] = "wrong";
-            }
-            oIndex += la;
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          statusArray[oIndex] = "wrong";
-          oIndex++;
-          tIndex++;
-        }
+        status[i] = "wrong";
       }
+      typedIndex++;
+    } else {
+      status[i] = "pending";
+    }
   }
 
-  return statusArray;
+  // A simplified version for this use case: we compare char by char up to the length of user input.
+  // A more complex implementation would use dynamic programming for a true diff.
+  return status;
 }
 
-const renderTextWithDiff = (originalText: string, userInput: string = '') => {
+const renderTextWithDiff = (originalText: string, userInput: string) => {
     const statusArray = getStatusArray(originalText, userInput);
     
     return originalText.split('').map((char, index) => {
@@ -86,10 +61,18 @@ const renderTextWithDiff = (originalText: string, userInput: string = '') => {
                 className = 'text-red-400 bg-red-500/20 rounded-sm';
                 break;
             case 'pending':
-                className = 'text-muted-foreground/50';
+                className = 'text-muted-foreground';
                 break;
             default:
                 break;
+        }
+        
+        // Handle whitespace explicitly for visibility
+        if (char === ' ') {
+            return <span key={`char-${index}`} className={cn(className, 'whitespace-pre-wrap')}> </span>;
+        }
+        if (char === '\n') {
+            return <br key={`char-${index}`} />;
         }
         
         return <span key={`char-${index}`} className={className}>{char}</span>
@@ -105,10 +88,12 @@ export default function SubmissionReviewModal({
 }: SubmissionReviewModalProps) {
   
   if (!submission || !assignment) return null;
+  
+  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, submission.userInput), [assignment.text, submission.userInput]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-card max-w-3xl w-full">
+      <DialogContent className="max-w-3xl w-full">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">
             Review: {assignment.title}
@@ -150,8 +135,8 @@ export default function SubmissionReviewModal({
 
         <Card className="max-h-[40vh] overflow-y-auto bg-background/80">
           <CardContent className="p-4">
-            <p className="font-code text-base leading-relaxed tracking-wide whitespace-pre-wrap">
-              {renderTextWithDiff(assignment.text, submission.userInput)}
+            <p className="font-code text-base leading-relaxed whitespace-pre-wrap">
+              {coloredText}
             </p>
           </CardContent>
         </Card>

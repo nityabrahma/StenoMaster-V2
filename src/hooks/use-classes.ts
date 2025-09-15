@@ -10,6 +10,7 @@ interface ClassesState {
   loadClasses: () => Promise<void>;
   addClass: (newClass: Omit<Class, 'id'>) => Promise<Class>;
   updateClass: (updatedClass: Class) => Promise<void>;
+  removeStudentFromAllClasses: (studentId: string) => void;
 }
 
 export const useClasses = create<ClassesState>()(
@@ -32,6 +33,14 @@ export const useClasses = create<ClassesState>()(
       updateClass: async (updatedClass) => {
         set(state => ({
           classes: state.classes.map(c => c.id === updatedClass.id ? updatedClass : c)
+        }));
+      },
+      removeStudentFromAllClasses: (studentId: string) => {
+        set(state => ({
+            classes: state.classes.map(c => ({
+                ...c,
+                studentIds: c.studentIds.filter(id => id !== studentId)
+            }))
         }));
       }
     }),

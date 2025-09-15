@@ -25,10 +25,19 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
   } from '@/components/ui/dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,6 +45,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from 'react';
@@ -43,6 +53,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
 import { useAssignments } from '@/hooks/use-assignments';
+import { useAppRouter } from '@/hooks/use-app-router';
+import AssignStudentModal from '@/components/AssignStudentModal';
+import type { Student } from '@/lib/types';
 
 function CreateStudentDialog() {
     const { signup } = useAuth();
@@ -66,9 +79,7 @@ function CreateStudentDialog() {
 
         try {
             const newUser = await signup({ name, email, password, role: 'student' });
-            if (newUser.role === 'student') {
-                await addStudent(newUser);
-            }
+            await addStudent(newUser);
             toast({
                 title: 'Success',
                 description: `Student account for ${name} created.`,
@@ -133,13 +144,40 @@ function CreateStudentDialog() {
 
 export default function StudentsPage() {
   const { user } = useAuth();
-  const { students } = useStudents();
+  const { students, removeStudent } = useStudents();
   const { classes } = useClasses();
   const { submissions } = useAssignments();
+  const router = useAppRouter();
+  const { toast } = useToast();
+  const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
+  const handleDeleteStudent = (studentId: string) => {
+    removeStudent(studentId);
+    toast({
+      title: 'Student Removed',
+      description: 'The student account has been deleted.',
+    });
+  };
+
+  const handleAssignSuccess = () => {
+    toast({
+        title: 'Student Assigned!',
+        description: 'The student has been enrolled in the selected class.',
+    });
+  }
+
   return (
+    <>
+    {studentToAssign && (
+        <AssignStudentModal
+            isOpen={!!studentToAssign}
+            onClose={() => setStudentToAssign(null)}
+            student={studentToAssign}
+            onAssignSuccess={handleAssignSuccess}
+        />
+    )}
     <div className="container mx-auto p-4 md:p-8">
       <Card>
         <CardHeader>
@@ -200,8 +238,39 @@ export default function StudentsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Performance</DropdownMenuItem>
-                          <DropdownMenuItem>Edit Student</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
+                            View Performance
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
+                            Assign to Class
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Student
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the student's
+                                    account and remove all their data.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    className="bg-destructive hover:bg-destructive/90"
+                                    onClick={() => handleDeleteStudent(student.id)}
+                                >
+                                    Yes, delete student
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -213,5 +282,6 @@ export default function StudentsPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
