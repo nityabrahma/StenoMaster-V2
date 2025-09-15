@@ -69,7 +69,7 @@ const MobileSidebar = () => {
                     <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
                     <SheetDescription className='sr-only'>Main navigation for StenoMaster</SheetDescription>
                      <div
-                        className="flex items-center"
+                        className="flex items-center cursor-pointer"
                         onClick={() => handleNavigation('/dashboard')}
                     >
                         <Logo />
