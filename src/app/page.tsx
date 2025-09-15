@@ -59,9 +59,13 @@ function LoginDialogContent({
 
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isAuthenticated, firstLoadDone } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useAppRouter();
-  const [visible, setVisible] = useState(false);
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
   
 
   const features = [
@@ -109,18 +113,11 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    if (firstLoadDone) {
-      if (isAuthenticated) {
-        router.push('/dashboard');
-      } else {
-        setVisible(true);
-      }
+    if (isAuthenticated) {
+      router.push('/dashboard');
     }
-  }, [isAuthenticated, firstLoadDone, router]);
+  }, [isAuthenticated, router]);
 
-  if (!visible) {
-    return null; // The global loading provider will handle the loading state
-  }
 
   return (
     <div
@@ -258,7 +255,7 @@ const HomePageContent = () => {
         <span
           className="justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message text-gray-400"
         >
-          <p>Copyright © {new Date().getFullYear()}</p>
+          <p>Copyright © {year}</p>
           <p className="font-normal hidden sm:flex">|</p>
           <p>Powered By Shubham Mishra</p>
         </span>
