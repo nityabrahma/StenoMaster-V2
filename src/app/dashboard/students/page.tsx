@@ -189,9 +189,9 @@ export default function StudentsPage() {
         <CardContent className="h-full p-6 flex flex-col">
             <div className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
                 <div>Student</div>
-                <div>Classes</div>
-                <div>Avg. WPM</div>
-                <div>Avg. Accuracy</div>
+                <div className="text-center">Classes</div>
+                <div className="text-right">Avg. WPM</div>
+                <div className="text-right">Avg. Accuracy</div>
                 <div className="w-8"><span className="sr-only">Actions</span></div>
             </div>
             <ScrollArea className="h-full">
@@ -220,15 +220,15 @@ export default function StudentsPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="min-w-0">
-                            <div className="flex flex-wrap gap-1">
+                        <div className="min-w-0 text-center">
+                            <div className="flex flex-wrap gap-1 justify-center">
                                 {studentClasses.map(c => <Badge key={c.id} variant="secondary" className="truncate">{c.name}</Badge>)}
                                 {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
                             </div>
                         </div>
                         <div className="truncate text-right">{avgWpm}</div>
                         <div className="truncate text-right">{avgAccuracy}</div>
-                        <div>
+                        <div className="flex justify-center">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
