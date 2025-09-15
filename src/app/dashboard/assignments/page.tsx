@@ -35,18 +35,28 @@ import { useStudents } from '@/hooks/use-students';
 import { useState } from 'react';
 import type { Assignment, Submission } from '@/lib/types';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
+import { useToast } from '@/hooks/use-toast';
 
 // Teacher's View
 function TeacherAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
-  const { assignments, submissions } = useAssignments();
+  const { assignments, submissions, deleteAssignment } = useAssignments();
   const { classes } = useClasses();
+  const { toast } = useToast();
 
   if(!user) return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
+
+  const handleDelete = (assignmentId: string, assignmentTitle: string) => {
+    deleteAssignment(assignmentId);
+    toast({
+        title: 'Assignment Deleted',
+        description: `"${assignmentTitle}" has been removed. Student scores are retained.`,
+    });
+  };
   
   return (
     <Card>
@@ -97,7 +107,12 @@ function TeacherAssignments() {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View Submissions</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDelete(assignment.id, assignment.title)}
+                        >
+                            Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -127,11 +142,10 @@ function StudentAssignments() {
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
   const mySubmissions = submissions.filter(s => s.studentId === user.id);
   
-  const completedAssignments = myAssignments.filter(a => mySubmissions.some(s => s.assignmentId === a.id));
   const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
   
   const handleCardClick = (assignment: Assignment, submission?: Submission) => {
-    if (submission) {
+    if (submission && assignment) {
       setSelectedAssignment(assignment);
       setSelectedSubmission(submission);
     }
@@ -184,15 +198,21 @@ function StudentAssignments() {
       {/* Completed Assignments */}
       <div>
         <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
-        {completedAssignments.length > 0 ? (
+        {mySubmissions.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {completedAssignments.map((assignment) => {
-              const submission = mySubmissions.find(s => s.assignmentId === assignment.id)!;
+            {mySubmissions.map((submission) => {
+              const assignment = assignments.find(a => a.id === submission.assignmentId);
+              const isDeleted = !assignment;
+
               return (
-                <Card key={assignment.id} onClick={() => handleCardClick(assignment, submission)} className="flex flex-col cursor-pointer">
+                <Card 
+                  key={submission.id} 
+                  onClick={() => handleCardClick(assignment!, submission)} 
+                  className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
+                >
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                        <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
+                        <CardTitle className="truncate pr-4">{assignment?.title || 'Deleted Assignment'}</CardTitle>
                         <Badge variant="default" className="bg-green-600">
                           <CheckCircle className="mr-1 h-3 w-3" /> Completed
                         </Badge>
@@ -208,7 +228,9 @@ function StudentAssignments() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <p className="text-xs text-muted-foreground w-full text-center">Click to review submission</p>
+                    <p className="text-xs text-muted-foreground w-full text-center">
+                        {isDeleted ? 'Original assignment has been deleted' : 'Click to review submission'}
+                    </p>
                   </CardFooter>
                 </Card>
               );

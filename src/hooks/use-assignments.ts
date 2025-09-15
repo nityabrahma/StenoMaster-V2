@@ -13,6 +13,7 @@ interface AssignmentsState {
   loadAssignments: () => Promise<void>;
   addAssignment: (assignment: Omit<Assignment, 'id'>) => Promise<Assignment>;
   addSubmission: (submission: NewSubmission) => Promise<Submission>;
+  deleteAssignment: (assignmentId: string) => Promise<void>;
 }
 
 export const useAssignments = create<AssignmentsState>()(
@@ -44,6 +45,11 @@ export const useAssignments = create<AssignmentsState>()(
         );
         set({ submissions: [newSubmission, ...otherSubmissions] });
         return newSubmission;
+      },
+      deleteAssignment: async (assignmentId: string) => {
+        set(state => ({
+            assignments: state.assignments.filter(a => a.id !== assignmentId)
+        }));
       }
     }),
     {
