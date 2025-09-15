@@ -42,10 +42,11 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useClasses } from '@/hooks/use-classes';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useAppRouter } from '@/hooks/use-app-router';
+import CreateClassModal from '@/components/CreateClassModal';
 
 const assignmentSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -66,6 +67,7 @@ export default function NewAssignmentPageContent() {
   const { toast } = useToast();
   const { classes } = useClasses();
   const { addAssignment } = useAssignments();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const teacherClasses = classes.filter((c) => c.teacherId === user?.id);
 
@@ -100,164 +102,174 @@ export default function NewAssignmentPageContent() {
 
   const handleClassChange = (value: string) => {
     if (value === 'create-new') {
-        const currentPath = '/dashboard/assignments/new';
-        router.push(`/dashboard/classes/new?redirect=${encodeURIComponent(currentPath)}`);
+        setIsModalOpen(true);
     } else {
         form.setValue('classId', value);
     }
   }
 
+  const handleClassCreated = (newClass: { id: string }) => {
+    form.setValue('classId', newClass.id);
+  };
+
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-3xl">
-            Create New Assignment
-          </CardTitle>
-          <CardDescription>
-            Fill out the form below to create a new typing assignment for your
-            students.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assignment Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., The Great Gatsby - Chapter 1"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="classId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Class</FormLabel>
-                    <Select onValueChange={handleClassChange} value={field.value}>
+    <>
+      <CreateClassModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onClassCreated={handleClassCreated}
+      />
+      <div className="container mx-auto p-4 md:p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-3xl">
+              Create New Assignment
+            </CardTitle>
+            <CardDescription>
+              Fill out the form below to create a new typing assignment for your
+              students.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assignment Title</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a class" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {teacherClasses.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                         <SelectItem value="create-new">
-                            <div className='flex items-center'>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Create New Class
-                            </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="deadline"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Deadline</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={'outline'}
-                            className={cn(
-                              'w-[240px] pl-3 text-left font-normal',
-                              !field.value && 'text-muted-foreground'
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, 'PPP')
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
+                        <Input
+                          placeholder="e.g., The Great Gatsby - Chapter 1"
+                          {...field}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="text"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assignment Text</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Paste or type the full text for the assignment here..."
-                        className="min-h-[200px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      This is the text your students will be timed on.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Optional Image URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://picsum.photos/seed/1/600/400"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Add an image to give context to the assignment.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="classId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class</FormLabel>
+                      <Select onValueChange={handleClassChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a class" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teacherClasses.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="create-new">
+                              <div className='flex items-center'>
+                                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Class
+                              </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-                <Button type="submit">Create Assignment</Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+                <FormField
+                  control={form.control}
+                  name="deadline"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Deadline</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={'outline'}
+                              className={cn(
+                                'w-[240px] pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, 'PPP')
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assignment Text</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Paste or type the full text for the assignment here..."
+                          className="min-h-[200px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This is the text your students will be timed on.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Optional Image URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://picsum.photos/seed/1/600/400"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Add an image to give context to the assignment.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+                  <Button type="submit">Create Assignment</Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
