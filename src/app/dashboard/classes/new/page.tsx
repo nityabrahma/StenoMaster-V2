@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,7 @@ export default function NewClassPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { students } = useStudents();
-  const { addClass } = useClasses();
+  const { createClass } = useClasses();
   
   const [className, setClassName] = useState('');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -46,24 +46,29 @@ export default function NewClassPage() {
         return;
     }
     
-    const newClass = {
-        id: `class-${Date.now()}`,
-        name: className,
-        teacherId: user.id,
-        studentIds: selectedStudents,
-    };
-    addClass(newClass);
-    
-    toast({
-        title: "Class Created!",
-        description: `The class "${className}" has been successfully created.`,
-    });
+    try {
+        const newClass = await createClass({
+            name: className,
+            studentIds: selectedStudents,
+        });
+        
+        toast({
+            title: "Class Created!",
+            description: `The class "${className}" has been successfully created.`,
+        });
 
-    const redirectPath = searchParams.get('redirect');
-    if (redirectPath) {
-        router.push(`${redirectPath}?newClassId=${newClass.id}`);
-    } else {
-        router.push('/dashboard/classes');
+        const redirectPath = searchParams.get('redirect');
+        if (redirectPath) {
+            router.push(`${redirectPath}?newClassId=${newClass.id}`);
+        } else {
+            router.push('/dashboard/classes');
+        }
+    } catch (error: any) {
+        toast({
+            title: "Creation Failed",
+            description: error.message || "Could not create class.",
+            variant: "destructive"
+        })
     }
   };
 

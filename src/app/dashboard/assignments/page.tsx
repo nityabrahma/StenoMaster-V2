@@ -1,6 +1,6 @@
 
 'use client';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import {
   Card,
   CardContent,
@@ -42,12 +42,20 @@ function TeacherAssignments() {
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
 
-  const handleDelete = (assignmentId: string, assignmentTitle: string) => {
-    deleteAssignment(assignmentId);
-    toast({
-        title: 'Assignment Deleted',
-        description: `"${assignmentTitle}" has been removed. Student scores are retained.`,
-    });
+  const handleDelete = async (assignmentId: string, assignmentTitle: string) => {
+    try {
+        await deleteAssignment(assignmentId);
+        toast({
+            title: 'Assignment Deleted',
+            description: `"${assignmentTitle}" has been removed. Student scores are retained.`,
+        });
+    } catch (error: any) {
+        toast({
+            title: 'Deletion Failed',
+            description: error.message || 'Could not delete assignment.',
+            variant: 'destructive',
+        })
+    }
   };
   
   return (
@@ -103,8 +111,8 @@ function TeacherAssignments() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem>View Submissions</DropdownMenuItem>
+                                        <DropdownMenuItem disabled>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem disabled>View Submissions</DropdownMenuItem>
                                         <DropdownMenuItem 
                                             className="text-destructive"
                                             onClick={() => handleDelete(assignment.id, assignment.title)}

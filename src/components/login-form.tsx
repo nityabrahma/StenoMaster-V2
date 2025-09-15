@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import { BookOpen, GraduationCap, LogIn, Loader2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 
 const LoginForm = () => {
   const userTypesNav = [
@@ -29,28 +28,8 @@ const LoginForm = () => {
 
   const handleLogin = async (e: React.FormEvent, role: 'student' | 'teacher') => {
     e.preventDefault();
-
     const credentials = role === 'student' ? studentCredentials : teacherCredentials;
-
-    if (!credentials.email.trim() || !credentials.password.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter both email and password.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    try {
-        await login({
-            email: credentials.email,
-            password: credentials.password,
-            role,
-        });
-        // onLoginSuccess is handled by the AuthProvider now
-    } catch (error) {
-        // Error toast is handled in the auth provider
-    }
+    await login({ ...credentials, role });
   };
 
   return (

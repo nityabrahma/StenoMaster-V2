@@ -1,6 +1,6 @@
 
 'use client';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import {
   Card,
   CardContent,
@@ -55,7 +55,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 function CreateStudentDialog() {
     const { signup } = useAuth();
     const { toast } = useToast();
-    const { addStudent } = useStudents();
+    const { fetchStudents } = useStudents();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -73,13 +73,8 @@ function CreateStudentDialog() {
         }
 
         try {
-            const newUser = await signup({ name, email, password, role: 'student' });
-            const newStudent = {
-                ...newUser,
-                id: `student-${Date.now()}`,
-                classIds: []
-            };
-            addStudent(newStudent);
+            await signup({ name, email, password, role: 'student' });
+            await fetchStudents(); // Re-fetch students list
             toast({
                 title: 'Success',
                 description: `Student account for ${name} created.`,
@@ -153,12 +148,20 @@ export default function StudentsPage() {
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
-  const handleDeleteStudent = (studentId: string) => {
-    removeStudent(studentId);
-    toast({
-      title: 'Student Removed',
-      description: 'The student account has been deleted.',
-    });
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+        await removeStudent(studentId);
+        toast({
+        title: 'Student Removed',
+        description: 'The student account has been deleted.',
+        });
+    } catch(error: any) {
+        toast({
+            title: 'Deletion Failed',
+            description: error.message || 'Could not remove student.',
+            variant: 'destructive',
+        });
+    }
   };
 
   const handleAssignSuccess = () => {

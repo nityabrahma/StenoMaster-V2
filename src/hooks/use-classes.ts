@@ -1,44 +1,55 @@
 
-'use_client';
+'use client';
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Class } from '@/lib/types';
+
+type NewClass = Omit<Class, 'id' | 'teacherId'>;
 
 interface ClassesState {
   classes: Class[];
-  setClasses: (classes: Class[]) => void;
-  loadClasses: () => Promise<void>;
-  addClass: (newClass: Class) => void;
-  updateClass: (updatedClass: Class) => void;
-  removeStudentFromAllClasses: (studentId: string) => void;
+  fetchClasses: () => Promise<void>;
+  createClass: (newClassData: NewClass) => Promise<Class>;
+  updateClass: (classId: string, updatedData: Partial<Class>) => Promise<void>;
 }
 
-export const useClasses = create<ClassesState>()(
-  persist(
-    (set) => ({
-      classes: [],
-      setClasses: (classes) => set({ classes }),
-      loadClasses: async () => {},
-      addClass: (newClass) => {
-        set(state => ({ classes: [...state.classes, newClass] }));
-      },
-      updateClass: async (updatedClass) => {
-        set(state => ({
-          classes: state.classes.map(c => c.id === updatedClass.id ? updatedClass : c)
-        }));
-      },
-      removeStudentFromAllClasses: (studentId: string) => {
-        set(state => ({
-            classes: state.classes.map(c => ({
-                ...c,
-                studentIds: c.studentIds.filter(id => id !== studentId)
-            }))
-        }));
-      }
-    }),
-    {
-      name: 'classes-storage',
-      storage: createJSONStorage(() => localStorage),
+async function api<T>(url: string, options?: RequestInit): Promise<T> {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-  )
-);
+    return res.json();
+}
+
+
+export const useClasses = create<ClassesState>((set) => ({
+    classes: [],
+    fetchClasses: async () => {
+        try {
+            const classes = await api<Class[]>('/api/classes');
+            set({ classes });
+        } catch (error) {
+            console.error("Failed to fetch classes:", error);
+            set({ classes: [] });
+        }
+    },
+    createClass: async (newClassData) => {
+        const newClass = await api<Class>('/api/classes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newClassData),
+        });
+        set(state => ({ classes: [...state.classes, newClass] }));
+        return newClass;
+    },
+    updateClass: async (classId, updatedData) => {
+        const updatedClass = await api<Class>(`/api/classes/${classId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData),
+        });
+        set(state => ({
+            classes: state.classes.map(c => c.id === classId ? updatedClass : c)
+        }));
+    },
+}));

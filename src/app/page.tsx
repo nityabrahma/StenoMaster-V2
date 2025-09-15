@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
 import LogoStatic from '@/components/logo-static';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import {
   Award,
   BookOpen,
@@ -30,7 +30,7 @@ import {
 import { useAppRouter } from '@/hooks/use-app-router';
 
 
-function LoginDialogContent({
+function LoginDialog({
   isLoginOpen,
   setIsLoginOpen,
 }: {
@@ -59,9 +59,7 @@ function LoginDialogContent({
 
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const router = useAppRouter();
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
     setYear(new Date().getFullYear());
@@ -112,13 +110,6 @@ const HomePageContent = () => {
     },
   ];
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, router]);
-
-
   return (
     <div
       className="min-h-screen"
@@ -136,7 +127,7 @@ const HomePageContent = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Suspense fallback={<Button disabled>Loading...</Button>}>
-                <LoginDialogContent
+                <LoginDialog
                     isLoginOpen={isLoginOpen}
                     setIsLoginOpen={setIsLoginOpen}
                 />
@@ -255,7 +246,7 @@ const HomePageContent = () => {
         <span
           className="justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message text-gray-400"
         >
-          <p>Copyright © {year}</p>
+          {year && <p>Copyright © {year}</p>}
           <p className="font-normal hidden sm:flex">|</p>
           <p>Powered By Shubham Mishra</p>
         </span>
@@ -266,6 +257,19 @@ const HomePageContent = () => {
 
 
 function HomePageWithSuspense() {
+    const { isAuthenticated, loading } = useAuth();
+    const router = useAppRouter();
+
+    useEffect(() => {
+        if (!loading && isAuthenticated) {
+        router.push('/dashboard');
+        }
+    }, [isAuthenticated, loading, router]);
+
+    if (loading || isAuthenticated) {
+        return null; // Or a loading spinner
+    }
+
     return (
         <Suspense fallback={null}>
             <HomePageContent />

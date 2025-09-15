@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -55,7 +55,7 @@ const assignmentSchema = z.object({
     required_error: 'A due date is required.',
   }),
   text: z.string().min(20, 'Assignment text must be at least 20 characters.'),
-  imageUrl: z.string().url('Please enter a valid image URL.').optional(),
+  imageUrl: z.string().url('Please enter a valid image URL.').optional().or(z.literal('')),
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
@@ -66,7 +66,7 @@ export default function NewAssignmentPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { classes } = useClasses();
-  const { addAssignment } = useAssignments();
+  const { createAssignment } = useAssignments();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const teacherClasses = classes.filter((c) => c.teacherId === user?.id);
@@ -89,17 +89,23 @@ export default function NewAssignmentPageContent() {
   }, [searchParams, form]);
 
   const onSubmit = async (data: AssignmentFormValues) => {
-    const newAssignment = {
-        ...data,
-        id: `assignment-${Date.now()}`,
-        deadline: data.deadline.toISOString(),
-    };
-    addAssignment(newAssignment);
-    toast({
-        title: "Assignment Created!",
-        description: `The assignment "${data.title}" has been successfully created.`,
-    });
-    router.push('/dashboard/assignments');
+    try {
+        await createAssignment({
+            ...data,
+            deadline: data.deadline.toISOString(),
+        });
+        toast({
+            title: "Assignment Created!",
+            description: `The assignment "${data.title}" has been successfully created.`,
+        });
+        router.push('/dashboard/assignments');
+    } catch (error: any) {
+        toast({
+            title: "Creation Failed",
+            description: error.message || "Could not create the assignment.",
+            variant: 'destructive',
+        });
+    }
   };
 
   const handleClassChange = (value: string) => {

@@ -1,54 +1,73 @@
 
 'use client';
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Assignment, Submission } from '@/lib/types';
-import { assignments as initialAssignments, submissions as initialSubmissions } from '@/lib/data';
 
-type NewSubmission = Omit<Submission, 'id'>;
+type NewAssignment = Omit<Assignment, 'id'>;
+type NewSubmission = Omit<Submission, 'id' | 'studentId'>;
 
 interface AssignmentsState {
   assignments: Assignment[];
   submissions: Submission[];
-  setAssignments: (assignments: Assignment[]) => void;
-  setSubmissions: (submissions: Submission[]) => void;
-  loadAssignments: () => Promise<void>;
-  addAssignment: (assignment: Assignment) => void;
-  addSubmission: (submission: Submission) => void;
-  deleteAssignment: (assignmentId: string) => void;
+  fetchAssignments: () => Promise<void>;
+  fetchSubmissions: () => Promise<void>;
+  createAssignment: (assignment: NewAssignment) => Promise<Assignment>;
+  createSubmission: (submission: NewSubmission) => Promise<Submission>;
+  deleteAssignment: (assignmentId: string) => Promise<void>;
 }
 
-export const useAssignments = create<AssignmentsState>()(
-  persist(
-    (set, get) => ({
-      assignments: [],
-      submissions: [],
-      setAssignments: (assignments) => set({ assignments }),
-      setSubmissions: (submissions) => set({ submissions }),
-      loadAssignments: async () => {
-        // This function is now a no-op but is kept for potential future use,
-        // for example, loading data from an API.
-        // The persisted state will be loaded automatically by zustand middleware.
-      },
-      addAssignment: (assignment) => {
-        set(state => ({ assignments: [...state.assignments, assignment] }));
-      },
-      addSubmission: (submission) => {
-        // Remove any previous submission for the same assignment by the same student
-        const otherSubmissions = get().submissions.filter(s => 
-            !(s.assignmentId === submission.assignmentId && s.studentId === submission.studentId)
-        );
-        set({ submissions: [submission, ...otherSubmissions] });
-      },
-      deleteAssignment: async (assignmentId: string) => {
-        set(state => ({
-            assignments: state.assignments.filter(a => a.id !== assignmentId)
-        }));
-      }
-    }),
-    {
-      name: 'assignments-storage',
-      storage: createJSONStorage(() => localStorage),
+async function api<T>(url: string, options?: RequestInit): Promise<T> {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-  )
-);
+    return res.json();
+}
+
+export const useAssignments = create<AssignmentsState>((set, get) => ({
+    assignments: [],
+    submissions: [],
+    fetchAssignments: async () => {
+        try {
+            const assignments = await api<Assignment[]>('/api/assignments');
+            const submissions = await api<Submission[]>('/api/submissions');
+            set({ assignments, submissions });
+        } catch (error) {
+            console.error("Failed to fetch assignments or submissions:", error);
+            set({ assignments: [], submissions: [] });
+        }
+    },
+    fetchSubmissions: async () => {
+        // This is combined with fetchAssignments, but can be separate if needed
+    },
+    createAssignment: async (assignmentData) => {
+        const newAssignment = await api<Assignment>('/api/assignments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(assignmentData),
+        });
+        set(state => ({ assignments: [...state.assignments, newAssignment] }));
+        return newAssignment;
+    },
+    createSubmission: async (submissionData) => {
+        const newSubmission = await api<Submission>('/api/submissions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submissionData),
+        });
+        set(state => ({
+            submissions: [
+                newSubmission, 
+                ...state.submissions.filter(s => !(s.assignmentId === newSubmission.assignmentId && s.studentId === newSubmission.studentId))
+            ]
+        }));
+        return newSubmission;
+    },
+    deleteAssignment: async (assignmentId) => {
+        await api(`/api/assignments/${assignmentId}`, { method: 'DELETE' });
+        set(state => ({
+            assignments: state.assignments.filter(a => a.id !== assignmentId),
+        }));
+    },
+}));

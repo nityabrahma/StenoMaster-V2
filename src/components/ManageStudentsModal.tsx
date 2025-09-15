@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import type { Class, Student } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
@@ -30,7 +30,7 @@ interface ManageStudentsModalProps {
 function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToManage: Class, onStudentCreated: (student: Student) => void }) {
     const { signup } = useAuth();
     const { toast } = useToast();
-    const { addStudent } = useStudents();
+    const { fetchStudents } = useStudents();
     const { updateClass } = useClasses();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -48,19 +48,13 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
         }
 
         try {
-            const signedUpUser = await signup({ name, email, password, role: 'student' });
-            const newStudent: Student = {
-                ...signedUpUser,
-                id: `student-${Date.now()}`,
-                classIds: [classToManage.id]
-            };
-            addStudent(newStudent);
-
-            const updatedClass = {
-                ...classToManage,
+            const newStudent = await signup({ name, email, password, role: 'student' });
+            
+            await updateClass(classToManage.id, {
                 studentIds: [...classToManage.studentIds, newStudent.id],
-            };
-            updateClass(updatedClass);
+            });
+
+            await fetchStudents();
             
             toast({
                 title: 'Student Created and Enrolled!',
@@ -124,19 +118,24 @@ export default function ManageStudentsModal({
             return;
         }
 
-        const updatedClass = {
-            ...classToManage,
-            studentIds: [...classToManage.studentIds, ...selectedStudents],
-        };
-        
-        updateClass(updatedClass);
-        
-        toast({
-            title: "Students Enrolled!",
-            description: `${selectedStudents.length} student(s) added to ${classToManage.name}.`,
-        });
-        setSelectedStudents([]);
-        onClose();
+        try {
+            await updateClass(classToManage.id, {
+                studentIds: [...classToManage.studentIds, ...selectedStudents],
+            });
+            
+            toast({
+                title: "Students Enrolled!",
+                description: `${selectedStudents.length} student(s) added to ${classToManage.name}.`,
+            });
+            setSelectedStudents([]);
+            onClose();
+        } catch(error: any) {
+            toast({
+                title: 'Enrollment Failed',
+                description: error.message || 'Could not enroll students.',
+                variant: 'destructive',
+            });
+        }
     };
     
   return (

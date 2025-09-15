@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,14 +28,13 @@ export default function CreateClassModal({
   onClose,
   onClassCreated,
 }: CreateClassModalProps) {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const { addClass } = useClasses();
+  const { createClass } = useClasses();
   const [className, setClassName] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!className.trim() || !user) {
+    if (!className.trim()) {
       toast({
         title: 'Error',
         description: 'Class name is required.',
@@ -45,25 +43,30 @@ export default function CreateClassModal({
       return;
     }
 
-    const newClass: Class = {
-      id: `class-${Date.now()}`,
-      name: className,
-      teacherId: user.id,
-      studentIds: [],
-    };
-    addClass(newClass);
+    try {
+        const newClass = await createClass({
+            name: className,
+            studentIds: [],
+        });
 
-    toast({
-      title: 'Class Created!',
-      description: `The class "${className}" has been successfully created.`,
-    });
+        toast({
+        title: 'Class Created!',
+        description: `The class "${className}" has been successfully created.`,
+        });
 
-    if (onClassCreated) {
-      onClassCreated(newClass);
+        if (onClassCreated) {
+        onClassCreated(newClass);
+        }
+        
+        setClassName('');
+        onClose();
+    } catch (error: any) {
+        toast({
+            title: 'Creation Failed',
+            description: error.message || 'Could not create class.',
+            variant: 'destructive'
+        });
     }
-    
-    setClassName('');
-    onClose();
   };
 
   return (

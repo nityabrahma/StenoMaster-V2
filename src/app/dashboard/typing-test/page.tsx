@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, History } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
 import { useAssignments } from '@/hooks/use-assignments';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Assignment, Submission } from '@/lib/types';
@@ -18,7 +18,7 @@ export default function TypingTestPage() {
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
     const { toast } = useToast();
     const { user } = useAuth();
-    const { addSubmission, submissions } = useAssignments();
+    const { createSubmission, submissions } = useAssignments();
 
     const [isListModalOpen, setIsListModalOpen] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -28,19 +28,24 @@ export default function TypingTestPage() {
     const handleComplete = async (result: SubmissionResult) => {
         if (!user) return;
         
-        const newSubmission = {
-            id: `sub-${Date.now()}`,
-            assignmentId: `practice-${currentTest.id}`,
-            studentId: user.id,
-            submittedAt: new Date().toISOString(),
-            ...result,
-        };
-        addSubmission(newSubmission);
-        
-        toast({
-            title: "Practice Complete!",
-            description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
-        });
+        try {
+            await createSubmission({
+                assignmentId: `practice-${currentTest.id}`,
+                submittedAt: new Date().toISOString(),
+                ...result,
+            });
+            
+            toast({
+                title: "Practice Complete!",
+                description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
+            });
+        } catch (error: any) {
+            toast({
+                title: "Practice Submission Failed",
+                description: error.message || "Could not save your practice score.",
+                variant: "destructive",
+            });
+        }
     };
 
     const nextTest = () => {

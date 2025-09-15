@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -19,34 +19,41 @@ export default function AssignmentPage() {
   const router = useAppRouter();
   const params = useParams();
   const { toast } = useToast();
-  const { assignments, addSubmission } = useAssignments();
+  const { assignments, createSubmission } = useAssignments();
 
   const assignmentId = typeof params.id === 'string' ? params.id : '';
   const assignment = assignments.find((a) => a.id === assignmentId);
 
   if (!assignment) {
-    notFound();
+    // Data might not be loaded yet, or not found.
+    // A loading skeleton or notFound() are options.
+    // For now, returning null to avoid flashing not-found page.
+    return null;
   }
 
   const handleSubmit = async (result: SubmissionResult) => {
     if (!user) return;
 
-    const newSubmission = {
-      id: `sub-${Date.now()}`,
-      assignmentId: assignment.id,
-      studentId: user.id,
-      submittedAt: new Date().toISOString(),
-      ...result,
-    };
-    
-    addSubmission(newSubmission);
-    
-    toast({
-        title: "Assignment Submitted!",
-        description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
-    });
+    try {
+      await createSubmission({
+        assignmentId: assignment.id,
+        submittedAt: new Date().toISOString(),
+        ...result,
+      });
+      
+      toast({
+          title: "Assignment Submitted!",
+          description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
+      });
 
-    router.push('/dashboard/assignments');
+      router.push('/dashboard/assignments');
+    } catch (error: any) {
+        toast({
+            title: "Submission Failed",
+            description: error.message || "Could not submit your assignment.",
+            variant: "destructive"
+        });
+    }
   };
 
   return (

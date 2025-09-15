@@ -49,17 +49,20 @@ export default function EditClassModal({
       return;
     }
 
-    await updateClass({
-      ...classToEdit,
-      name: className,
-    });
-
-    toast({
-      title: 'Class Updated!',
-      description: `The class has been renamed to "${className}".`,
-    });
-    
-    onClose();
+    try {
+        await updateClass(classToEdit.id, { name: className });
+        toast({
+        title: 'Class Updated!',
+        description: `The class has been renamed to "${className}".`,
+        });
+        onClose();
+    } catch(error: any) {
+        toast({
+            title: 'Update Failed',
+            description: error.message || 'Could not update class name.',
+            variant: 'destructive'
+        });
+    }
   };
 
   return (

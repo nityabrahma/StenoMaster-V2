@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth-provider';
 import type { Student } from '@/lib/types';
 import { Label } from './ui/label';
 
@@ -54,14 +54,12 @@ export default function AssignStudentModal({
     if (!classToUpdate) return;
     
     // Add student to the new class
-    updateClass({
-        ...classToUpdate,
+    await updateClass(classToUpdate.id, {
         studentIds: [...classToUpdate.studentIds, student.id]
     });
 
     // Update the student's classIds array
-    updateStudent({
-        ...student,
+    await updateStudent(student.id, {
         classIds: [...student.classIds, selectedClassId]
     });
 

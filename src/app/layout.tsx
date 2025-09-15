@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { AuthProvider } from '@/components/auth-provider';
+import { AuthProvider } from '@/hooks/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { Suspense } from 'react';
