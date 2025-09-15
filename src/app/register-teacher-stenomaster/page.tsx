@@ -6,12 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, AuthProvider } from "@/hooks/auth-provider";
 import { UserPlus } from "lucide-react";
 import React, { useState } from "react";
 import { useAppRouter } from "@/hooks/use-app-router";
 
-const TeacherRegistrationPage = () => {
+const TeacherRegistrationContent = () => {
   const [teacherSignup, setTeacherSignup] = useState({
     name: "",
     email: "",
@@ -168,4 +168,10 @@ const TeacherRegistrationPage = () => {
   );
 };
 
-export default TeacherRegistrationPage;
+export default function TeacherRegistrationPage() {
+    return (
+        <AuthProvider>
+            <TeacherRegistrationContent />
+        </AuthProvider>
+    )
+}
