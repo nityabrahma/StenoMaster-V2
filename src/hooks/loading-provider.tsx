@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
-import Logo from '@/components/logo';
+import LogoStatic from '@/components/logo-static';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -48,7 +48,7 @@ const LoadingOverlay = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="w-full max-w-sm p-8 space-y-4 rounded-2xl bg-gray-700/10 bg-clip-padding backdrop-filter backdrop-blur-md border border-gray-100/20">
                 <div className="flex justify-center">
-                    <Logo />
+                    <LogoStatic />
                 </div>
                 <p className="text-center text-muted-foreground">Loading, please wait...</p>
                 <Progress value={progress} className="w-full" />
