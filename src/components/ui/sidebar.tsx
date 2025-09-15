@@ -20,8 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+const SIDEBAR_STORAGE_KEY = "sidebar_state"
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3.5rem"
@@ -71,20 +70,7 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    const getCookie = (name: string) => {
-      if (typeof window === 'undefined') return null;
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift();
-      return null;
-    }
-    
-    const [initialState] = React.useState(() => {
-        const cookieValue = getCookie(SIDEBAR_COOKIE_NAME);
-        return cookieValue ? cookieValue === 'true' : defaultOpen;
-    });
-
-    const [_open, _setOpen] = React.useState(initialState)
+    const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
     
     const setOpen = React.useCallback(
@@ -96,11 +82,21 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState)
         }
         if (typeof window !== 'undefined') {
-          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+          localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(openState))
         }
       },
       [setOpenProp, open]
     )
+
+    // Load state from local storage on initial mount
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedState = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+            if (storedState !== null) {
+                _setOpen(JSON.parse(storedState));
+            }
+        }
+    }, []);
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile
@@ -736,3 +732,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
