@@ -42,7 +42,7 @@ const studentLinks = [
 export default function AppSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
   const router = useAppRouter();
 
   if (!user) return null;
@@ -64,7 +64,10 @@ export default function AppSidebar() {
         }}
     >
       <SidebarHeader className={cn(!isMobile && "p-2")}>
-        <div className="flex items-center justify-center p-2">
+        <div className={cn(
+            "flex items-center justify-center p-2",
+            state === 'collapsed' && 'h-10 w-10 p-0'
+        )}>
             <Logo />
         </div>
       </SidebarHeader>
@@ -106,3 +109,5 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
+
+    
