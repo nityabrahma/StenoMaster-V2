@@ -12,7 +12,7 @@ import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useLoading } from '@/components/loading-provider';
+import { useLoading } from '@/hooks/loading-provider';
 import { useAppRouter } from '@/hooks/use-app-router';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
@@ -104,10 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
+            setIsLoading(false); // Ensure loading is stopped on error
             throw error;
-        } finally {
-            setIsLoading(false);
-        }
+        } 
+        // No finally block here, loading is handled by the router
     },
     [router, toast, searchParams, setIsLoading]
   );

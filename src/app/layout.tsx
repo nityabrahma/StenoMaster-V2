@@ -4,7 +4,7 @@ import { AuthProvider } from '@/components/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { Suspense } from 'react';
-import { LoadingProvider } from '@/components/loading-provider';
+import { LoadingProvider } from '@/hooks/loading-provider';
 import BackgroundStars from '@/components/background-stars';
 import { AppRouterProvider } from '@/hooks/use-app-router';
 

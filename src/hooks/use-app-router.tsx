@@ -13,7 +13,7 @@ import {
   usePathname,
   useSearchParams,
 } from 'next/navigation';
-import { useLoading } from '@/components/loading-provider';
+import { useLoading } from '@/hooks/loading-provider';
 
 type AppRouterContextType = {
   push: (href: string) => void;
@@ -39,16 +39,20 @@ export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
   const { setIsLoading } = useLoading();
 
   useEffect(() => {
-    // This effect runs when the page navigation has completed.
+    // This effect runs when the page component has mounted after navigation.
     setIsLoading(false);
   }, [pathname, searchParams, setIsLoading]);
 
   const push = useCallback(
     (href: string) => {
-      setIsLoading(true);
+      const currentPath = pathname + '?' + searchParams.toString();
+      // Don't show loading if it's the same page
+      if (href !== currentPath) {
+        setIsLoading(true);
+      }
       router.push(href);
     },
-    [router, setIsLoading]
+    [router, setIsLoading, pathname, searchParams]
   );
 
   const back = useCallback(() => {
