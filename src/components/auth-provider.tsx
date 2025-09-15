@@ -68,6 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const isAuthenticated = !!user;
 
+  // This effect runs whenever the path changes, signaling a navigation has completed.
+  useEffect(() => {
+    if (isLoading) {
+      setIsLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchParams]);
+
+
+  // This effect handles the very first load of the application
   useEffect(() => {
     if(firstLoadDone) {
         setIsLoading(false);
@@ -77,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Protected route handling
   useEffect(() => {
     if (firstLoadDone && !isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
-        const redirectUrl = `/?redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
+        const redirectUrl = `/`;
         router.push(redirectUrl);
     }
   }, [firstLoadDone, isLoading, isAuthenticated, pathname, router, searchParams]);
