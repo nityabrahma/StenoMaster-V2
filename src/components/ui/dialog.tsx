@@ -44,7 +44,7 @@ const DialogContent = React.forwardRef<
         className
       )}
        style={{
-        backdropFilter: "blur(1px)",
+        backdropFilter: "blur(3px)",
         boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.2)"
       }}
       {...props}
