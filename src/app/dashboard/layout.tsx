@@ -15,10 +15,12 @@ import { ArrowLeft } from 'lucide-react';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isAuthenticated } = useAuth();
-  const router = useRouter();
+  const router = useAppRouter();
+  const nextRouter = useRouter();
 
   const [initialLoad, setInitialLoad] = useState(true);
   
@@ -28,9 +30,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/?showLogin=true');
+      nextRouter.push('/?showLogin=true');
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, nextRouter]);
   
   useEffect(() => {
     const loadData = async () => {
@@ -61,7 +63,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   const handleBack = () => {
-    window.history.back();
+    router.back();
   }
 
   return (
@@ -70,7 +72,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <nav 
                 className="h-16 flex-shrink-0 sticky top-0 z-20 bg-gray-900/30"
                 style={{
-                    backdropFilter: "blur(1px)"
+                    backdropFilter: "blur(3px)"
                 }}
             >
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">

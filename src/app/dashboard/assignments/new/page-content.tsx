@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 import { useClasses } from '@/hooks/use-classes';
 import { useAssignments } from '@/hooks/use-assignments';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 const assignmentSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -59,7 +60,7 @@ const assignmentSchema = z.object({
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
 export default function NewAssignmentPageContent() {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();

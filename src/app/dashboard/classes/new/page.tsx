@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,10 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 
 export default function NewClassPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();

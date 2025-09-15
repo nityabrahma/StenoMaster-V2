@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
 import Logo from '@/components/logo';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Award,
@@ -30,6 +30,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 
 function LoginDialogContent({
@@ -71,7 +72,7 @@ const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isAuthenticated, user, firstLoadDone } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
+  const router = useAppRouter();
   
 
   const features = [
@@ -150,7 +151,7 @@ const HomePageContent = () => {
       <nav
         className="bg-gray-900/30 fixed w-full top-0 z-50"
         style={{
-          backdropFilter: "blur(1px)",
+          backdropFilter: "blur(3px)",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

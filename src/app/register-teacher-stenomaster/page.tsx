@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { UserPlus } from "lucide-react";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 
 const TeacherRegistrationPage = () => {
   const [teacherSignup, setTeacherSignup] = useState({
@@ -22,7 +22,7 @@ const TeacherRegistrationPage = () => {
   const [clicked, setClicked] = useState(false);
   const { signup } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useAppRouter();
 
   const handleTeacherSignup = async (e: React.FormEvent) => {
     e.preventDefault();

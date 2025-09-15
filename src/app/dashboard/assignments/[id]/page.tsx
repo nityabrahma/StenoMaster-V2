@@ -2,7 +2,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { notFound, useRouter, useParams } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -12,10 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { useAssignments } from '@/hooks/use-assignments';
 import type { SubmissionResult } from '@/components/typing-test';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 export default function AssignmentPage() {
   const { user } = useAuth();
-  const router = useRouter();
+  const router = useAppRouter();
   const params = useParams();
   const { toast } = useToast();
   const { assignments, addSubmission } = useAssignments();

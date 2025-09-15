@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/components/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
@@ -5,6 +6,7 @@ import './globals.css';
 import { Suspense } from 'react';
 import { LoadingProvider } from '@/components/loading-provider';
 import BackgroundStars from '@/components/background-stars';
+import { AppRouterProvider } from '@/hooks/use-app-router';
 
 export const metadata: Metadata = {
   title: 'StenoMaster',
@@ -33,10 +35,12 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <BackgroundStars />
         <LoadingProvider>
-          <AuthProvider>
-            <Suspense>{children}</Suspense>
-            <Toaster />
-          </AuthProvider>
+          <AppRouterProvider>
+            <AuthProvider>
+              <Suspense>{children}</Suspense>
+              <Toaster />
+            </AuthProvider>
+          </AppRouterProvider>
         </LoadingProvider>
       </body>
     </html>

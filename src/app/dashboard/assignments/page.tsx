@@ -29,7 +29,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-import { useRouter } from 'next/navigation';
+import { useAppRouter } from '@/hooks/use-app-router';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
@@ -40,7 +40,7 @@ import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 // Teacher's View
 function TeacherAssignments() {
   const { user } = useAuth();
-  const router = useRouter();
+  const router = useAppRouter();
   const { assignments, submissions } = useAssignments();
   const { classes } = useClasses();
 

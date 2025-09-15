@@ -13,6 +13,7 @@ import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/components/loading-provider';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
@@ -20,7 +21,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [firstLoadDone, setFirstLoadDone] = useState(false);
-  const router = useRouter();
+  const router = useAppRouter();
+  const nextRouter = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -72,9 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && !isAuthenticated && pathname.startsWith('/dashboard')) {
         const redirectUrl = `/?showLogin=true&redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
-        router.push(redirectUrl);
+        nextRouter.push(redirectUrl);
     }
-  }, [loading, isAuthenticated, pathname, router, searchParams]);
+  }, [loading, isAuthenticated, pathname, nextRouter, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {

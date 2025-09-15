@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import { useClasses } from '@/hooks/use-classes';
@@ -27,13 +28,13 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-import { useRouter } from 'next/navigation';
+import { useAppRouter } from '@/hooks/use-app-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 export default function ClassesPage() {
   const { user } = useAuth();
-  const router = useRouter();
+  const router = useAppRouter();
   const { classes } = useClasses();
   const { students } = useStudents();
 
