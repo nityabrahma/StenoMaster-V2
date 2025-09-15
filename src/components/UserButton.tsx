@@ -29,7 +29,7 @@ export default function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
            <Avatar className="h-10 w-10">
               <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
               <AvatarFallback>{userInitials}</AvatarFallback>

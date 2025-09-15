@@ -58,18 +58,16 @@ export default function AppSidebar() {
 
   return (
     <Sidebar 
-        className="hidden md:flex md:flex-col md:w-64 bg-gray-900/30"
+        className="flex-shrink-0 md:flex md:flex-col bg-gray-900/30"
         style={{
             backdropFilter: "blur(1px)"
         }}
     >
-      {isMobile && (
-        <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
+      <SidebarHeader className={cn(!isMobile && "p-2")}>
+        <div className="flex items-center justify-center p-2">
             <Logo />
-          </div>
-        </SidebarHeader>
-      )}
+        </div>
+      </SidebarHeader>
 
       <SidebarContent className="flex-1 p-2">
         <SidebarMenu>
@@ -83,16 +81,7 @@ export default function AppSidebar() {
                 onClick={() => router.push(link.href)}
                 className={cn(
                     "rounded-2xl transition-all duration-300",
-                    active 
-                    ? "bg-gray-900/30 border-2 border-white/20" 
-                    : "border-2 border-transparent hover:bg-gray-900/30 hover:border-white/20"
                 )}
-                 style={
-                  active ? {
-                    backdropFilter: "blur(1px)",
-                    boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.2)"
-                  } : {}
-                }
               >
                   <link.icon />
                   <span>{link.label}</span>

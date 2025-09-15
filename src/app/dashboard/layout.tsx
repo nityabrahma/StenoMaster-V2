@@ -62,17 +62,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             >
                 <div className="flex justify-between items-center h-16 px-4 lg:px-6">
                     <div className="flex items-center space-x-4">
-                        <div className="md:hidden">
-                            <SidebarTrigger
-                                className="h-9 w-9 cursor-pointer bg-card/80 hover:bg-black/60"
-                            />
-                        </div>
+                        <SidebarTrigger
+                            className="h-9 w-9 cursor-pointer bg-card/80 hover:bg-black/60"
+                        />
                         <div className="hidden md:flex items-center gap-2">
                            <Logo />
                         </div>
-                        <Button variant="ghost" size="icon" onClick={handleBack}>
-                            <ArrowLeft />
-                        </Button>
                     </div>
                     <div className="flex items-center space-x-2 lg:space-x-4">
                         <UserButton />
