@@ -117,13 +117,18 @@ export default function StudentPerformancePage() {
             </CardHeader>
           <CardContent className="h-[calc(100%-7.5rem)] flex flex-col">
              <div className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                <div>Assignment</div>
+                <div className="text-center">Assignment</div>
                 <div className="text-center">Type</div>
                 <div className="text-center">Submitted On</div>
                 <div className="text-right">WPM</div>
                 <div className="text-right">Accuracy</div>
                 <div className="text-right">Mistakes</div>
             </div>
+            {studentSubmissions.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                    This student has not submitted any assignments or practice tests yet.
+                </div>
+            ) : (
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
                     {studentSubmissions.map((submission) => {
@@ -135,7 +140,7 @@ export default function StudentPerformancePage() {
                             onClick={() => handleRowClick(submission)}
                             className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
                         >
-                            <div className="font-medium truncate">{assignment.title}</div>
+                            <div className="font-medium truncate text-center">{assignment.title}</div>
                             <div className="text-center">
                                 {isPractice ? (
                                 <Badge variant="secondary" className="items-center">
@@ -155,12 +160,8 @@ export default function StudentPerformancePage() {
                     );
                     })}
                 </div>
-                {studentSubmissions.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                        This student has not submitted any assignments or practice tests yet.
-                    </div>
-                )}
             </ScrollArea>
+            )}
           </CardContent>
         </Card>
       </div>

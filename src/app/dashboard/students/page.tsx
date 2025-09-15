@@ -194,6 +194,11 @@ export default function StudentsPage() {
                 <div className="text-right">Avg. Accuracy</div>
                 <div className="w-8"><span className="sr-only">Actions</span></div>
             </div>
+            {students.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                    No students have been created yet.
+                </div>
+            ) : (
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
                 {students.map(student => {
@@ -279,10 +284,6 @@ export default function StudentsPage() {
                 })}
                 </div>
             </ScrollArea>
-             {students.length === 0 && (
-                <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    No students have been created yet.
-                </div>
             )}
         </CardContent>
       </Card>

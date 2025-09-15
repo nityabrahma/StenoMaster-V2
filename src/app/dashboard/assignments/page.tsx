@@ -75,6 +75,11 @@ function TeacherAssignments() {
                     <div className="text-center">Submissions</div>
                     <div className="w-8"><span className="sr-only">Actions</span></div>
                 </div>
+                 {teacherAssignments.length === 0 ? (
+                    <div className="text-center p-8 text-muted-foreground">
+                        No assignments created yet.
+                    </div>
+                ) : (
                 <ScrollArea className="h-full">
                     <div className="divide-y divide-border">
                         {teacherAssignments.map(assignment => {
@@ -114,10 +119,6 @@ function TeacherAssignments() {
                         })}
                     </div>
                 </ScrollArea>
-                 {teacherAssignments.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                        No assignments created yet.
-                    </div>
                 )}
             </CardContent>
         </Card>
@@ -210,7 +211,7 @@ function StudentAssignments() {
                     return (
                         <Card 
                         key={submission.id} 
-                        onClick={() => handleCardClick(assignment!, submission)} 
+                        onClick={() => !isDeleted && handleCardClick(assignment!, submission)} 
                         className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
                         >
                         <CardHeader>
