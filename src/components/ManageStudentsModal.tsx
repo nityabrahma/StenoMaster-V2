@@ -166,7 +166,7 @@ export default function ManageStudentsModal({
                                     htmlFor={`student-${student.id}`}
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
-                                    {student.name} ({student.email})
+                                    {student.name} ({student.id})
                                 </label>
                             </div>
                         )) : (

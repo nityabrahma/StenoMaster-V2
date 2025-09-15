@@ -45,10 +45,14 @@ export type Submission = {
 
 export type LoginCredentials = {
     email: string;
-    // For simplicity, we are not actually checking passwords.
-    // In a real app, you would send this to the server for verification.
     password?: string; 
     role: 'student' | 'teacher';
+}
+
+export type CheckUserResponse = {
+  exists: boolean;
+  role?: 'student' | 'teacher';
+  message?: string;
 }
 
 export type SignupCredentials = {

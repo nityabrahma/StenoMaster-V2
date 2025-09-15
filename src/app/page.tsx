@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -8,14 +7,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
 import LogoStatic from '@/components/logo-static';
 import { useAuth } from '@/hooks/auth-provider';
@@ -29,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useAppRouter } from '@/hooks/use-app-router';
 
-
 function LoginDialog({
   isLoginOpen,
   setIsLoginOpen,
@@ -37,15 +29,12 @@ function LoginDialog({
   isLoginOpen: boolean;
   setIsLoginOpen: (open: boolean) => void;
 }) {
-
   return (
     <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
       <DialogTrigger asChild>
         <Button className="gradient-button">Login</Button>
       </DialogTrigger>
-      <DialogContent
-        className="w-full max-w-md"
-      >
+      <DialogContent className="w-full max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
             <LogoStatic />
@@ -64,7 +53,6 @@ const HomePageContent = () => {
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
-  
 
   const features = [
     {
@@ -111,13 +99,11 @@ const HomePageContent = () => {
   ];
 
   return (
-    <div
-      className="min-h-screen"
-    >
+    <div className="min-h-screen">
       <nav
         className="bg-gray-900/30 fixed w-full top-0 z-50"
         style={{
-          backdropFilter: "blur(3px)",
+          backdropFilter: 'blur(3px)',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -126,12 +112,10 @@ const HomePageContent = () => {
               <LogoStatic />
             </div>
             <div className="flex items-center space-x-4">
-              <Suspense fallback={<Button disabled>Loading...</Button>}>
-                <LoginDialog
-                    isLoginOpen={isLoginOpen}
-                    setIsLoginOpen={setIsLoginOpen}
-                />
-              </Suspense>
+              <LoginDialog
+                isLoginOpen={isLoginOpen}
+                setIsLoginOpen={setIsLoginOpen}
+              />
             </div>
           </div>
         </div>
@@ -149,9 +133,7 @@ const HomePageContent = () => {
                     with Interactive Learning
                   </span>
                 </h1>
-                <p
-                  className="text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-gray-300"
-                >
+                <p className="text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-gray-300">
                   A comprehensive platform for learning stenography with
                   real-time feedback, progress tracking, and interactive
                   assignments designed for both teachers and students.
@@ -170,17 +152,13 @@ const HomePageContent = () => {
           </div>
         </section>
 
-        <section
-          className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8"
-        >
+        <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12 sm:mb-16">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 primary-gradient-text font-headline">
                 Why Choose StenoMaster?
               </h2>
-              <p
-                className="text-lg font-medium sm:text-xl text-gray-300"
-              >
+              <p className="text-lg font-medium sm:text-xl text-gray-300">
                 Everything you need to excel in stenography education
               </p>
             </div>
@@ -191,21 +169,17 @@ const HomePageContent = () => {
                 return (
                   <Card key={index} className="p-6 ">
                     <div className="flex items-center space-x-4">
-                        <div
-                          className={`p-3 rounded-lg bg-gradient-to-br ${feature.gradient} shadow-lg`}
-                        >
-                          <Icon className="h-6 w-6 text-white" />
-                        </div>
-                        <h3
-                          className="text-lg sm:text-xl font-bold text-gray-100"
-                        >
-                          {feature.title}
-                        </h3>
+                      <div
+                        className={`p-3 rounded-lg bg-gradient-to-br ${feature.gradient} shadow-lg`}
+                      >
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-100">
+                        {feature.title}
+                      </h3>
                     </div>
-                    <p
-                        className="leading-relaxed text-gray-300 mt-4"
-                    >
-                        {feature.description}
+                    <p className="leading-relaxed text-gray-300 mt-4">
+                      {feature.description}
                     </p>
                   </Card>
                 );
@@ -221,9 +195,7 @@ const HomePageContent = () => {
                 <h3 className="text-2xl sm:text-3xl font-bold mb-4 primary-gradient-text">
                   Ready to Start Learning?
                 </h3>
-                <p
-                  className="text-lg sm:text-xl mb-8 leading-relaxed text-gray-300"
-                >
+                <p className="text-lg sm:text-xl mb-8 leading-relaxed text-gray-300">
                   Join thousands of students and teachers already using
                   StenoMaster to master stenography
                 </p>
@@ -240,12 +212,8 @@ const HomePageContent = () => {
         </section>
       </main>
 
-      <footer
-        className="border-t border-white/10 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-transparent"
-      >
-        <span
-          className="justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message text-gray-400"
-        >
+      <footer className="border-t border-white/10 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-transparent">
+        <span className="justify-center items-center text-lg sm:text-xl font-bold w-full flex gap-1 flex-col sm:flex-row copyright-message text-gray-400">
           {year && <p>Copyright © {year}</p>}
           <p className="font-normal hidden sm:flex">|</p>
           <p>Powered By Shubham Mishra</p>
@@ -255,8 +223,7 @@ const HomePageContent = () => {
   );
 };
 
-
-function HomePageWithSuspense() {
+export default function Home() {
     const { isAuthenticated, loading } = useAuth();
     const router = useAppRouter();
 
@@ -269,14 +236,9 @@ function HomePageWithSuspense() {
     if (loading || isAuthenticated) {
         return null; // Or a loading spinner
     }
-
-    return (
-        <Suspense fallback={null}>
-            <HomePageContent />
-        </Suspense>
-    )
-}
-
-export default function Home() {
-    return <HomePageWithSuspense />
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
+  );
 }
