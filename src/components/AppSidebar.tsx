@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -24,6 +23,7 @@ import Logo from './logo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import UserButton from './UserButton';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 const teacherLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -43,6 +43,7 @@ const MobileSidebar = () => {
     const { user } = useAuth();
     const { openMobile, setOpenMobile } = useSidebar();
     const pathname = usePathname();
+    const router = useAppRouter();
 
     const links = user?.role === 'teacher' ? teacherLinks : studentLinks;
 
@@ -51,6 +52,11 @@ const MobileSidebar = () => {
             return pathname === '/dashboard';
         }
         return pathname.startsWith(href);
+    }
+    
+    const handleNavigation = (href: string) => {
+        router.push(href);
+        setOpenMobile(false);
     }
 
     return (
@@ -62,27 +68,23 @@ const MobileSidebar = () => {
                  <SheetHeader className="p-2 border-b">
                     <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
                     <SheetDescription className='sr-only'>Main navigation for StenoMaster</SheetDescription>
-                     <Link
-                        href="/dashboard"
+                     <div
                         className="flex items-center"
-                        onClick={() => setOpenMobile(false)}
+                        onClick={() => handleNavigation('/dashboard')}
                     >
                         <Logo />
-                    </Link>
+                    </div>
                 </SheetHeader>
                 <SidebarContent className="p-2">
                     <SidebarMenu>
                     {links.map((link) => (
                         <SidebarMenuItem key={link.href}>
                             <SidebarMenuButton
-                                asChild
                                 isActive={isLinkActive(link.href)}
-                                onClick={() => setOpenMobile(false)}
+                                onClick={() => handleNavigation(link.href)}
                             >
-                                <Link href={link.href}>
-                                    <link.icon />
-                                    <span>{link.label}</span>
-                                </Link>
+                                <link.icon />
+                                <span>{link.label}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ))}
@@ -100,6 +102,7 @@ export default function AppSidebar() {
   const { user } = useAuth();
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const router = useAppRouter();
   
   if (isMobile) {
     return <MobileSidebar />;
@@ -133,14 +136,12 @@ export default function AppSidebar() {
           {links.map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
-                asChild
                 isActive={isLinkActive(link.href)}
                 tooltip={link.label}
+                onClick={() => router.push(link.href)}
               >
-                  <Link href={link.href}>
-                    <link.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
-                  </Link>
+                  <link.icon />
+                  <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
