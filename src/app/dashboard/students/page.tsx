@@ -8,14 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -194,23 +186,20 @@ export default function StudentsPage() {
         </CardHeader>
       </Card>
       <Card className="flex-1 min-h-0">
-        <CardContent className="h-full p-0">
+        <CardContent className="h-full p-6 flex flex-col">
+            <div className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                <div>Student</div>
+                <div>Classes</div>
+                <div>Avg. WPM</div>
+                <div>Avg. Accuracy</div>
+                <div className="w-8"><span className="sr-only">Actions</span></div>
+            </div>
             <ScrollArea className="h-full">
-            <Table>
-                <TableHeader className="sticky top-0 bg-card z-10">
-                <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead>Avg. WPM</TableHead>
-                    <TableHead>Avg. Accuracy</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
+                <div className="divide-y divide-border">
                 {students.map(student => {
                     const studentSubmissions = submissions.filter(s => s.studentId === student.id);
                     const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
-                    const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N_A';
+                    const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N/A';
                     const studentClasses = classes.filter(c => student.classIds.includes(c.id));
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1
@@ -218,28 +207,28 @@ export default function StudentsPage() {
                         : student.name.substring(0, 2);
 
                     return (
-                    <TableRow key={student.id}>
-                        <TableCell>
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                            <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                            <AvatarFallback>{studentInitials}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                            <p className="font-medium">{student.name}</p>
-                            <p className="text-sm text-muted-foreground">{student.email}</p>
+                    <div key={student.id} className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <Avatar>
+                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                                <AvatarFallback>{studentInitials}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                <p className="font-medium truncate">{student.name}</p>
+                                <p className="text-sm text-muted-foreground truncate">{student.email}</p>
+                                </div>
                             </div>
                         </div>
-                        </TableCell>
-                        <TableCell>
+                        <div>
                             <div className="flex flex-wrap gap-1">
                                 {studentClasses.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)}
                                 {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
                             </div>
-                        </TableCell>
-                        <TableCell>{avgWpm}</TableCell>
-                        <TableCell>{avgAccuracy}</TableCell>
-                        <TableCell>
+                        </div>
+                        <div className="truncate">{avgWpm}</div>
+                        <div className="truncate">{avgAccuracy}</div>
+                        <div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -284,13 +273,17 @@ export default function StudentsPage() {
                             </AlertDialog>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
+                        </div>
+                    </div>
                     );
                 })}
-                </TableBody>
-            </Table>
+                </div>
             </ScrollArea>
+             {students.length === 0 && (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                    No students have been created yet.
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>

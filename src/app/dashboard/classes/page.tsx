@@ -11,14 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
@@ -85,67 +77,69 @@ export default function ClassesPage() {
           </CardHeader>
         </Card>
         <Card className="flex-1 min-h-0">
-            <CardContent className="h-full p-0">
+            <CardContent className="h-full p-6 flex flex-col">
+                <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                    <div>Class Name</div>
+                    <div>Students</div>
+                    <div>Enrolled</div>
+                    <div className="w-8"><span className="sr-only">Actions</span></div>
+                </div>
                 <ScrollArea className="h-full">
-                <Table>
-                <TableHeader className="sticky top-0 bg-card z-10">
-                    <TableRow>
-                    <TableHead>Class Name</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Enrolled</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {teacherClasses.map(cls => (
-                    <TableRow key={cls.id}>
-                        <TableCell className="font-medium">{cls.name}</TableCell>
-                        <TableCell>
-                        <div className="flex -space-x-2 overflow-hidden">
-                            {cls.studentIds.slice(0, 5).map(studentId => {
-                                const student = students.find(s => s.id === studentId);
-                                if (!student) return null;
-                                const nameParts = student.name.split(' ');
-                                const studentInitials = nameParts.length > 1
-                                    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-                                    : student.name.substring(0, 2);
-                                return (
-                                    <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                        <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                                        <AvatarFallback>{studentInitials}</AvatarFallback>
-                                    </Avatar>
-                                )
-                            })}
-                            {cls.studentIds.length > 5 && (
-                                <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                                    <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
-                                </Avatar>
-                            )}
+                    <div className="divide-y divide-border">
+                        {teacherClasses.map(cls => (
+                        <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
+                            <div className="font-medium truncate">{cls.name}</div>
+                            <div>
+                                <div className="flex -space-x-2 overflow-hidden">
+                                    {cls.studentIds.slice(0, 5).map(studentId => {
+                                        const student = students.find(s => s.id === studentId);
+                                        if (!student) return null;
+                                        const nameParts = student.name.split(' ');
+                                        const studentInitials = nameParts.length > 1
+                                            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                                            : student.name.substring(0, 2);
+                                        return (
+                                            <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                                                <AvatarFallback>{studentInitials}</AvatarFallback>
+                                            </Avatar>
+                                        )
+                                    })}
+                                    {cls.studentIds.length > 5 && (
+                                        <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                                            <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    {cls.studentIds.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
+                                </div>
+                            </div>
+                            <div>
+                                <Badge variant="outline">{cls.studentIds.length} students</Badge>
+                            </div>
+                            <div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant="outline">{cls.studentIds.length} students</Badge>
-                        </TableCell>
-                        <TableCell>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
+                        ))}
+                    </div>
                 </ScrollArea>
+                 {teacherClasses.length === 0 && (
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                        You haven't created any classes yet.
+                    </div>
+                )}
           </CardContent>
         </Card>
       </div>

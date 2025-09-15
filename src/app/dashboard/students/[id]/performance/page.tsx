@@ -13,14 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -121,56 +113,52 @@ export default function StudentPerformancePage() {
         <Card className="flex-1 min-h-0">
             <CardHeader>
                 <CardTitle>Submission History</CardTitle>
-                <CardDescription>Click on a row to review the submission details.</CardDescription>
+                <CardDescription>Click on a submission to review the details.</CardDescription>
             </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-26rem)]">
-                <Table>
-                <TableHeader className="sticky top-0 bg-card z-10">
-                    <TableRow>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Submitted On</TableHead>
-                    <TableHead>WPM</TableHead>
-                    <TableHead>Accuracy</TableHead>
-                    <TableHead>Mistakes</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
+          <CardContent className="h-[calc(100%-7.5rem)] flex flex-col">
+             <div className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                <div>Assignment</div>
+                <div>Type</div>
+                <div>Submitted On</div>
+                <div className="text-right">WPM</div>
+                <div className="text-right">Accuracy</div>
+                <div className="text-right">Mistakes</div>
+            </div>
+            <ScrollArea className="h-full">
+                <div className="divide-y divide-border">
                     {studentSubmissions.map((submission) => {
                     const assignment = getAssignmentForSubmission(submission);
                     const isPractice = assignment.id.startsWith('practice-');
                     return (
-                        <TableRow
-                        key={submission.id}
-                        onClick={() => handleRowClick(submission)}
-                        className="cursor-pointer"
+                        <div
+                            key={submission.id}
+                            onClick={() => handleRowClick(submission)}
+                            className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
                         >
-                        <TableCell className="font-medium">{assignment.title}</TableCell>
-                        <TableCell>
-                            {isPractice ? (
-                            <Badge variant="secondary" className="items-center">
-                                <BookOpen className="mr-1 h-3 w-3" /> Practice
-                            </Badge>
-                            ) : (
-                            <Badge variant="default" className="bg-green-600 items-center">
-                                <CheckCircle className="mr-1 h-3 w-3" /> Assignment
-                            </Badge>
-                            )}
-                        </TableCell>
-                        <TableCell>{format(new Date(submission.submittedAt), 'PPp')}</TableCell>
-                        <TableCell className="font-semibold">{submission.wpm}</TableCell>
-                        <TableCell>{submission.accuracy.toFixed(1)}%</TableCell>
-                        <TableCell>{submission.mistakes}</TableCell>
-                        </TableRow>
+                            <div className="font-medium truncate">{assignment.title}</div>
+                            <div>
+                                {isPractice ? (
+                                <Badge variant="secondary" className="items-center">
+                                    <BookOpen className="mr-1 h-3 w-3" /> Practice
+                                </Badge>
+                                ) : (
+                                <Badge variant="default" className="bg-green-600 items-center">
+                                    <CheckCircle className="mr-1 h-3 w-3" /> Assignment
+                                </Badge>
+                                )}
+                            </div>
+                            <div>{format(new Date(submission.submittedAt), 'PPp')}</div>
+                            <div className="font-semibold text-right">{submission.wpm}</div>
+                            <div className="text-right">{submission.accuracy.toFixed(1)}%</div>
+                            <div className="text-right">{submission.mistakes}</div>
+                        </div>
                     );
                     })}
-                </TableBody>
-                </Table>
+                </div>
                 {studentSubmissions.length === 0 && (
-                    <p className="text-center text-muted-foreground mt-8">
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
                         This student has not submitted any assignments or practice tests yet.
-                    </p>
+                    </div>
                 )}
             </ScrollArea>
           </CardContent>

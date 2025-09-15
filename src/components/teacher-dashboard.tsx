@@ -9,14 +9,6 @@ import {
   CardDescription,
 } from './ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from './ui/table';
-import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -30,6 +22,7 @@ import { useAssignments } from '@/hooks/use-assignments';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { useMemo } from 'react';
+import { ScrollArea } from './ui/scroll-area';
 
 const chartConfig = {
   avgWpm: {
@@ -146,34 +139,32 @@ export default function TeacherDashboard() {
           </CardHeader>
           <CardContent>
             {recentSubmissions.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead className="text-right">WPM</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentSubmissions.map(sub => (
-                      <TableRow key={sub.id}>
-                          <TableCell>
-                              <div className="flex items-center gap-2">
-                                  <Avatar className="h-8 w-8">
-                                      <AvatarImage src={`https://avatar.vercel.sh/${sub.student?.email}.png`} />
-                                      <AvatarFallback>{sub.student?.name.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <span>{sub.student?.name}</span>
-                              </div>
-                          </TableCell>
-                          <TableCell className="truncate max-w-[120px]">{sub.assignment?.title}</TableCell>
-                          <TableCell className="text-right">
-                              <Badge variant={sub.wpm > 60 ? "default" : "secondary"}>{sub.wpm}</Badge>
-                          </TableCell>
-                      </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 text-sm font-semibold text-muted-foreground border-b pb-2">
+                        <div>Student</div>
+                        <div>Assignment</div>
+                        <div className="text-right">WPM</div>
+                    </div>
+                     <ScrollArea className="h-[200px]">
+                        <div className="divide-y divide-border">
+                            {recentSubmissions.map(sub => (
+                                <div key={sub.id} className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 py-3 items-center">
+                                    <div className="flex items-center gap-2 truncate">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={`https://avatar.vercel.sh/${sub.student?.email}.png`} />
+                                            <AvatarFallback>{sub.student?.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="truncate">{sub.student?.name}</span>
+                                    </div>
+                                    <div className="truncate">{sub.assignment?.title}</div>
+                                    <div className="text-right">
+                                        <Badge variant={sub.wpm > 60 ? "default" : "secondary"}>{sub.wpm}</Badge>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
             ) : (
               <div className="text-center text-muted-foreground p-8">No recent submissions.</div>
             )}

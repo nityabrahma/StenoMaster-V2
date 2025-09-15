@@ -8,14 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -75,31 +67,28 @@ function TeacherAssignments() {
             </CardHeader>
         </Card>
         <Card className="flex-1 min-h-0">
-            <CardContent className="h-full p-0">
+            <CardContent className="h-full p-6 flex flex-col">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                    <div>Title</div>
+                    <div>Class</div>
+                    <div>Due Date</div>
+                    <div>Submissions</div>
+                    <div className="w-8"><span className="sr-only">Actions</span></div>
+                </div>
                 <ScrollArea className="h-full">
-                    <Table>
-                        <TableHeader className="sticky top-0 bg-card z-10">
-                            <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Class</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Submissions</TableHead>
-                            <TableHead><span className="sr-only">Actions</span></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {teacherAssignments.map(assignment => {
-                            const assignmentSubmissions = submissions.filter(s => s.assignmentId === assignment.id);
-                            const assignmentClass = classes.find(c => c.id === assignment.classId);
-                            return (
-                                <TableRow key={assignment.id}>
-                                <TableCell className="font-medium">{assignment.title}</TableCell>
-                                <TableCell>{assignmentClass?.name}</TableCell>
-                                <TableCell>{format(new Date(assignment.deadline), 'PP')}</TableCell>
-                                <TableCell>
+                    <div className="divide-y divide-border">
+                        {teacherAssignments.map(assignment => {
+                        const assignmentSubmissions = submissions.filter(s => s.assignmentId === assignment.id);
+                        const assignmentClass = classes.find(c => c.id === assignment.classId);
+                        return (
+                            <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
+                                <div className="font-medium truncate">{assignment.title}</div>
+                                <div>{assignmentClass?.name}</div>
+                                <div>{format(new Date(assignment.deadline), 'PP')}</div>
+                                <div>
                                     <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
-                                </TableCell>
-                                <TableCell>
+                                </div>
+                                <div>
                                     <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -119,13 +108,17 @@ function TeacherAssignments() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                     </DropdownMenu>
-                                </TableCell>
-                                </TableRow>
-                            );
-                            })}
-                        </TableBody>
-                    </Table>
+                                </div>
+                            </div>
+                        );
+                        })}
+                    </div>
                 </ScrollArea>
+                 {teacherAssignments.length === 0 && (
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                        No assignments created yet.
+                    </div>
+                )}
             </CardContent>
         </Card>
     </div>
