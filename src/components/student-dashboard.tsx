@@ -6,14 +6,15 @@ import { useAuth } from '@/hooks/use-auth';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useStudents } from '@/hooks/use-students';
 import { Button } from './ui/button';
-import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { BookOpen } from 'lucide-react';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { students } = useStudents();
   const { assignments, submissions } = useAssignments();
+  const router = useAppRouter();
   
   if (!user || user.role !== 'student') return null;
 
@@ -66,8 +67,8 @@ export default function StudentDashboard() {
             <p className="text-sm text-blue-100">Take a random typing test to warm up.</p>
         </CardContent>
         <CardFooter>
-            <Button variant="secondary" asChild>
-            <Link href="/dashboard/typing-test">Start Typing Test</Link>
+            <Button variant="secondary" onClick={() => router.push('/dashboard/typing-test')}>
+                Start Typing Test
             </Button>
         </CardFooter>
       </Card>
@@ -90,9 +91,7 @@ export default function StudentDashboard() {
                   </div>
                 </CardContent>
                  <CardFooter>
-                    <Button asChild className="w-full">
-                        <Link href={`/dashboard/assignments/${assignment.id}`}>Start Assignment</Link>
-                    </Button>
+                    <Button className="w-full" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>Start Assignment</Button>
                  </CardFooter>
               </Card>
             ))}

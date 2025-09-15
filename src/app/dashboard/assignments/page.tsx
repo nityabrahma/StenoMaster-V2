@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { MoreHorizontal, PlusCircle, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -115,6 +114,7 @@ function TeacherAssignments() {
 // Student's View
 function StudentAssignments() {
   const { user } = useAuth();
+  const router = useAppRouter();
   const { students } = useStudents();
   const { assignments, submissions } = useAssignments();
   
@@ -150,8 +150,7 @@ function StudentAssignments() {
             {pendingAssignments.map((assignment) => {
               const isPastDue = new Date(assignment.deadline) < new Date();
               return (
-                <Link key={assignment.id} href={`/dashboard/assignments/${assignment.id}`} passHref>
-                  <Card className="flex flex-col h-full cursor-pointer">
+                <Card key={assignment.id} className="flex flex-col h-full cursor-pointer" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
@@ -169,12 +168,11 @@ function StudentAssignments() {
                       <p className="text-sm text-muted-foreground">Click to start this assignment.</p>
                     </CardContent>
                     <CardFooter>
-                      <Button asChild className="w-full">
+                      <Button className="w-full" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
                         <span>{isPastDue ? 'Submit Late' : 'Start Assignment'}</span>
                       </Button>
                     </CardFooter>
                   </Card>
-                </Link>
               );
             })}
           </div>

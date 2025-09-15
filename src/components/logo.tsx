@@ -1,12 +1,14 @@
+
 'use client';
 import { Feather } from 'lucide-react';
-import Link from 'next/link';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 export default function Logo() {
+  const router = useAppRouter();
   return (
-    <Link href="/" className="flex items-center justify-center gap-2">
+    <div onClick={() => router.push('/')} className="flex items-center justify-center gap-2 cursor-pointer">
         <Feather className="w-8 h-8 text-primary" />
         <span className="text-2xl font-bold font-headline">StenoMaster</span>
-    </Link>
+    </div>
   );
 }

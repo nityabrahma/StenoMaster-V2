@@ -9,7 +9,6 @@ import {
   LogOut,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -25,6 +24,7 @@ import {
 import Logo from './logo';
 import { useSidebar } from './ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 const teacherLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -43,6 +43,7 @@ export default function AppSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const { isMobile } = useSidebar();
+  const router = useAppRouter();
 
   if (!user) return null;
 
@@ -77,9 +78,9 @@ export default function AppSidebar() {
             return (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
-                asChild
                 isActive={active}
                 tooltip={link.label}
+                onClick={() => router.push(link.href)}
                 className={cn(
                     "rounded-2xl transition-all duration-300",
                     active 
@@ -93,10 +94,8 @@ export default function AppSidebar() {
                   } : {}
                 }
               >
-                <Link href={link.href}>
                   <link.icon />
                   <span>{link.label}</span>
-                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )})}
@@ -118,4 +117,3 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
-
