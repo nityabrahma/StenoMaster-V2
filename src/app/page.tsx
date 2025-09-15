@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
-import Logo from '@/components/logo';
+import LogoStatic from '@/components/logo-static';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Award,
@@ -48,7 +48,7 @@ function LoginDialogContent({
       >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center">
-            <Logo />
+            <LogoStatic />
           </DialogTitle>
         </DialogHeader>
         <LoginForm />
@@ -132,7 +132,7 @@ const HomePageContent = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3 justify-center">
-              <Logo />
+              <LogoStatic />
             </div>
             <div className="flex items-center space-x-4">
               <Suspense fallback={<Button disabled>Loading...</Button>}>
