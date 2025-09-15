@@ -28,6 +28,7 @@ import { BookOpen, CheckCircle } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Submission, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function StudentPerformancePage() {
   const params = useParams();
@@ -102,8 +103,8 @@ export default function StudentPerformancePage() {
           assignment={selectedAssignment}
         />
       )}
-      <div className="container mx-auto p-4 md:p-8">
-        <Card>
+      <div className="container mx-auto p-4 md:p-8 h-full flex flex-col gap-4">
+        <Card className="flex-shrink-0">
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
@@ -116,55 +117,62 @@ export default function StudentPerformancePage() {
               </div>
             </div>
           </CardHeader>
+        </Card>
+        <Card className="flex-1 min-h-0">
+            <CardHeader>
+                <CardTitle>Submission History</CardTitle>
+                <CardDescription>Click on a row to review the submission details.</CardDescription>
+            </CardHeader>
           <CardContent>
-            <h2 className="text-2xl font-bold font-headline mb-4">Submission History</h2>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Assignment</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Submitted On</TableHead>
-                  <TableHead>WPM</TableHead>
-                  <TableHead>Accuracy</TableHead>
-                  <TableHead>Mistakes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentSubmissions.map((submission) => {
-                  const assignment = getAssignmentForSubmission(submission);
-                  const isPractice = assignment.id.startsWith('practice-');
-                  return (
-                    <TableRow
-                      key={submission.id}
-                      onClick={() => handleRowClick(submission)}
-                      className="cursor-pointer"
-                    >
-                      <TableCell className="font-medium">{assignment.title}</TableCell>
-                      <TableCell>
-                        {isPractice ? (
-                          <Badge variant="secondary" className="items-center">
-                            <BookOpen className="mr-1 h-3 w-3" /> Practice
-                          </Badge>
-                        ) : (
-                          <Badge variant="default" className="bg-green-600 items-center">
-                            <CheckCircle className="mr-1 h-3 w-3" /> Assignment
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{format(new Date(submission.submittedAt), 'PPp')}</TableCell>
-                      <TableCell className="font-semibold">{submission.wpm}</TableCell>
-                      <TableCell>{submission.accuracy.toFixed(1)}%</TableCell>
-                      <TableCell>{submission.mistakes}</TableCell>
+            <ScrollArea className="h-[calc(100vh-26rem)]">
+                <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                    <TableRow>
+                    <TableHead>Assignment</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Submitted On</TableHead>
+                    <TableHead>WPM</TableHead>
+                    <TableHead>Accuracy</TableHead>
+                    <TableHead>Mistakes</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            {studentSubmissions.length === 0 && (
-                <p className="text-center text-muted-foreground mt-8">
-                    This student has not submitted any assignments or practice tests yet.
-                </p>
-            )}
+                </TableHeader>
+                <TableBody>
+                    {studentSubmissions.map((submission) => {
+                    const assignment = getAssignmentForSubmission(submission);
+                    const isPractice = assignment.id.startsWith('practice-');
+                    return (
+                        <TableRow
+                        key={submission.id}
+                        onClick={() => handleRowClick(submission)}
+                        className="cursor-pointer"
+                        >
+                        <TableCell className="font-medium">{assignment.title}</TableCell>
+                        <TableCell>
+                            {isPractice ? (
+                            <Badge variant="secondary" className="items-center">
+                                <BookOpen className="mr-1 h-3 w-3" /> Practice
+                            </Badge>
+                            ) : (
+                            <Badge variant="default" className="bg-green-600 items-center">
+                                <CheckCircle className="mr-1 h-3 w-3" /> Assignment
+                            </Badge>
+                            )}
+                        </TableCell>
+                        <TableCell>{format(new Date(submission.submittedAt), 'PPp')}</TableCell>
+                        <TableCell className="font-semibold">{submission.wpm}</TableCell>
+                        <TableCell>{submission.accuracy.toFixed(1)}%</TableCell>
+                        <TableCell>{submission.mistakes}</TableCell>
+                        </TableRow>
+                    );
+                    })}
+                </TableBody>
+                </Table>
+                {studentSubmissions.length === 0 && (
+                    <p className="text-center text-muted-foreground mt-8">
+                        This student has not submitted any assignments or practice tests yet.
+                    </p>
+                )}
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>

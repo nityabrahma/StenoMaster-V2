@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -36,6 +35,7 @@ import { useState } from 'react';
 import type { Assignment, Submission } from '@/lib/types';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Teacher's View
 function TeacherAssignments() {
@@ -59,70 +59,76 @@ function TeacherAssignments() {
   };
   
   return (
-    <Card>
-        <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="font-headline text-2xl">Manage Assignments</CardTitle>
-                    <CardDescription>Create, view, and manage assignments for your classes.</CardDescription>
+    <div className="h-full flex flex-col gap-4">
+        <Card className="flex-shrink-0">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="font-headline text-2xl">Manage Assignments</CardTitle>
+                        <CardDescription>Create, view, and manage assignments for your classes.</CardDescription>
+                    </div>
+                    <Button onClick={() => router.push('/dashboard/assignments/new')}>
+                        <PlusCircle className="mr-2 h-4 w-4"/>
+                        New Assignment
+                    </Button>
                 </div>
-                <Button onClick={() => router.push('/dashboard/assignments/new')}>
-                    <PlusCircle className="mr-2 h-4 w-4"/>
-                    New Assignment
-                </Button>
-            </div>
-        </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Submissions</TableHead>
-              <TableHead><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teacherAssignments.map(assignment => {
-              const assignmentSubmissions = submissions.filter(s => s.assignmentId === assignment.id);
-              const assignmentClass = classes.find(c => c.id === assignment.classId);
-              return (
-                <TableRow key={assignment.id}>
-                  <TableCell className="font-medium">{assignment.title}</TableCell>
-                  <TableCell>{assignmentClass?.name}</TableCell>
-                  <TableCell>{format(new Date(assignment.deadline), 'PP')}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View Submissions</DropdownMenuItem>
-                        <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDelete(assignment.id, assignment.title)}
-                        >
-                            Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </CardHeader>
+        </Card>
+        <Card className="flex-1 min-h-0">
+            <CardContent className="h-full p-0">
+                <ScrollArea className="h-full">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                            <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Class</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Submissions</TableHead>
+                            <TableHead><span className="sr-only">Actions</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {teacherAssignments.map(assignment => {
+                            const assignmentSubmissions = submissions.filter(s => s.assignmentId === assignment.id);
+                            const assignmentClass = classes.find(c => c.id === assignment.classId);
+                            return (
+                                <TableRow key={assignment.id}>
+                                <TableCell className="font-medium">{assignment.title}</TableCell>
+                                <TableCell>{assignmentClass?.name}</TableCell>
+                                <TableCell>{format(new Date(assignment.deadline), 'PP')}</TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem>View Submissions</DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                            className="text-destructive"
+                                            onClick={() => handleDelete(assignment.id, assignment.title)}
+                                        >
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                                </TableRow>
+                            );
+                            })}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    </div>
   );
 }
 
@@ -152,94 +158,92 @@ function StudentAssignments() {
   };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold font-headline mb-2">My Assignments</h1>
-      <p className="text-muted-foreground mb-6">Here are all your assignments. Keep up the great work!</p>
+    <div className="h-full flex flex-col gap-4">
+      <Card className="flex-shrink-0">
+          <CardHeader>
+              <h1 className="text-3xl font-bold font-headline">My Assignments</h1>
+              <p className="text-muted-foreground">Here are all your assignments. Keep up the great work!</p>
+          </CardHeader>
+      </Card>
       
-      {/* Pending Assignments */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold font-headline mb-4">Pending</h2>
-        {pendingAssignments.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {pendingAssignments.map((assignment) => {
-              const isPastDue = new Date(assignment.deadline) < new Date();
-              return (
-                <Card key={assignment.id} className="flex flex-col h-full cursor-pointer" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
-                        {isPastDue ? (
-                          <Badge variant="destructive">Past Due</Badge>
-                        ) : (
-                          <Badge variant="secondary">Pending</Badge>
-                        )}
-                      </div>
-                      <CardDescription>
-                        Due {format(new Date(assignment.deadline), 'PPp')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-sm text-muted-foreground">Click to start this assignment.</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
-                        <span>{isPastDue ? 'Submit Late' : 'Start Assignment'}</span>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">No pending assignments. Great job!</p>
-        )}
-      </div>
+      <ScrollArea className="flex-1">
+        <div className="pr-4">
+            {/* Pending Assignments */}
+            <div className="mb-12">
+                <h2 className="text-2xl font-bold font-headline mb-4">Pending</h2>
+                {pendingAssignments.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {pendingAssignments.map((assignment) => {
+                    const isPastDue = new Date(assignment.deadline) < new Date();
+                    return (
+                        <Card key={assignment.id} className="flex flex-col h-full cursor-pointer" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
+                            <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
+                                {isPastDue ? (
+                                <Badge variant="destructive">Past Due</Badge>
+                                ) : (
+                                <Badge variant="secondary">Pending</Badge>
+                                )}
+                            </div>
+                            <CardDescription>
+                                Due {format(new Date(assignment.deadline), 'PPp')}
+                            </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                            <p className="text-sm text-muted-foreground">Click to start this assignment.</p>
+                            </CardContent>
+                        </Card>
+                    );
+                    })}
+                </div>
+                ) : (
+                <p className="text-muted-foreground">No pending assignments. Great job!</p>
+                )}
+            </div>
 
-      {/* Completed Assignments */}
-      <div>
-        <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
-        {mySubmissions.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {mySubmissions.map((submission) => {
-              const assignment = assignments.find(a => a.id === submission.assignmentId);
-              const isDeleted = !assignment;
+            {/* Completed Assignments */}
+            <div>
+                <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
+                {mySubmissions.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {mySubmissions.map((submission) => {
+                    const assignment = assignments.find(a => a.id === submission.assignmentId);
+                    const isDeleted = !assignment;
 
-              return (
-                <Card 
-                  key={submission.id} 
-                  onClick={() => handleCardClick(assignment!, submission)} 
-                  className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="truncate pr-4">{assignment?.title || 'Deleted Assignment'}</CardTitle>
-                        <Badge variant="default" className="bg-green-600">
-                          <CheckCircle className="mr-1 h-3 w-3" /> Completed
-                        </Badge>
-                    </div>
-                    <CardDescription>
-                      Submitted {format(new Date(submission.submittedAt), 'PP')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <div className="text-sm space-y-2">
-                        <p><span className="font-semibold">Score:</span> {submission.wpm} WPM</p>
-                        <p><span className="font-semibold">Accuracy:</span> {submission.accuracy.toFixed(1)}%</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <p className="text-xs text-muted-foreground w-full text-center">
-                        {isDeleted ? 'Original assignment has been deleted' : 'Click to review submission'}
-                    </p>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">You haven't completed any assignments yet.</p>
-        )}
-      </div>
+                    return (
+                        <Card 
+                        key={submission.id} 
+                        onClick={() => handleCardClick(assignment!, submission)} 
+                        className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
+                        >
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="truncate pr-4">{assignment?.title || 'Deleted Assignment'}</CardTitle>
+                                <Badge variant="default" className="bg-green-600">
+                                <CheckCircle className="mr-1 h-3 w-3" /> Completed
+                                </Badge>
+                            </div>
+                            <CardDescription>
+                            Submitted {format(new Date(submission.submittedAt), 'PP')}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                            <div className="text-sm space-y-2">
+                                <p><span className="font-semibold">Score:</span> {submission.wpm} WPM</p>
+                                <p><span className="font-semibold">Accuracy:</span> {submission.accuracy.toFixed(1)}%</p>
+                            </div>
+                        </CardContent>
+                        </Card>
+                    );
+                    })}
+                </div>
+                ) : (
+                <p className="text-muted-foreground">You haven't completed any assignments yet.</p>
+                )}
+            </div>
+        </div>
+      </ScrollArea>
 
       {selectedSubmission && selectedAssignment && (
         <SubmissionReviewModal
@@ -261,7 +265,7 @@ export default function AssignmentsPage() {
   if (!user) return null;
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
+    <div className="h-full p-4 md:p-8">
       {user.role === 'teacher' ? <TeacherAssignments /> : <StudentAssignments />}
     </div>
   );

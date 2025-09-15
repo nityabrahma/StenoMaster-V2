@@ -34,6 +34,7 @@ import { useState } from 'react';
 import CreateClassModal from '@/components/CreateClassModal';
 import EditClassModal from '@/components/EditClassModal';
 import ManageStudentsModal from '@/components/ManageStudentsModal';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ClassesPage() {
   const { user } = useAuth();
@@ -68,8 +69,8 @@ export default function ClassesPage() {
           classToManage={managingStudentsClass}
         />
       )}
-      <div className="container mx-auto p-4 md:p-8">
-        <Card>
+      <div className="container mx-auto p-4 md:p-8 h-full flex flex-col gap-4">
+        <Card className="flex-shrink-0">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -82,65 +83,69 @@ export default function ClassesPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class Name</TableHead>
-                  <TableHead>Students</TableHead>
-                  <TableHead>Enrolled</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teacherClasses.map(cls => (
-                  <TableRow key={cls.id}>
-                    <TableCell className="font-medium">{cls.name}</TableCell>
-                    <TableCell>
-                      <div className="flex -space-x-2 overflow-hidden">
-                          {cls.studentIds.slice(0, 5).map(studentId => {
-                              const student = students.find(s => s.id === studentId);
-                              if (!student) return null;
-                              const nameParts = student.name.split(' ');
-                              const studentInitials = nameParts.length > 1
-                                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-                                : student.name.substring(0, 2);
-                              return (
-                                  <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                      <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                                      <AvatarFallback>{studentInitials}</AvatarFallback>
-                                  </Avatar>
-                              )
-                          })}
-                          {cls.studentIds.length > 5 && (
-                              <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                                  <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
-                              </Avatar>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant="outline">{cls.studentIds.length} students</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        </Card>
+        <Card className="flex-1 min-h-0">
+            <CardContent className="h-full p-0">
+                <ScrollArea className="h-full">
+                <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                    <TableRow>
+                    <TableHead>Class Name</TableHead>
+                    <TableHead>Students</TableHead>
+                    <TableHead>Enrolled</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {teacherClasses.map(cls => (
+                    <TableRow key={cls.id}>
+                        <TableCell className="font-medium">{cls.name}</TableCell>
+                        <TableCell>
+                        <div className="flex -space-x-2 overflow-hidden">
+                            {cls.studentIds.slice(0, 5).map(studentId => {
+                                const student = students.find(s => s.id === studentId);
+                                if (!student) return null;
+                                const nameParts = student.name.split(' ');
+                                const studentInitials = nameParts.length > 1
+                                    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                                    : student.name.substring(0, 2);
+                                return (
+                                    <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                                        <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                                        <AvatarFallback>{studentInitials}</AvatarFallback>
+                                    </Avatar>
+                                )
+                            })}
+                            {cls.studentIds.length > 5 && (
+                                <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                                    <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
+                                </Avatar>
+                            )}
+                        </div>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant="outline">{cls.studentIds.length} students</Badge>
+                        </TableCell>
+                        <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+                </ScrollArea>
           </CardContent>
         </Card>
       </div>
