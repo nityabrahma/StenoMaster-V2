@@ -25,6 +25,8 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+  } from '@/components/ui/dialog';
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -34,7 +36,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-  } from '@/components/ui/dialog';
+  } from '@/components/ui/alert-dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
@@ -204,7 +206,7 @@ export default function StudentsPage() {
               {students.map(student => {
                 const studentSubmissions = submissions.filter(s => s.studentId === student.id);
                 const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
-                const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N/A';
+                const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N_A';
                 const studentClasses = classes.filter(c => student.classIds.includes(c.id));
                 return (
                   <TableRow key={student.id}>
