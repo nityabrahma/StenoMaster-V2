@@ -58,6 +58,7 @@ import { useAssignments } from '@/hooks/use-assignments';
 import { useAppRouter } from '@/hooks/use-app-router';
 import AssignStudentModal from '@/components/AssignStudentModal';
 import type { Student } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function CreateStudentDialog() {
     const { signup } = useAuth();
@@ -180,8 +181,8 @@ export default function StudentsPage() {
             onAssignSuccess={handleAssignSuccess}
         />
     )}
-    <div className="container mx-auto p-4 md:p-8">
-      <Card>
+    <div className="container mx-auto p-4 md:p-8 h-full flex flex-col gap-4">
+      <Card className="flex-shrink-0">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -191,101 +192,105 @@ export default function StudentsPage() {
             <CreateStudentDialog />
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Classes</TableHead>
-                <TableHead>Avg. WPM</TableHead>
-                <TableHead>Avg. Accuracy</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map(student => {
-                const studentSubmissions = submissions.filter(s => s.studentId === student.id);
-                const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
-                const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N_A';
-                const studentClasses = classes.filter(c => student.classIds.includes(c.id));
-                const nameParts = student.name.split(' ');
-                const studentInitials = nameParts.length > 1
-                    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-                    : student.name.substring(0, 2);
+      </Card>
+      <Card className="flex-1 min-h-0">
+        <CardContent className="h-full p-0">
+            <ScrollArea className="h-full">
+            <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Classes</TableHead>
+                    <TableHead>Avg. WPM</TableHead>
+                    <TableHead>Avg. Accuracy</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {students.map(student => {
+                    const studentSubmissions = submissions.filter(s => s.studentId === student.id);
+                    const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
+                    const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N_A';
+                    const studentClasses = classes.filter(c => student.classIds.includes(c.id));
+                    const nameParts = student.name.split(' ');
+                    const studentInitials = nameParts.length > 1
+                        ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                        : student.name.substring(0, 2);
 
-                return (
-                  <TableRow key={student.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                          <AvatarFallback>{studentInitials}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-muted-foreground">{student.email}</p>
+                    return (
+                    <TableRow key={student.id}>
+                        <TableCell>
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                            <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                            <AvatarFallback>{studentInitials}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                            <p className="font-medium">{student.name}</p>
+                            <p className="text-sm text-muted-foreground">{student.email}</p>
+                            </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                            {studentClasses.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)}
-                            {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
-                        </div>
-                    </TableCell>
-                    <TableCell>{avgWpm}</TableCell>
-                    <TableCell>{avgAccuracy}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
-                            View Performance
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
-                            Assign to Class
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Student
-                                </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the student's
-                                    account and remove all their data.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="bg-destructive hover:bg-destructive/90"
-                                    onClick={() => handleDeleteStudent(student.id)}
-                                >
-                                    Yes, delete student
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                                {studentClasses.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)}
+                                {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
+                            </div>
+                        </TableCell>
+                        <TableCell>{avgWpm}</TableCell>
+                        <TableCell>{avgAccuracy}</TableCell>
+                        <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
+                                View Performance
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
+                                Assign to Class
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Student
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the student's
+                                        account and remove all their data.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        className="bg-destructive hover:bg-destructive/90"
+                                        onClick={() => handleDeleteStudent(student.id)}
+                                    >
+                                        Yes, delete student
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                    );
+                })}
+                </TableBody>
+            </Table>
+            </ScrollArea>
         </CardContent>
       </Card>
     </div>
