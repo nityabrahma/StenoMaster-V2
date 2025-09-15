@@ -80,8 +80,8 @@ export default function ClassesPage() {
             <CardContent className="h-full p-6 flex flex-col">
                 <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
                     <div>Class Name</div>
-                    <div>Students</div>
-                    <div>Enrolled</div>
+                    <div className="text-center">Students</div>
+                    <div className="text-center">Enrolled</div>
                     <div className="w-8"><span className="sr-only">Actions</span></div>
                 </div>
                 <ScrollArea className="h-full">
@@ -89,7 +89,7 @@ export default function ClassesPage() {
                         {teacherClasses.map(cls => (
                         <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
                             <div className="font-medium truncate">{cls.name}</div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex justify-center">
                                 <div className="flex -space-x-2 overflow-hidden">
                                     {cls.studentIds.slice(0, 5).map(studentId => {
                                         const student = students.find(s => s.id === studentId);
@@ -113,10 +113,10 @@ export default function ClassesPage() {
                                     {cls.studentIds.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
                                 </div>
                             </div>
-                            <div>
+                            <div className="text-center">
                                 <Badge variant="outline">{cls.studentIds.length} students</Badge>
                             </div>
-                            <div>
+                            <div className="flex justify-center">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button aria-haspopup="true" size="icon" variant="ghost">

@@ -70,9 +70,9 @@ function TeacherAssignments() {
             <CardContent className="h-full p-6 flex flex-col">
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
                     <div>Title</div>
-                    <div>Class</div>
-                    <div>Due Date</div>
-                    <div>Submissions</div>
+                    <div className="text-center">Class</div>
+                    <div className="text-center">Due Date</div>
+                    <div className="text-center">Submissions</div>
                     <div className="w-8"><span className="sr-only">Actions</span></div>
                 </div>
                 <ScrollArea className="h-full">
@@ -83,12 +83,12 @@ function TeacherAssignments() {
                         return (
                             <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
                                 <div className="font-medium truncate">{assignment.title}</div>
-                                <div className="truncate">{assignmentClass?.name}</div>
-                                <div className="truncate">{format(new Date(assignment.deadline), 'PP')}</div>
-                                <div>
+                                <div className="truncate text-center">{assignmentClass?.name}</div>
+                                <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
+                                <div className="text-center">
                                     <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
                                 </div>
-                                <div>
+                                <div className="flex justify-center">
                                     <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button aria-haspopup="true" size="icon" variant="ghost">

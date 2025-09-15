@@ -118,8 +118,8 @@ export default function StudentPerformancePage() {
           <CardContent className="h-[calc(100%-7.5rem)] flex flex-col">
              <div className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
                 <div>Assignment</div>
-                <div>Type</div>
-                <div>Submitted On</div>
+                <div className="text-center">Type</div>
+                <div className="text-center">Submitted On</div>
                 <div className="text-right">WPM</div>
                 <div className="text-right">Accuracy</div>
                 <div className="text-right">Mistakes</div>
@@ -136,7 +136,7 @@ export default function StudentPerformancePage() {
                             className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
                         >
                             <div className="font-medium truncate">{assignment.title}</div>
-                            <div>
+                            <div className="text-center">
                                 {isPractice ? (
                                 <Badge variant="secondary" className="items-center">
                                     <BookOpen className="mr-1 h-3 w-3" /> Practice
@@ -147,7 +147,7 @@ export default function StudentPerformancePage() {
                                 </Badge>
                                 )}
                             </div>
-                            <div className="truncate">{format(new Date(submission.submittedAt), 'PPp')}</div>
+                            <div className="truncate text-center">{format(new Date(submission.submittedAt), 'PPp')}</div>
                             <div className="font-semibold text-right">{submission.wpm}</div>
                             <div className="text-right">{submission.accuracy.toFixed(1)}%</div>
                             <div className="text-right">{submission.mistakes}</div>
