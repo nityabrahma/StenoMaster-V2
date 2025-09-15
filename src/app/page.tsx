@@ -59,7 +59,7 @@ function LoginDialogContent({
 
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isAuthenticated, user, firstLoadDone } = useAuth();
+  const { isAuthenticated, firstLoadDone } = useAuth();
   const router = useAppRouter();
   const [visible, setVisible] = useState(false);
   
@@ -109,15 +109,14 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    // This effect ensures we don't try to redirect on the server or during the initial hydration.
-    // It also prevents a redirect loop by only running when isAuthenticated state changes.
-    if (firstLoadDone && isAuthenticated && user) {
+    if (firstLoadDone) {
+      if (isAuthenticated) {
         router.push('/dashboard');
-    } else if (firstLoadDone && !isAuthenticated) {
-        // Only show the page content once we are sure the user is not logged in.
+      } else {
         setVisible(true);
+      }
     }
-  }, [isAuthenticated, user, firstLoadDone, router]);
+  }, [isAuthenticated, firstLoadDone, router]);
 
   if (!visible) {
     return null; // The global loading provider will handle the loading state
