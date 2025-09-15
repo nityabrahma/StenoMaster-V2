@@ -14,6 +14,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Submission, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
+
 
 interface SubmissionReviewModalProps {
   isOpen: boolean;
