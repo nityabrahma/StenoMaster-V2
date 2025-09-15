@@ -2,28 +2,28 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
-import Logo from '@/components/logo';
 import { useAuth } from '@/hooks/use-auth';
 import UserButton from '@/components/UserButton';
 import { AuthProvider } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import { useAppRouter } from '@/hooks/use-app-router';
+import { useIsMobile } from '@/hooks/use-mobile';
+import Logo from '@/components/logo';
+
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isAuthenticated } = useAuth();
   const router = useAppRouter();
+  const isMobile = useIsMobile();
   
   const { loadAssignments } = useAssignments();
   const { loadClasses } = useClasses();
   const { loadStudents } = useStudents();
   
-  // This state ensures data is loaded only once on initial mount
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
@@ -41,14 +41,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isAuthenticated, dataLoaded, loadAssignments, loadClasses, loadStudents]);
 
 
-  // The global loading provider now handles all loading states.
-  // AuthProvider handles the redirect, so we just need to wait for the user.
   if (!user) {
     return null;
-  }
-
-  const handleBack = () => {
-    router.back();
   }
 
   return (
@@ -65,11 +59,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                         <SidebarTrigger
                             className="h-9 w-9 cursor-pointer bg-card/80 hover:bg-black/60"
                         />
-                        <div className="hidden md:flex items-center gap-2">
-                           <Logo />
-                        </div>
+                         {isMobile && <Logo />}
                     </div>
-                    <div className="flex items-center space-x-2 lg:space-x-4">
+                    <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
                         <UserButton />
                     </div>
                 </div>

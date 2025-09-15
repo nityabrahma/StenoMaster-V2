@@ -6,25 +6,24 @@ import {
   Book,
   ClipboardList,
   LayoutDashboard,
-  LogOut,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarSeparator,
+  useSidebar,
 } from './ui/sidebar';
 import Logo from './logo';
-import { useSidebar } from './ui/sidebar';
-import { cn } from '@/lib/utils';
-import { useAppRouter } from '@/hooks/use-app-router';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import UserButton from './UserButton';
 
 const teacherLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -39,11 +38,72 @@ const studentLinks = [
   { href: '/dashboard/typing-test', label: 'Typing Practice', icon: Book },
 ];
 
+
+const MobileSidebar = () => {
+    const { user } = useAuth();
+    const { openMobile, setOpenMobile } = useSidebar();
+    const pathname = usePathname();
+
+    const links = user?.role === 'teacher' ? teacherLinks : studentLinks;
+
+    const isLinkActive = (href: string) => {
+        if (href === '/dashboard') {
+            return pathname === '/dashboard';
+        }
+        return pathname.startsWith(href);
+    }
+
+    return (
+        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+            <SheetContent
+                side="left"
+                className="w-[18rem] bg-card p-0 text-card-foreground [&>button]:hidden"
+            >
+                 <SheetHeader className="p-2 border-b">
+                    <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
+                    <SheetDescription className='sr-only'>Main navigation for StenoMaster</SheetDescription>
+                     <Link
+                        href="/dashboard"
+                        className="flex items-center"
+                        onClick={() => setOpenMobile(false)}
+                    >
+                        <Logo />
+                    </Link>
+                </SheetHeader>
+                <SidebarContent className="p-2">
+                    <SidebarMenu>
+                    {links.map((link) => (
+                        <SidebarMenuItem key={link.href}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isLinkActive(link.href)}
+                                onClick={() => setOpenMobile(false)}
+                            >
+                                <Link href={link.href}>
+                                    <link.icon />
+                                    <span>{link.label}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                    </SidebarMenu>
+                </SidebarContent>
+                 <div className="p-2 border-t mt-auto">
+                    <UserButton />
+                </div>
+            </SheetContent>
+      </Sheet>
+    )
+}
+
 export default function AppSidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
-  const { isMobile, state } = useSidebar();
-  const router = useAppRouter();
+  const isMobile = useIsMobile();
+  
+  if (isMobile) {
+    return <MobileSidebar />;
+  }
 
   if (!user) return null;
 
@@ -58,56 +118,34 @@ export default function AppSidebar() {
 
   return (
     <Sidebar 
+        collapsible="icon"
         className="flex-shrink-0 md:flex md:flex-col bg-gray-900/30"
         style={{
             backdropFilter: "blur(1px)"
         }}
     >
-      <SidebarHeader className={cn(!isMobile && "p-2")}>
-        <div className={cn(
-            "flex items-center justify-center p-2",
-            state === 'collapsed' && 'h-10 w-10 p-0'
-        )}>
-            <Logo />
-        </div>
+      <SidebarHeader className="p-2 justify-center">
+          <Logo />
       </SidebarHeader>
 
-      <SidebarContent className="flex-1 p-2">
+      <SidebarContent className="flex-1 p-2 mt-4">
         <SidebarMenu>
-          {links.map((link) => {
-            const active = isLinkActive(link.href);
-            return (
+          {links.map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
-                isActive={active}
+                asChild
+                isActive={isLinkActive(link.href)}
                 tooltip={link.label}
-                onClick={() => router.push(link.href)}
-                className={cn(
-                    "rounded-2xl transition-all duration-300",
-                )}
               >
-                  <link.icon />
-                  <span>{link.label}</span>
+                  <Link href={link.href}>
+                    <link.icon />
+                    <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
+                  </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )})}
+          ))}
         </SidebarMenu>
       </SidebarContent>
-
-      <SidebarSeparator />
-
-      <SidebarFooter>
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={logout} tooltip="Log out">
-                    <LogOut/>
-                    <span>Log Out</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
-
-    
