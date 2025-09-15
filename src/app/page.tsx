@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -9,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Card,
@@ -29,7 +27,6 @@ import {
   Target,
   Users,
 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAppRouter } from '@/hooks/use-app-router';
 
 
@@ -71,7 +68,6 @@ function LoginDialogContent({
 const HomePageContent = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isAuthenticated, user, firstLoadDone } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const router = useAppRouter();
   
 
@@ -120,29 +116,16 @@ const HomePageContent = () => {
   ];
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && firstLoadDone && isAuthenticated && user) {
+    if (firstLoadDone && isAuthenticated && user) {
         router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router, firstLoadDone, mounted]);
+  }, [isAuthenticated, user, router, firstLoadDone]);
 
-  if (!mounted || (isAuthenticated === null && firstLoadDone)) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-        </div>
-      </div>
-    );
+  // The global loading provider now handles the initial loading state.
+  // We only need to prevent rendering the page content until the auth state is resolved.
+  if (!firstLoadDone || isAuthenticated) {
+    return null; // or a minimal loading indicator if you prefer, but global one should cover it
   }
-
 
   return (
     <div

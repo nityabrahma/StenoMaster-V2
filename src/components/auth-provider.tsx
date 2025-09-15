@@ -19,14 +19,13 @@ const TOKEN_STORAGE_KEY = 'steno-auth-token';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [firstLoadDone, setFirstLoadDone] = useState(false);
   const router = useAppRouter();
   const nextRouter = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { setIsLoading } = useLoading();
+  const { isLoading, setIsLoading } = useLoading();
 
   const logout = useCallback(() => {
     setUser(null);
@@ -44,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
       if (storedToken) {
         if (isTokenExpired(storedToken)) {
@@ -63,20 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to process token from localStorage', error);
       logout();
     } finally {
-      setLoading(false);
+      setIsLoading(false);
       setFirstLoadDone(true);
     }
-  }, [logout]);
+  }, [logout, setIsLoading]);
   
   const isAuthenticated = !!user;
 
   // Protected route handling
   useEffect(() => {
-    if (!loading && !isAuthenticated && pathname.startsWith('/dashboard')) {
+    if (!isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
         const redirectUrl = `/?showLogin=true&redirect=${encodeURIComponent(pathname + searchParams.toString())}`;
         nextRouter.push(redirectUrl);
     }
-  }, [loading, isAuthenticated, pathname, nextRouter, searchParams]);
+  }, [isLoading, isAuthenticated, pathname, nextRouter, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -130,8 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, isAuthenticated, firstLoadDone, signup }),
-    [user, loading, login, logout, isAuthenticated, firstLoadDone, signup]
+    () => ({ user, loading: isLoading, login, logout, isAuthenticated, firstLoadDone, signup }),
+    [user, isLoading, login, logout, isAuthenticated, firstLoadDone, signup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
