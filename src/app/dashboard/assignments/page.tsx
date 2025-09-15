@@ -69,7 +69,7 @@ function TeacherAssignments() {
         <Card className="flex-1 min-h-0">
             <CardContent className="h-full p-6 flex flex-col">
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                    <div>Title</div>
+                    <div className="text-center">Title</div>
                     <div className="text-center">Class</div>
                     <div className="text-center">Due Date</div>
                     <div className="text-center">Submissions</div>
@@ -82,7 +82,7 @@ function TeacherAssignments() {
                         const assignmentClass = classes.find(c => c.id === assignment.classId);
                         return (
                             <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
-                                <div className="font-medium truncate">{assignment.title}</div>
+                                <div className="font-medium truncate text-center">{assignment.title}</div>
                                 <div className="truncate text-center">{assignmentClass?.name}</div>
                                 <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
                                 <div className="text-center">
@@ -150,6 +150,8 @@ function StudentAssignments() {
     }
   };
 
+  const now = new Date();
+
   return (
     <div className="h-full flex flex-col gap-4">
       <Card className="flex-shrink-0">
@@ -167,7 +169,8 @@ function StudentAssignments() {
                 {pendingAssignments.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {pendingAssignments.map((assignment) => {
-                    const isPastDue = new Date(assignment.deadline) < new Date();
+                    const deadlineDate = new Date(assignment.deadline);
+                    const isPastDue = deadlineDate < now;
                     return (
                         <Card key={assignment.id} className="flex flex-col h-full cursor-pointer" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
                             <CardHeader>
@@ -180,7 +183,7 @@ function StudentAssignments() {
                                 )}
                             </div>
                             <CardDescription>
-                                Due {format(new Date(assignment.deadline), 'PPp')}
+                                Due {format(deadlineDate, 'PPp')}
                             </CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow">
