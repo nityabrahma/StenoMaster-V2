@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database/mongoose';
-import UserModel from '@/lib/database/models/user.model';
+import UserModel, { IUser } from '@/lib/database/models/user.model';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { LoginCredentials } from '@/lib/types';
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Missing credentials' }, { status: 400 });
     }
 
-    const user = await UserModel.findOne({ email: email.toLowerCase(), userType: role }).select('+password');
+    const user = await UserModel.findOne<IUser>({ email: email.toLowerCase(), userType: role }).select('+password');
 
     if (!user) {
         return NextResponse.json({ message: 'User not found. Please check your email and role.' }, { status: 404 });

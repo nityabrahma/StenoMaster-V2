@@ -2,9 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils";
-import User from "@/lib/database/models/user.model";
+import User, { IUser } from "@/lib/database/models/user.model";
 import { createUser, validateUserType } from "@/lib/actions/user.action";
-import jwt from "jsonwebtoken";
 
 interface RegisterRequestBody {
   email: string;
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      const teacher = await User.findOne({
+      const teacher = await User.findOne<IUser>({
         userId: body.teacherId,
         userType: "teacher",
       });
@@ -57,9 +56,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    //console.log("Register input:", body);
-
-    const existingUser = await User.findOne({ email: body.email });
+    const existingUser = await User.findOne<IUser>({ email: body.email });
     if (existingUser) {
       return NextResponse.json(
         { status: "error", message: "User with this email already exists" },
