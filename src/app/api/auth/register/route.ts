@@ -1,14 +1,43 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { signUp } from '@/lib/services/auth.service';
-import type { SignupCredentials, User } from '@/lib/types';
+import { connectToDatabase } from '@/lib/mongodb';
+import UserModel from '@/models/User';
+import bcrypt from 'bcryptjs';
+import type { SignupCredentials } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
-    const credentials = await req.json() as SignupCredentials;
-    const newUser = await signUp(credentials);
-    return NextResponse.json(newUser, { status: 201 });
+    await connectToDatabase();
+    const { name, email, password, role } = await req.json() as SignupCredentials;
+
+    if (!name || !email || !password || !role) {
+      return NextResponse.json({ message: 'Missing required fields.' }, { status: 400 });
+    }
+
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json({ message: 'An account with this email already exists.' }, { status: 409 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const newUser = await UserModel.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
+
+    const userObject = {
+      id: newUser.userId,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+    }
+
+    return NextResponse.json(userObject, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || 'An unexpected error occurred.' }, { status: 400 });
+    console.error('[API Register Error]', error);
+    return NextResponse.json({ message: error.message || 'An unexpected error occurred.' }, { status: 500 });
   }
 }

@@ -16,7 +16,8 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
         const errorData = await res.json();
         throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-    return res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
 
 export const useStudents = create<StudentsState>((set) => ({
@@ -24,7 +25,7 @@ export const useStudents = create<StudentsState>((set) => ({
     fetchStudents: async () => {
         try {
             const students = await api<Student[]>('/api/students');
-            set({ students });
+            set({ students: students || [] });
         } catch (error) {
             console.error("Failed to fetch students:", error);
             set({ students: [] });

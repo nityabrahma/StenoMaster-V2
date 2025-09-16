@@ -13,7 +13,7 @@ type AuthContextType = {
   loading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<User>;
+  signup: (credentials: SignupCredentials) => Promise<User | undefined>;
   logout: () => void;
 };
 
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     validateAndSetUser();
-  }, [validateAndSetUser]);
+  }, []);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error(errorData.message || 'Login failed');
         }
         
-        await validateAndSetUser(); // Re-validate to get user info from the new cookie
+        await validateAndSetUser();
         router.push('/dashboard');
         
       } catch (error: any) {
@@ -81,13 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           variant: 'destructive',
         });
         setIsLoading(false);
+        throw error;
       }
     },
     [setIsLoading, toast, router, validateAndSetUser]
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<User> => {
+    async (credentials: SignupCredentials): Promise<User | undefined> => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
@@ -102,7 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             const newUser = await res.json();
             
-            // Manually trigger a refresh of the students list on the client
             if (newUser.role === 'student') {
                 await fetchStudents();
             }
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return newUser;
         } catch (error: any) {
             console.error("Signup failed", error);
-            throw error; // Let the calling component handle the toast
+            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -126,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Logout request failed:", error);
     } finally {
       setUser(null);
+      // Clear client-side stores on logout
       window.localStorage.removeItem('assignments-storage');
       window.localStorage.removeItem('classes-storage');
       window.localStorage.removeItem('students-storage');

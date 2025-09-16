@@ -18,7 +18,8 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
         const errorData = await res.json();
         throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-    return res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
 
 
@@ -27,7 +28,7 @@ export const useClasses = create<ClassesState>((set) => ({
     fetchClasses: async () => {
         try {
             const classes = await api<Class[]>('/api/classes');
-            set({ classes });
+            set({ classes: classes || [] });
         } catch (error) {
             console.error("Failed to fetch classes:", error);
             set({ classes: [] });

@@ -10,7 +10,6 @@ interface AssignmentsState {
   assignments: Assignment[];
   submissions: Submission[];
   fetchAssignments: () => Promise<void>;
-  fetchSubmissions: () => Promise<void>;
   createAssignment: (assignment: NewAssignment) => Promise<Assignment>;
   createSubmission: (submission: NewSubmission) => Promise<Submission>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
@@ -22,7 +21,9 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
         const errorData = await res.json();
         throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-    return res.json();
+    // Handle cases where the response might be empty
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
 
 export const useAssignments = create<AssignmentsState>((set, get) => ({
@@ -30,16 +31,15 @@ export const useAssignments = create<AssignmentsState>((set, get) => ({
     submissions: [],
     fetchAssignments: async () => {
         try {
-            const assignments = await api<Assignment[]>('/api/assignments');
-            const submissions = await api<Submission[]>('/api/submissions');
-            set({ assignments, submissions });
+            const [assignments, submissions] = await Promise.all([
+              api<Assignment[]>('/api/assignments'),
+              api<Submission[]>('/api/submissions')
+            ]);
+            set({ assignments: assignments || [], submissions: submissions || [] });
         } catch (error) {
             console.error("Failed to fetch assignments or submissions:", error);
             set({ assignments: [], submissions: [] });
         }
-    },
-    fetchSubmissions: async () => {
-        // This is combined with fetchAssignments, but can be separate if needed
     },
     createAssignment: async (assignmentData) => {
         const newAssignment = await api<Assignment>('/api/assignments', {

@@ -1,22 +1,47 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import { Schema, model, models, Document } from "mongoose";
+import { nanoid } from "nanoid";
 
 export interface IUser extends Document {
-  name: string;
+  userId: string;
   email: string;
+  name: string;
   password?: string;
-  role: 'teacher' | 'student';
+  role: "student" | "teacher";
   classIds: string[];
 }
 
-const UserSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, select: false },
-  role: { type: String, required: true, enum: ['teacher', 'student'] },
-  classIds: { type: [String], default: [] },
+const UserSchema = new Schema<IUser>({
+  userId: {
+    type: String,
+    required: true,
+    unique: true,
+    default: () => nanoid(10),
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    select: false, // Hide by default
+  },
+  role: {
+    type: String,
+    enum: ["student", "teacher"],
+    required: true,
+  },
+  classIds: {
+    type: [String],
+    default: [],
+  },
 });
 
-// For HMR (Hot Module Replacement) with Next.js
-const UserModel: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const UserModel = models.User || model<IUser>("User", UserSchema);
 
 export default UserModel;
