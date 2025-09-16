@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase-admin';
 import type { Class } from '@/lib/types';
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';

@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase-admin';
 import type { Submission } from '@/lib/types';
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
@@ -9,7 +10,7 @@ function mapDocToSubmission(doc: QueryDocumentSnapshot | DocumentData): Submissi
 
     // Safely handle timestamp conversion
     let submittedAt: string;
-    if (data.submittedAt instanceof Timestamp) {
+    if (data.submittedAt && typeof data.submittedAt.toDate === 'function') { // Check if it's a Firestore Timestamp
         submittedAt = data.submittedAt.toDate().toISOString();
     } else if (typeof data.submittedAt === 'string') {
         submittedAt = data.submittedAt;

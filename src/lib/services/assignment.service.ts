@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase-admin';
 import type { Assignment } from '@/lib/types';
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
@@ -8,7 +9,7 @@ function mapDocToAssignment(doc: QueryDocumentSnapshot | DocumentData): Assignme
     const data = doc.data();
     // Safely handle deadline conversion
     let deadline: string;
-    if (data.deadline instanceof Timestamp) {
+    if (data.deadline && typeof data.deadline.toDate === 'function') { // Check if it's a Firestore Timestamp
         deadline = data.deadline.toDate().toISOString();
     } else if (typeof data.deadline === 'string') {
         deadline = data.deadline;
