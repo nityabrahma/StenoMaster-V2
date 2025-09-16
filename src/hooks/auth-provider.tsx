@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
@@ -6,14 +5,13 @@ import { useAppRouter } from '@/hooks/use-app-router';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
-import { useStudents } from './use-students';
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<User | undefined>;
+  signup: (credentials: SignupCredentials) => Promise<any | undefined>;
   logout: () => void;
 };
 
@@ -32,7 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useAppRouter();
   const { toast } = useToast();
   const { isLoading, setIsLoading } = useLoading();
-  const { fetchStudents } = useStudents();
 
   const validateAndSetUser = useCallback(async () => {
     setIsLoading(true);
@@ -66,12 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(credentials),
         });
 
+        const data = await res.json();
         if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Login failed');
+          throw new Error(data.message || 'Login failed');
         }
         
-        await validateAndSetUser();
+        setUser(data.user);
         router.push('/dashboard');
         
       } catch (error: any) {
@@ -80,34 +77,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: error.message,
           variant: 'destructive',
         });
+      } finally {
         setIsLoading(false);
-        throw error;
       }
     },
-    [setIsLoading, toast, router, validateAndSetUser]
+    [setIsLoading, toast, router]
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<User | undefined> => {
+    async (credentials: SignupCredentials): Promise<any | undefined> => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
+                body: JSON.stringify({
+                    fullName: credentials.name,
+                    email: credentials.email,
+                    password: credentials.password,
+                    userType: credentials.role
+                }),
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Signup failed');
-            }
-            const newUser = await res.json();
-            
-            if (newUser.role === 'student') {
-                await fetchStudents();
-            }
+            const data = await res.json();
 
-            return newUser;
+            if (!res.ok) {
+                throw new Error(data.message || 'Signup failed');
+            }
+            return data;
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error;
@@ -115,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
         }
     },
-    [setIsLoading, fetchStudents]
+    [setIsLoading]
   );
 
   const logout = useCallback(async () => {

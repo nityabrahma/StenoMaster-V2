@@ -1,4 +1,3 @@
-
 import { Schema, model, models, Document } from "mongoose";
 import { nanoid } from "nanoid";
 
@@ -55,6 +54,6 @@ const UserSchema = new Schema<IUser>({
   },
 });
 
-const UserModel = models.User || model<IUser>("User", UserSchema);
+const User = models?.User || model<IUser>("User", UserSchema);
 
-export default UserModel;
+export default User;

@@ -1,10 +1,10 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import UserModel from '@/models/User';
+import { connectToDatabase } from '@/lib/database/mongoose';
+import UserModel from '@/lib/database/models/user.model';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { LoginCredentials } from '@/lib/types';
+import { handleError } from '@/lib/utils';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-that-is-at-least-32-characters-long';
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Missing credentials' }, { status: 400 });
     }
 
-    const user = await UserModel.findOne({ email, userType: role }).select('+password');
+    const user = await UserModel.findOne({ email: email.toLowerCase(), userType: role }).select('+password');
 
     if (!user) {
         return NextResponse.json({ message: 'User not found. Please check your email and role.' }, { status: 404 });
@@ -37,7 +37,13 @@ export async function POST(req: NextRequest) {
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
-    const response = NextResponse.json({ success: true, message: 'Login successful' });
+    await UserModel.updateOne({ _id: user._id }, { $set: { sessionToken: token } });
+
+    const response = NextResponse.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: payload
+    });
     
     response.cookies.set('auth-token', token, {
         httpOnly: true,
@@ -49,7 +55,7 @@ export async function POST(req: NextRequest) {
     return response;
 
   } catch (error: any) {
-    console.error('[API Login Error]', error);
+    handleError(error)
     return NextResponse.json({ message: error.message || 'An unexpected error occurred.' }, { status: 500 });
   }
 }
