@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +9,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { LogIn, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { CheckUserResponse } from '@/lib/types';
-import { DialogOverlay } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
 
 type LoginStep = 'enter-email' | 'enter-password';
 
@@ -23,6 +21,20 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  const isLoading = isCheckingEmail || loading;
+
+  useEffect(() => {
+    if (isLoading) {
+      document.body.style.pointerEvents = 'none';
+    } else {
+      document.body.style.pointerEvents = 'auto';
+    }
+    // Cleanup function to ensure pointer events are re-enabled on unmount
+    return () => {
+      document.body.style.pointerEvents = 'auto';
+    };
+  }, [isLoading]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,18 +78,14 @@ const LoginForm = () => {
     setRole(null);
   }
 
-  const isLoading = isCheckingEmail || loading;
-
   return (
-    <>
-    <DialogOverlay className={cn(isLoading && "pointer-events-none")} />
     <div className="w-full max-w-md mx-auto flex flex-col">
       {step === 'enter-email' && (
         <form onSubmit={handleEmailSubmit} className="space-y-3">
-          <p className="font-semibold text-center text-gray-300 pb-2">
+          <p className="font-semibold text-center text-gray-300 pb-1">
             Welcome! Enter your email to begin.
           </p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -89,7 +97,7 @@ const LoginForm = () => {
             />
           </div>
           <Button
-            disabled={isLoading}
+            disabled={isCheckingEmail}
             type="submit"
             className="gradient-button w-full"
           >
@@ -110,7 +118,7 @@ const LoginForm = () => {
                 </div>
             </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -122,7 +130,7 @@ const LoginForm = () => {
             />
           </div>
           <Button
-            disabled={isLoading}
+            disabled={loading}
             type="submit"
             className="gradient-button w-full"
           >
@@ -132,7 +140,6 @@ const LoginForm = () => {
         </form>
       )}
     </div>
-    </>
   );
 };
 
