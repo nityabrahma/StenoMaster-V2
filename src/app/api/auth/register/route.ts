@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
+    // Correctly map the incoming fields to the schema fields
     const newUser = new UserModel({
       fullName: name,
       email,
