@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import UserModel from '@/models/User';
+import { connectToDatabase } from '@/lib/database/mongoose';
+import UserModel from '@/lib/database/models/user.model';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (user) {
         return NextResponse.json({ exists: true, role: user.userType });
     } else {
-        return NextResponse.json({ exists: false, message: 'No user found with this email.' }, { status: 404 });
+        return NextResponse.json({ exists: false, message: 'No user found with this email.' });
     }
   } catch (error: any) {
     console.error('[API Check-User Error]', error);

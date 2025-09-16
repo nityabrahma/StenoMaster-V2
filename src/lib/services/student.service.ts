@@ -1,6 +1,6 @@
 
-import UserModel from '@/models/User';
-import { connectToDatabase } from '../mongodb';
+import UserModel from '@/lib/database/models/user.model';
+import { connectToDatabase } from '@/lib/database/mongoose';
 import type { Student } from '@/lib/types';
 
 export async function getAllStudents(): Promise<Student[]> {
