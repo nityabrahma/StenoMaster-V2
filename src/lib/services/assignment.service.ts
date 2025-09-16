@@ -1,4 +1,4 @@
-import { db } from '@/lib/database/firebase-admin';
+import { db } from '@/lib/firebase-admin';
 import type { Assignment } from '@/lib/types';
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 
