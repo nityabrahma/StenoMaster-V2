@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils";
@@ -81,17 +82,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Generate JWT and store in database
-    const token = jwt.sign(
-      { userId: newUser.userId, userType: newUser.userType },
-      process.env.JWT_SECRET || ""
-    );
-
-    await User.updateOne(
-      { _id: newUser._id },
-      { $set: { sessionToken: token } }
-    );
     
     const response = NextResponse.json(
       {
@@ -114,13 +104,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
     
-    response.cookies.set('auth-token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-        maxAge: 60 * 60, // 1 hour
-        path: '/',
-    });
-
     return response;
   } catch (error: any) {
     handleError(error);
