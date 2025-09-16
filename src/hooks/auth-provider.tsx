@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const { isLoading, setIsLoading } = useLoading();
   const [firstLoadDone, setFirstLoadDone] = useState(false);
-  const router = useRouter();
+  const router = useRouter(); // Using the standard Next.js router
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -25,12 +25,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setIsLoading(true);
     setUser(null);
-    // Also clear zustand stores and other local storage
-    localStorage.removeItem('assignments-storage');
-    localStorage.removeItem('classes-storage');
-    localStorage.removeItem('students-storage');
     
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      // The redirect is handled by the useEffect which reacts to isAuthenticated
       setIsLoading(false);
       router.push('/');
     });
@@ -56,17 +53,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
     validate();
-  }, [pathname, firstLoadDone]);
+  }, [pathname]); // Re-validate on path change
 
   
   const isAuthenticated = !!user;
 
+  // This effect handles the very first load of the application
   useEffect(() => {
     if(firstLoadDone) {
         setIsLoading(false);
     }
   }, [firstLoadDone, setIsLoading]);
 
+  // Protected route handling
   useEffect(() => {
     if (firstLoadDone && !isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
         const redirectUrl = `/`;
@@ -98,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
+        } finally {
             setIsLoading(false);
         }
     },
@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const signup = useCallback(
     async (credentials: SignupCredentials): Promise<any> => {
+        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
               method: 'POST',
@@ -127,9 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error; // Re-throw to be caught in the component
+        } finally {
+            setIsLoading(false);
         }
     },
-    []
+    [setIsLoading]
   );
 
   const value = useMemo(
