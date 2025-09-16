@@ -1,104 +1,121 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { useAppRouter } from '@/hooks/use-app-router';
+import {
+  useMemo,
+  useCallback,
+  useState,
+  useEffect
+} from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
 
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<any | undefined>;
-  logout: () => void;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const router = useAppRouter();
-  const { toast } = useToast();
   const { isLoading, setIsLoading } = useLoading();
+  const [firstLoadDone, setFirstLoadDone] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
-  const validateAndSetUser = useCallback(async () => {
+  const logout = useCallback(() => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/auth/validate');
-      if (res.ok) {
-        const { user: validatedUser } = await res.json();
-        setUser(validatedUser);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      setUser(null);
-      console.error("Validation failed:", error);
-    } finally {
+    setUser(null);
+    // Also clear zustand stores and other local storage
+    localStorage.removeItem('assignments-storage');
+    localStorage.removeItem('classes-storage');
+    localStorage.removeItem('students-storage');
+    
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
       setIsLoading(false);
-    }
-  }, [setIsLoading]);
+      router.push('/');
+    });
+  }, [setIsLoading, router]);
 
   useEffect(() => {
-    validateAndSetUser();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const validate = async () => {
+        try {
+            const res = await fetch('/api/auth/validate');
+            if (res.ok) {
+                const { user: validatedUser } = await res.json();
+                setUser(validatedUser);
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.error('Validation failed:', error);
+            setUser(null);
+        } finally {
+            if (!firstLoadDone) {
+                setFirstLoadDone(true);
+            }
+        }
+    }
+    validate();
+  }, [pathname, firstLoadDone]);
+
+  
+  const isAuthenticated = !!user;
+
+  useEffect(() => {
+    if(firstLoadDone) {
+        setIsLoading(false);
+    }
+  }, [firstLoadDone, setIsLoading]);
+
+  useEffect(() => {
+    if (firstLoadDone && !isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
+        const redirectUrl = `/`;
+        router.push(redirectUrl);
+    }
+  }, [firstLoadDone, isLoading, isAuthenticated, pathname, router, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      setIsLoading(true);
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credentials),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || 'Login failed');
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(credentials),
+            });
+    
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.message || 'Login failed');
+            }
+            
+            setUser(data.user);
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error("Authentication failed", error);
+            toast({
+                title: 'Login Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive'
+            });
+            setIsLoading(false);
         }
-        
-        setUser(data.user);
-        router.push('/dashboard');
-        
-      } catch (error: any) {
-        toast({
-          title: 'Login Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
     },
-    [setIsLoading, toast, router]
+    [router, toast, setIsLoading]
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<any | undefined> => {
-        setIsLoading(true);
+    async (credentials: SignupCredentials): Promise<any> => {
         try {
             const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fullName: credentials.name,
-                    email: credentials.email,
-                    password: credentials.password,
-                    userType: credentials.role
-                }),
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  fullName: credentials.name,
+                  email: credentials.email,
+                  password: credentials.password,
+                  userType: credentials.role
+              }),
             });
 
             const data = await res.json();
@@ -109,41 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return data;
         } catch (error: any) {
             console.error("Signup failed", error);
-            throw error;
-        } finally {
-            setIsLoading(false);
+            throw error; // Re-throw to be caught in the component
         }
     },
-    [setIsLoading]
+    []
   );
 
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error("Logout request failed:", error);
-    } finally {
-      setUser(null);
-      // Clear client-side stores on logout
-      window.localStorage.removeItem('assignments-storage');
-      window.localStorage.removeItem('classes-storage');
-      window.localStorage.removeItem('students-storage');
-      router.push('/');
-      setIsLoading(false);
-    }
-  }, [setIsLoading, router]);
-
   const value = useMemo(
-    () => ({
-      user,
-      loading: isLoading,
-      isAuthenticated: !!user,
-      login,
-      logout,
-      signup,
-    }),
-    [user, isLoading, login, logout, signup]
+    () => ({ user, loading: isLoading, login, logout, isAuthenticated, firstLoadDone, signup }),
+    [user, isLoading, login, logout, isAuthenticated, firstLoadDone, signup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

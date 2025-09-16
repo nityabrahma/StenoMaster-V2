@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import UserButton from '@/components/UserButton';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useClasses } from '@/hooks/use-classes';

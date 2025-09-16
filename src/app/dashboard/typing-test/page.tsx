@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, History } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
 import { useAssignments } from '@/hooks/use-assignments';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Assignment, Submission } from '@/lib/types';

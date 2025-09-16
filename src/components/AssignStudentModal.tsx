@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import type { Student } from '@/lib/types';
 import { Label } from './ui/label';
 

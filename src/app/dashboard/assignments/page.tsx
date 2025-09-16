@@ -1,6 +1,6 @@
 
 'use client';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Card,
   CardContent,

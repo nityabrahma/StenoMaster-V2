@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -12,7 +13,7 @@ import {
 import { Card } from '@/components/ui/card';
 import LoginForm from '@/components/login-form';
 import LogoStatic from '@/components/logo-static';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Award,
   BookOpen,

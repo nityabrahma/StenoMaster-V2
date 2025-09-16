@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 import { UserPlus, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -17,8 +18,9 @@ const TeacherRegistrationContent = () => {
     password: "",
     confirmPassword: "",
   });
-
-  const { signup, loading } = useAuth();
+  
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const { signup } = useAuth();
   const { toast } = useToast();
   const router = useAppRouter();
 
@@ -62,6 +64,7 @@ const TeacherRegistrationContent = () => {
       return;
     }
 
+    setIsSigningUp(true);
     try {
       await signup({
         name: teacherSignup.fullName,
@@ -80,6 +83,8 @@ const TeacherRegistrationContent = () => {
         description: error.message || 'An unexpected error occurred.',
         variant: 'destructive',
       });
+    } finally {
+        setIsSigningUp(false);
     }
   };
 
@@ -129,11 +134,11 @@ const TeacherRegistrationContent = () => {
               />
             </div>
             <Button
-              disabled={loading}
+              disabled={isSigningUp}
               type="submit"
               className="w-full"
             >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
+              {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
               Create Account
             </Button>
         </form>
