@@ -21,12 +21,15 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const newUser = await UserModel.create({
+    // Use .save() for a more robust write confirmation
+    const newUser = new UserModel({
       name,
       email,
       password: hashedPassword,
       role,
     });
+    
+    await newUser.save();
 
     const userObject = {
       id: newUser.userId,
@@ -38,6 +41,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(userObject, { status: 201 });
   } catch (error: any) {
     console.error('[API Register Error]', error);
-    return NextResponse.json({ message: error.message || 'An unexpected error occurred.' }, { status: 500 });
+    return NextResponse.json({ message: error.message || 'An unexpected error occurred during registration.' }, { status: 500 });
   }
 }
