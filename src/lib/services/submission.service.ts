@@ -1,21 +1,20 @@
 
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Submission } from '@/lib/types';
-import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 
 const submissionsCollection = db.collection('submissions');
 
 function mapDocToSubmission(doc: QueryDocumentSnapshot | DocumentData): Submission {
     const data = doc.data();
 
-    // Safely handle timestamp conversion
     let submittedAt: string;
-    if (data.submittedAt && typeof data.submittedAt.toDate === 'function') { // Check if it's a Firestore Timestamp
+    if (data.submittedAt && typeof data.submittedAt.toDate === 'function') { 
         submittedAt = data.submittedAt.toDate().toISOString();
-    } else if (typeof data.submittedAt === 'string') {
-        submittedAt = data.submittedAt;
+    } else if (typeof data.submittedAt === 'string' && data.submittedAt) {
+        submittedAt = new Date(data.submittedAt).toISOString();
     } else {
-        submittedAt = new Date().toISOString(); // Fallback
+        submittedAt = new Date().toISOString(); // Fallback to a valid date
     }
 
     return {
@@ -51,13 +50,12 @@ export async function createSubmission(data: Omit<Submission, 'id'>): Promise<Su
         await batch.commit();
     }
     
-    // Store dates as proper Timestamps
     const submissionPayload = {
         ...data,
         submittedAt: new Date(data.submittedAt)
     }
 
     const docRef = await submissionsCollection.add(submissionPayload);
-    
-    return { ...data, id: docRef.id };
+    const newDoc = await docRef.get();
+    return mapDocToSubmission(newDoc);
 }

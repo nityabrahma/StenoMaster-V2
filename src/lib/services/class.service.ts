@@ -1,8 +1,7 @@
 
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Class } from '@/lib/types';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-
 
 const classesCollection = db.collection('classes');
 
@@ -26,15 +25,16 @@ export async function getAllClasses(): Promise<Class[]> {
 
 export async function createClass(data: Omit<Class, 'id'>): Promise<Class> {
     const docRef = await classesCollection.add(data);
-    return {
-        ...data,
-        id: docRef.id,
-    };
+    const newDoc = await docRef.get();
+    return mapDocToClass(newDoc);
 }
 
 export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>): Promise<Class> {
     const docRef = classesCollection.doc(id);
     await docRef.update(data);
     const updatedDoc = await docRef.get();
+    if (!updatedDoc.exists) {
+        throw new Error('Class not found after update');
+    }
     return mapDocToClass(updatedDoc);
 }
