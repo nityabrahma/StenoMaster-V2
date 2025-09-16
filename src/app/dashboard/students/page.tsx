@@ -42,7 +42,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
@@ -139,12 +139,20 @@ function CreateStudentDialog() {
 
 export default function StudentsPage() {
   const { user } = useAuth();
-  const { students, removeStudent } = useStudents();
-  const { classes } = useClasses();
-  const { submissions } = useAssignments();
+  const { students, removeStudent, fetchStudents } = useStudents();
+  const { classes, fetchClasses } = useClasses();
+  const { submissions, fetchAssignments } = useAssignments();
   const router = useAppRouter();
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
+
+  useEffect(() => {
+    if (user?.role === 'teacher') {
+        fetchStudents();
+        fetchClasses();
+        fetchAssignments();
+    }
+  }, [user, fetchStudents, fetchClasses, fetchAssignments]);
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 

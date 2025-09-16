@@ -6,9 +6,6 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import { useAuth } from '@/hooks/use-auth';
 import UserButton from '@/components/UserButton';
-import { useAssignments } from '@/hooks/use-assignments';
-import { useClasses } from '@/hooks/use-classes';
-import { useStudents } from '@/hooks/use-students';
 import Logo from '@/components/logo';
 import { useAppRouter } from '@/hooks/use-app-router';
 
@@ -16,36 +13,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
     const router = useAppRouter();
 
-    const { fetchAssignments } = useAssignments();
-    const { fetchClasses } = useClasses();
-    const { fetchStudents } = useStudents();
-    
-    const [dataLoaded, setDataLoaded] = useState(false);
-
     useEffect(() => {
         if (!loading && !isAuthenticated) {
             router.push('/');
         }
     }, [loading, isAuthenticated, router]);
     
-    useEffect(() => {
-        const loadData = async () => {
-            if (isAuthenticated && !dataLoaded) {
-                await Promise.all([
-                    fetchAssignments(),
-                    fetchClasses(),
-                    fetchStudents()
-                ]);
-                setDataLoaded(true);
-            }
-        };
-        if(!loading) {
-            loadData();
-        }
-    }, [isAuthenticated, loading, dataLoaded, fetchAssignments, fetchClasses, fetchStudents]);
 
-
-    if (loading || !isAuthenticated || !dataLoaded) {
+    if (loading || !isAuthenticated) {
         // The global loading provider will show an overlay
         return null;
     }

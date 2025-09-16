@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllStudents } from '@/lib/services/student.service';
+import { getStudentsByTeacher } from '@/lib/services/student.service';
 import { validateRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const students = await getAllStudents();
+        const students = await getStudentsByTeacher(validation.user.id as string);
         return NextResponse.json(students);
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });

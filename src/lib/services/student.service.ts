@@ -1,46 +1,76 @@
 
-import UserModel from '@/lib/database/models/user.model';
-import { connectToDatabase } from '@/lib/database/mongoose';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase-admin';
 import type { Student } from '@/lib/types';
+import { getAllClasses } from './class.service';
 
-export async function getAllStudents(): Promise<Student[]> {
-    await connectToDatabase();
-    const students = await UserModel.find({ userType: 'student' }).lean();
-    return students.map(s => ({
-        id: s.userId,
-        name: s.fullName,
-        email: s.email,
-        role: 'student',
-        classIds: [] // This will be managed by Firestore 'classes' collection
-    }));
-}
+const usersCollection = db.collection('users');
 
-export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
-    await connectToDatabase();
-    // Map our app's field names to the database schema names
-    const dbData: { [key: string]: any } = {};
-    if (data.name) dbData.fullName = data.name;
-    if (data.email) dbData.email = data.email;
-    
-    const updatedStudent = await UserModel.findOneAndUpdate({ userId: id }, dbData, { new: true }).lean();
-
-    if (!updatedStudent) {
-        throw new Error('Student not found');
-    }
-
+function mapDocToStudent(doc: QueryDocumentSnapshot | DocumentData): Student {
+    const data = doc.data();
     return {
-        id: updatedStudent.userId,
-        name: updatedStudent.fullName,
-        email: updatedStudent.email,
-        role: 'student',
-        classIds: [] // This will be managed by Firestore 'classes' collection
+      id: doc.id, // Firestore doc ID
+      name: data.name || 'Unnamed Student',
+      email: data.email || '',
+      role: 'student',
+      classIds: data.classIds || [],
     };
 }
 
+export async function getAllStudents(): Promise<Student[]> {
+    const snapshot = await usersCollection.where('role', '==', 'student').get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToStudent);
+}
+
+
+export async function getStudentsByTeacher(teacherId: string): Promise<Student[]> {
+    const allClasses = await getAllClasses();
+    const teacherClasses = allClasses.filter(c => c.teacherId === teacherId);
+    const studentIds = new Set(teacherClasses.flatMap(c => c.studentIds));
+
+    if (studentIds.size === 0) {
+        return [];
+    }
+
+    const students: Student[] = [];
+    // Firestore 'in' query is limited to 30 elements. We may need to batch.
+    const studentIdChunks: string[][] = [];
+    const allStudentIds = Array.from(studentIds);
+    for (let i = 0; i < allStudentIds.length; i += 30) {
+        studentIdChunks.push(allStudentIds.slice(i, i + 30));
+    }
+
+    for (const chunk of studentIdChunks) {
+        if (chunk.length > 0) {
+            const snapshot = await db.collection('users').where('__name__', 'in', chunk).get();
+            snapshot.forEach(doc => {
+                 students.push(mapDocToStudent(doc));
+            });
+        }
+    }
+    
+    return students;
+}
+
+
+export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
+    const docRef = usersCollection.doc(id);
+    await docRef.update(data);
+    const updatedDoc = await docRef.get();
+     if (!updatedDoc.exists) {
+        throw new Error('Student not found after update');
+    }
+    return mapDocToStudent(updatedDoc);
+}
+
 export async function deleteStudent(id: string): Promise<void> {
-    await connectToDatabase();
-    const result = await UserModel.findOneAndDelete({ userId: id });
-    if (!result) {
+    const docRef = usersCollection.doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) {
         throw new Error('Student not found');
     }
+    await docRef.delete();
 }
