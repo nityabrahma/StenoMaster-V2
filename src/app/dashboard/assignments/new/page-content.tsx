@@ -95,34 +95,36 @@ export default function NewAssignmentPageContent() {
     if (!file) return;
 
     setIsUploading(true);
+    
     const formData = new FormData();
     formData.append('file', file);
-
+    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
+    
     try {
-      const res = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData,
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Upload failed');
-      }
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error.message || 'Upload failed');
+        }
 
-      const imageData = await res.json();
-      form.setValue('imageUrl', imageData.secure_url);
-      toast({
-        title: 'Image Uploaded',
-        description: 'The image has been successfully added.',
-      });
+        const imageData = await res.json();
+        form.setValue('imageUrl', imageData.secure_url);
+        toast({
+            title: 'Image Uploaded',
+            description: 'The image has been successfully added.',
+        });
     } catch (error: any) {
-      toast({
-        title: 'Upload Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+        toast({
+            title: 'Upload Failed',
+            description: error.message,
+            variant: 'destructive',
+        });
     } finally {
-      setIsUploading(false);
+        setIsUploading(false);
     }
   };
 
@@ -338,3 +340,5 @@ export default function NewAssignmentPageContent() {
     </>
   );
 }
+
+    
