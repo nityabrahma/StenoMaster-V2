@@ -21,7 +21,6 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
         const errorData = await res.json();
         throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-    // Handle cases where the response might be empty
     const text = await res.text();
     return text ? JSON.parse(text) : null;
 }

@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
     validate();
-  }, [pathname]); // Re-validate on path change
+  }, [pathname, firstLoadDone]);
 
   
   const isAuthenticated = !!user;
@@ -105,8 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<any> => {
-        setIsLoading(true);
+    async (credentials: SignupCredentials): Promise<User> => {
         try {
             const res = await fetch('/api/auth/register', {
               method: 'POST',
@@ -124,15 +123,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!res.ok) {
                 throw new Error(data.message || 'Signup failed');
             }
-            return data;
+            // We return the user data but don't set the session here.
+            // The component handles routing, which leads to login.
+            return data.data.user;
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error; // Re-throw to be caught in the component
-        } finally {
-            setIsLoading(false);
         }
     },
-    [setIsLoading]
+    []
   );
 
   const value = useMemo(
