@@ -6,6 +6,7 @@ import {
   useContext,
   ReactNode,
   useCallback,
+  useEffect,
 } from 'react';
 import {
   useRouter as useNextRouter,
@@ -35,7 +36,15 @@ export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
   const router = useNextRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { setIsLoading } = useLoading();
+  const { isLoading, setIsLoading } = useLoading();
+
+  // Effect to turn off loading when navigation completes
+  useEffect(() => {
+    if (isLoading) {
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchParams]);
 
   const push = useCallback(
     (href: string) => {
