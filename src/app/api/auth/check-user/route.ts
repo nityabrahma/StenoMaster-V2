@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const user = await UserModel.findOne({ email }).lean();
     
     if (user) {
-        return NextResponse.json({ exists: true, role: user.userType });
+        return NextResponse.json({ exists: true, role: user.userType, name: user.fullName });
     } else {
         return NextResponse.json({ exists: false, message: 'No user found with this email.' });
     }

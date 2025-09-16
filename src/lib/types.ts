@@ -54,6 +54,7 @@ export type LoginCredentials = {
 export type CheckUserResponse = {
   exists: boolean;
   role?: 'student' | 'teacher';
+  name?: string;
   message?: string;
 }
 

@@ -20,6 +20,7 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | null>(null);
+  const [name, setName] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const isLoading = isCheckingEmail || loading;
@@ -55,6 +56,7 @@ const LoginForm = () => {
 
       if (res.ok && data.exists) {
         setRole(data.role!);
+        setName(data.name || '');
         setStep('enter-password');
       } else {
         toast({ title: data.message || 'No user found with this email.', variant: 'destructive' });
@@ -76,6 +78,7 @@ const LoginForm = () => {
     setStep('enter-email');
     setPassword('');
     setRole(null);
+    setName('');
   }
 
   return (
@@ -113,7 +116,7 @@ const LoginForm = () => {
                     <ArrowLeft />
                 </Button>
                 <div>
-                    <p className="font-semibold text-gray-300">Welcome back!</p>
+                    <p className="font-semibold text-gray-300">Welcome back, {name}!</p>
                     <p className="text-sm text-muted-foreground -mt-1">{email}</p>
                 </div>
             </div>
