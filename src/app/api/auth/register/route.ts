@@ -23,11 +23,10 @@ export async function POST(req: NextRequest) {
     
     // Correctly map the incoming fields to the schema fields
     const newUser = new UserModel({
-      fullName: name,
+      fullName: name, // Correct mapping
       email,
       password: hashedPassword,
-      userType: role,
-      // teacherId is not handled in this basic signup form
+      userType: role, // Correct mapping
     });
     
     await newUser.save();
