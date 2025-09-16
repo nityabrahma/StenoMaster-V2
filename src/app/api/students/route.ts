@@ -8,13 +8,17 @@ export async function GET(req: NextRequest) {
     if (validation.error) {
         return NextResponse.json({ message: validation.error }, { status: validation.status });
     }
-    // Only teachers can see all students
-    if (validation.user?.role !== 'teacher') {
+    
+    const user = validation.user;
+
+    // Only teachers can see their students
+    if (user?.role !== 'teacher') {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     try {
-        const students = await getStudentsByTeacher(validation.user.id as string);
+        // Pass the teacher's ID to the service function
+        const students = await getStudentsByTeacher(user.id as string);
         return NextResponse.json(students);
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
