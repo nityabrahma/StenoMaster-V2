@@ -105,7 +105,7 @@ export default function ClassesPage() {
                                             : student.name.substring(0, 2);
                                         return (
                                             <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                                <AvatarImage src={`https://avatar.vercel.sh/${student.id}.png`} alt={student.name} />
+                                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
                                                 <AvatarFallback>{studentInitials}</AvatarFallback>
                                             </Avatar>
                                         )
