@@ -43,3 +43,12 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+
+.env
+
+.env.local
+
+.env*
+
+/.idx
