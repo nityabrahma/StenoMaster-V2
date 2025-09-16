@@ -21,26 +21,30 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Use .save() for a more robust write confirmation
     const newUser = new UserModel({
-      name,
+      fullName: name,
       email,
       password: hashedPassword,
-      role,
+      userType: role,
+      // teacherId is not handled in this basic signup form
     });
     
     await newUser.save();
 
     const userObject = {
       id: newUser.userId,
-      name: newUser.name,
+      name: newUser.fullName,
       email: newUser.email,
-      role: newUser.role,
+      role: newUser.userType,
     }
 
     return NextResponse.json(userObject, { status: 201 });
   } catch (error: any) {
     console.error('[API Register Error]', error);
+    // Provide a more specific error message if it's a validation error
+    if (error.name === 'ValidationError') {
+        return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     return NextResponse.json({ message: error.message || 'An unexpected error occurred during registration.' }, { status: 500 });
   }
 }

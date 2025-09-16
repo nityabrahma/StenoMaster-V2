@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Missing credentials' }, { status: 400 });
     }
 
-    const user = await UserModel.findOne({ email, role }).select('+password');
+    const user = await UserModel.findOne({ email, userType: role }).select('+password');
 
     if (!user) {
         return NextResponse.json({ message: 'User not found. Please check your email and role.' }, { status: 404 });
@@ -30,9 +30,9 @@ export async function POST(req: NextRequest) {
 
     const payload = {
         id: user.userId,
-        name: user.name,
+        name: user.fullName,
         email: user.email,
-        role: user.role,
+        role: user.userType,
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });

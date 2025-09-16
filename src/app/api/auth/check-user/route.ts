@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const user = await UserModel.findOne({ email }).lean();
     
     if (user) {
-        return NextResponse.json({ exists: true, role: user.role });
+        return NextResponse.json({ exists: true, role: user.userType });
     } else {
         return NextResponse.json({ exists: false, message: 'No user found with this email.' }, { status: 404 });
     }

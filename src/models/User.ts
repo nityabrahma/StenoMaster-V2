@@ -5,10 +5,12 @@ import { nanoid } from "nanoid";
 export interface IUser extends Document {
   userId: string;
   email: string;
-  name: string;
-  password?: string;
-  role: "student" | "teacher";
-  classIds: string[];
+  photo?: string;
+  fullName: string;
+  password: string;
+  userType: "student" | "teacher";
+  sessionToken?: string;
+  teacherId?: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -16,30 +18,40 @@ const UserSchema = new Schema<IUser>({
     type: String,
     required: true,
     unique: true,
-    default: () => nanoid(10),
+    default: () => nanoid(),
   },
   email: {
     type: String,
     required: true,
     unique: true,
   },
-  name: {
+  photo: {
+    type: String,
+  },
+  fullName: {
     type: String,
     required: true,
   },
   password: {
     type: String,
     required: true,
-    select: false, // Hide by default
+    select: false,
   },
-  role: {
+  userType: {
     type: String,
     enum: ["student", "teacher"],
     required: true,
   },
-  classIds: {
-    type: [String],
-    default: [],
+  sessionToken: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  teacherId: {
+    type: String,
+    required: function (this: IUser) {
+      return this.userType === "student";
+    },
   },
 });
 
