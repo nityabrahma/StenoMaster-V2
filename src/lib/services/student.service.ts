@@ -2,58 +2,33 @@
 import { connectToDatabase } from '@/lib/database/mongoose';
 import UserModel from '@/lib/database/models/user.model';
 import type { Student } from '@/lib/types';
+import { getClassesByStudent } from './class.service';
 
 // Map the MongoDB user document to the Student type used in the frontend
-function mapUserToStudent(user: any): Student {
+async function mapUserToStudent(user: any): Promise<Student> {
+    // Fetch class enrollments for the student from Firestore
+    const classes = await getClassesByStudent(user.userId);
+    const classIds = classes.map(c => c.id);
+
     return {
         id: user.userId.toString(),
         name: user.fullName,
         email: user.email,
         role: 'student',
-        classIds: user.classIds || [], // Assuming classIds are stored on the user model
+        teacherId: user.teacherId,
+        classIds: classIds || [], 
     };
 }
-
-
-/**
- * Fetches all students assigned to a specific teacher directly from MongoDB.
- * @param teacherId The userId of the teacher.
- * @returns A promise that resolves to an array of Student objects.
- */
-export async function getStudentsByTeacher(teacherId: string): Promise<Student[]> {
-    try {
-        await connectToDatabase();
-        const studentsFromDb = await UserModel.find({ userType: 'student', teacherId: teacherId }).lean();
-
-        if (!studentsFromDb) {
-            return [];
-        }
-
-        // We need to fetch class enrollments for each student separately
-        // For now, let's just map the basic data. Class IDs will need to be populated.
-        // This is a simplification until we have a clear link between mongo users and firestore classes.
-        const students: Student[] = studentsFromDb.map(user => ({
-            id: user.userId,
-            name: user.fullName,
-            email: user.email,
-            role: 'student',
-            classIds: [], // Placeholder, as class data is in Firestore.
-        }));
-        
-        return students;
-
-    } catch (error) {
-        console.error('Error fetching students by teacher:', error);
-        throw new Error('Could not fetch students.');
-    }
-}
-
 
 export async function getAllStudents(): Promise<Student[]> {
     try {
         await connectToDatabase();
         const users = await UserModel.find({ userType: 'student' }).lean();
-        return users.map(mapUserToStudent);
+        
+        // Map all users to students with their class info
+        const studentPromises = users.map(user => mapUserToStudent(user));
+        return Promise.all(studentPromises);
+
     } catch (error) {
         console.error('Error fetching all students:', error);
         return [];

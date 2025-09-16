@@ -22,7 +22,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CreateClassModal from '@/components/CreateClassModal';
 import EditClassModal from '@/components/EditClassModal';
 import ManageStudentsModal from '@/components/ManageStudentsModal';
@@ -30,20 +30,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ClassesPage() {
   const { user } = useAuth();
-  const { classes, fetchClasses } = useClasses();
-  const { students, fetchStudents } = useStudents();
+  const { classes } = useClasses();
+  const { students } = useStudents();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [managingStudentsClass, setManagingStudentsClass] = useState<Class | null>(null);
   
-  useEffect(() => {
-    if(user?.role === 'teacher') {
-        fetchClasses();
-        fetchStudents();
-    }
-  }, [user, fetchClasses, fetchStudents]);
-
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);

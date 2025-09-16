@@ -23,7 +23,7 @@ import { useAppRouter } from '@/hooks/use-app-router';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Assignment, Submission } from '@/lib/types';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import { useToast } from '@/hooks/use-toast';
@@ -33,15 +33,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 function TeacherAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
-  const { assignments, submissions, deleteAssignment, fetchAssignments } = useAssignments();
-  const { classes, fetchClasses } = useClasses();
+  const { assignments, submissions, deleteAssignment } = useAssignments();
+  const { classes } = useClasses();
   const { toast } = useToast();
   
-  useEffect(() => {
-    fetchAssignments();
-    fetchClasses();
-  }, [fetchAssignments, fetchClasses]);
-
   if(!user) return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
@@ -143,16 +138,11 @@ function TeacherAssignments() {
 function StudentAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
-  const { students, fetchStudents } = useStudents();
-  const { assignments, submissions, fetchAssignments } = useAssignments();
+  const { students } = useStudents();
+  const { assignments, submissions } = useAssignments();
   
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-
-  useEffect(() => {
-    fetchStudents();
-    fetchAssignments();
-  }, [fetchStudents, fetchAssignments]);
 
   if(!user) return null;
 

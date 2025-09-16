@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getStudentsByTeacher } from '@/lib/services/student.service';
+import { getAllStudents } from '@/lib/services/student.service';
 import { validateRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -9,16 +9,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: validation.error }, { status: validation.status });
     }
     
-    const user = validation.user;
-
-    // Only teachers can see their students
-    if (user?.role !== 'teacher') {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
+    // For now, allow both roles to fetch all students, will be optimized later.
+    // The filtering will happen on the client side.
+    
     try {
-        // Pass the teacher's ID to the service function
-        const students = await getStudentsByTeacher(user.id as string);
+        const students = await getAllStudents();
         return NextResponse.json(students);
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });

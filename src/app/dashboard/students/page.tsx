@@ -43,7 +43,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
@@ -149,22 +149,16 @@ function CreateStudentDialog() {
 
 export default function StudentsPage() {
   const { user } = useAuth();
-  const { students, removeStudent, fetchStudents } = useStudents();
-  const { classes, fetchClasses } = useClasses();
-  const { submissions, fetchAssignments } = useAssignments();
+  const { students, removeStudent } = useStudents();
+  const { classes } = useClasses();
+  const { submissions } = useAssignments();
   const router = useAppRouter();
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
 
-  useEffect(() => {
-    if (user?.role === 'teacher') {
-        fetchStudents();
-        fetchClasses();
-        fetchAssignments();
-    }
-  }, [user, fetchStudents, fetchClasses, fetchAssignments]);
-
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
+
+  const teacherStudents = students.filter(s => s.teacherId === user.id);
 
   const handleDeleteStudent = async (studentId: string) => {
     try {
@@ -220,14 +214,14 @@ export default function StudentsPage() {
                 <div className="text-right">Avg. Accuracy</div>
                 <div className="w-8"><span className="sr-only">Actions</span></div>
             </div>
-            {students.length === 0 ? (
+            {teacherStudents.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                     No students have been created yet.
                 </div>
             ) : (
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
-                {students.map(student => {
+                {teacherStudents.map(student => {
                     const studentSubmissions = submissions.filter(s => s.studentId === student.id);
                     const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
                     const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N/A';
