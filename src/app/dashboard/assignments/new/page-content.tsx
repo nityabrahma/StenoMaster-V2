@@ -40,9 +40,9 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useClasses } from '@/hooks/use-classes';
 import { useAssignments } from '@/hooks/use-assignments';
 import { useAppRouter } from '@/hooks/use-app-router';
@@ -55,7 +55,7 @@ const assignmentSchema = z.object({
     required_error: 'A due date is required.',
   }),
   text: z.string().min(20, 'Assignment text must be at least 20 characters.'),
-  imageUrl: z.string().url('Please enter a valid image URL.').optional().or(z.literal('')),
+  imageUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
@@ -68,7 +68,9 @@ export default function NewAssignmentPageContent() {
   const { classes } = useClasses();
   const { createAssignment } = useAssignments();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const teacherClasses = classes.filter((c) => c.teacherId === user?.id);
 
   const form = useForm<AssignmentFormValues>({
@@ -87,6 +89,42 @@ export default function NewAssignmentPageContent() {
       form.setValue('classId', newClassId);
     }
   }, [searchParams, form]);
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
+
+      const imageData = await res.json();
+      form.setValue('imageUrl', imageData.secure_url);
+      toast({
+        title: 'Image Uploaded',
+        description: 'The image has been successfully added.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Upload Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const onSubmit = async (data: AssignmentFormValues) => {
     try {
@@ -254,12 +292,31 @@ export default function NewAssignmentPageContent() {
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Optional Image URL</FormLabel>
+                      <FormLabel>Optional Image</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="https://picsum.photos/seed/1/600/400"
-                          {...field}
-                        />
+                        <div className="flex items-center gap-4">
+                           <Input
+                              placeholder="Image URL will appear here after upload"
+                              readOnly
+                              value={field.value || ''}
+                            />
+                           <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                          >
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Upload
+                          </Button>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/gif"
+                          />
+                        </div>
                       </FormControl>
                       <FormDescription>
                         Add an image to give context to the assignment.

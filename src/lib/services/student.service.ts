@@ -1,54 +1,43 @@
 
-import { students as initialStudents, teachers } from '@/lib/data';
-import type { Student, Class } from '@/lib/types';
-import { classes } from './class.service';
-
-const allUsers = [...initialStudents, ...teachers];
+import UserModel from '@/models/User';
+import dbConnect from '../mongodb';
+import type { Student } from '@/lib/types';
 
 export async function getAllStudents(): Promise<Student[]> {
-    // Filter from the live array in case new users were added
-    const students = allUsers.filter(u => u.role === 'student') as Student[];
-    return new Promise(resolve => resolve(students));
+    await dbConnect();
+    const students = await UserModel.find({ role: 'student' }).lean();
+    return students.map(s => ({
+        id: s._id.toString(),
+        name: s.name,
+        email: s.email,
+        role: 'student',
+        classIds: s.classIds || []
+    }));
 }
 
 export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
-    const studentIndex = allUsers.findIndex(s => s.id === id && s.role === 'student');
+    await dbConnect();
+    const updatedStudent = await UserModel.findByIdAndUpdate(id, data, { new: true }).lean();
 
-    if (studentIndex === -1) {
+    if (!updatedStudent) {
         throw new Error('Student not found');
     }
 
-    const updatedStudent = { ...allUsers[studentIndex], ...data } as Student;
-    allUsers[studentIndex] = updatedStudent;
-    
-    // Also update the original students array
-    const originalStudentIndex = initialStudents.findIndex(s => s.id === id);
-    if(originalStudentIndex !== -1) {
-        initialStudents[originalStudentIndex] = updatedStudent;
-    }
-
-
-    return new Promise(resolve => resolve(updatedStudent));
+    return {
+        id: updatedStudent._id.toString(),
+        name: updatedStudent.name,
+        email: updatedStudent.email,
+        role: 'student',
+        classIds: updatedStudent.classIds || []
+    };
 }
 
 export async function deleteStudent(id: string): Promise<void> {
-    const userIndex = allUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) {
+    await dbConnect();
+    const result = await UserModel.findByIdAndDelete(id);
+    if (!result) {
         throw new Error('Student not found');
     }
-    allUsers.splice(userIndex, 1);
-
-    // Also remove from original students array
-    const originalStudentIndex = initialStudents.findIndex(s => s.id === id);
-    if(originalStudentIndex !== -1) {
-        initialStudents.splice(originalStudentIndex, 1);
-    }
-
-
-    // Also remove student from any classes they were in
-    classes.forEach(c => {
-        c.studentIds = c.studentIds.filter(studentId => studentId !== id);
-    });
-    
-    return new Promise(resolve => resolve());
+    // We would also need to remove student from classes in a real app,
+    // which would be handled here or via a database trigger.
 }

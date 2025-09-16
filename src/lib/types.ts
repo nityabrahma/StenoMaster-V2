@@ -1,7 +1,9 @@
 
 
+import type { Types } from 'mongoose';
+
 export type User = {
-  id: string;
+  id: string | Types.ObjectId;
   name: string;
   email: string;
   role: 'teacher' | 'student';
@@ -58,6 +60,6 @@ export type CheckUserResponse = {
 export type SignupCredentials = {
   name: string;
   email: string;
-  password?: string;
+  password: string;
   role: 'student' | 'teacher';
 }

@@ -1,34 +1,30 @@
 
-import { assignments as initialAssignments } from '@/lib/data';
+import { db } from '../firebase-admin';
 import type { Assignment } from '@/lib/types';
 
-// Let's use the in-memory array for this service
-const assignments: Assignment[] = [...initialAssignments];
+const assignmentsCollection = db.collection('assignments');
 
 export async function getAllAssignments(): Promise<Assignment[]> {
-    return new Promise(resolve => resolve(assignments));
+    const snapshot = await assignmentsCollection.get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
 }
 
 export async function getAssignmentById(id: string): Promise<Assignment | undefined> {
-    const allAssignments = await getAllAssignments();
-    return new Promise(resolve => resolve(allAssignments.find(a => a.id === id)));
+    const doc = await assignmentsCollection.doc(id).get();
+    if (!doc.exists) {
+        return undefined;
+    }
+    return { id: doc.id, ...doc.data() } as Assignment;
 }
 
 export async function createAssignment(data: Omit<Assignment, 'id'>): Promise<Assignment> {
-    const newAssignment: Assignment = {
-        ...data,
-        id: `assignment-${Date.now()}`,
-    };
-    assignments.push(newAssignment);
-    return new Promise(resolve => resolve(newAssignment));
+    const docRef = await assignmentsCollection.add(data);
+    return { ...data, id: docRef.id };
 }
 
 export async function deleteAssignment(id: string): Promise<void> {
-    const initialLength = assignments.length;
-    const index = assignments.findIndex(a => a.id === id);
-    if (index === -1) {
-        throw new Error('Assignment not found');
-    }
-    assignments.splice(index, 1);
-    return new Promise(resolve => resolve());
+    await assignmentsCollection.doc(id).delete();
 }

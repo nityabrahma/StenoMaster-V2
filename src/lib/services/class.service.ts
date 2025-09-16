@@ -1,31 +1,28 @@
 
-import { classes as initialClasses } from '@/lib/data';
+import { db } from '../firebase-admin';
 import type { Class } from '@/lib/types';
 
-const classes: Class[] = [...initialClasses];
+const classesCollection = db.collection('classes');
 
 export async function getAllClasses(): Promise<Class[]> {
-    return new Promise(resolve => resolve(classes));
+    const snapshot = await classesCollection.get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
 }
 
 export async function createClass(data: Omit<Class, 'id'>): Promise<Class> {
-    const newClass: Class = {
+    const docRef = await classesCollection.add(data);
+    return {
         ...data,
-        id: `class-${Date.now()}`,
+        id: docRef.id,
     };
-    classes.push(newClass);
-    return new Promise(resolve => resolve(newClass));
 }
 
 export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>): Promise<Class> {
-    const classIndex = classes.findIndex(c => c.id === id);
-
-    if (classIndex === -1) {
-        throw new Error('Class not found');
-    }
-
-    const updatedClass = { ...classes[classIndex], ...data } as Class;
-    classes[classIndex] = updatedClass;
-
-    return new Promise(resolve => resolve(updatedClass));
+    const docRef = classesCollection.doc(id);
+    await docRef.update(data);
+    const updatedDoc = await docRef.get();
+    return { id, ...updatedDoc.data() } as Class;
 }
