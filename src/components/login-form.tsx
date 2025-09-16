@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { LogIn, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { CheckUserResponse } from '@/lib/types';
+import { DialogOverlay } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 type LoginStep = 'enter-email' | 'enter-password';
 
@@ -20,6 +22,7 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +31,7 @@ const LoginForm = () => {
       return;
     }
 
+    setIsCheckingEmail(true);
     try {
       const res = await fetch('/api/auth/check-user', {
         method: 'POST',
@@ -45,6 +49,8 @@ const LoginForm = () => {
       }
     } catch (error) {
       toast({ title: 'An error occurred', description: 'Please try again later.', variant: 'destructive' });
+    } finally {
+        setIsCheckingEmail(false);
     }
   };
 
@@ -60,11 +66,15 @@ const LoginForm = () => {
     setRole(null);
   }
 
+  const isLoading = isCheckingEmail || loading;
+
   return (
+    <>
+    <DialogOverlay className={cn(isLoading && "pointer-events-none")} />
     <div className="w-full max-w-md mx-auto flex flex-col">
       {step === 'enter-email' && (
-        <form onSubmit={handleEmailSubmit} className="space-y-4 mt-4">
-          <p className="font-semibold text-center text-gray-300 pb-4">
+        <form onSubmit={handleEmailSubmit} className="space-y-3">
+          <p className="font-semibold text-center text-gray-300 pb-2">
             Welcome! Enter your email to begin.
           </p>
           <div className="space-y-2">
@@ -79,17 +89,17 @@ const LoginForm = () => {
             />
           </div>
           <Button
-            disabled={loading}
+            disabled={isLoading}
             type="submit"
             className="gradient-button w-full"
           >
-            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Continue'}
+            {isCheckingEmail ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Continue'}
           </Button>
         </form>
       )}
 
       {step === 'enter-password' && (
-        <form onSubmit={handleLogin} className="space-y-4 mt-4">
+        <form onSubmit={handleLogin} className="space-y-3">
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
                     <ArrowLeft />
@@ -112,7 +122,7 @@ const LoginForm = () => {
             />
           </div>
           <Button
-            disabled={loading}
+            disabled={isLoading}
             type="submit"
             className="gradient-button w-full"
           >
@@ -122,6 +132,7 @@ const LoginForm = () => {
         </form>
       )}
     </div>
+    </>
   );
 };
 
