@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Submission, Assignment } from '@/lib/types';
+import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -20,53 +20,23 @@ import { cn } from '@/lib/utils';
 interface SubmissionReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  submission: Submission;
+  score: Score;
   assignment: Assignment;
 }
 
-// This is a more robust diffing function that can handle insertions and deletions
-function getStatusArray(original: string, typed: string): ("correct" | "wrong" | "pending")[] {
-  const status: ("correct" | "wrong" | "pending")[] = new Array(original.length).fill("pending");
-  const typedChars = typed.split('');
-  let typedIndex = 0;
 
-  for (let i = 0; i < original.length; i++) {
-    if (typedIndex < typedChars.length) {
-      if (original[i] === typedChars[typedIndex]) {
-        status[i] = "correct";
-      } else {
-        status[i] = "wrong";
-      }
-      typedIndex++;
-    } else {
-      status[i] = "pending";
-    }
-  }
-
-  // A simplified version for this use case: we compare char by char up to the length of user input.
-  // A more complex implementation would use dynamic programming for a true diff.
-  return status;
-}
-
-const renderTextWithDiff = (originalText: string, userInput: string) => {
-    const statusArray = getStatusArray(originalText, userInput);
+const renderTextWithDiff = (originalText: string, userInput: string, mistakes: Score['mistakes']) => {
+    const mistakePositions = new Set(mistakes.map(m => m.position));
     
     return originalText.split('').map((char, index) => {
-        const status = statusArray[index];
-        let className = '';
+        let className = 'text-muted-foreground';
 
-        switch (status) {
-            case 'correct':
+        if (index < userInput.length) {
+            if (mistakePositions.has(index)) {
+                 className = 'text-red-400 bg-red-500/20 rounded-sm';
+            } else {
                 className = 'text-green-400';
-                break;
-            case 'wrong':
-                className = 'text-red-400 bg-red-500/20 rounded-sm';
-                break;
-            case 'pending':
-                className = 'text-muted-foreground';
-                break;
-            default:
-                break;
+            }
         }
         
         // Handle whitespace explicitly for visibility
@@ -85,13 +55,13 @@ const renderTextWithDiff = (originalText: string, userInput: string) => {
 export default function SubmissionReviewModal({
   isOpen,
   onClose,
-  submission,
+  score,
   assignment,
 }: SubmissionReviewModalProps) {
   
-  if (!submission || !assignment) return null;
+  if (!score || !assignment) return null;
   
-  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, submission.userInput), [assignment.text, submission.userInput]);
+  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, score.userInput, score.mistakes), [assignment.text, score.userInput, score.mistakes]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -111,7 +81,7 @@ export default function SubmissionReviewModal({
                     <Zap className="h-6 w-6 text-primary"/>
                     <div>
                         <p className="text-sm text-muted-foreground">WPM</p>
-                        <p className="text-2xl font-bold">{submission.wpm}</p>
+                        <p className="text-2xl font-bold">{score.wpm}</p>
                     </div>
                 </CardContent>
             </Card>
@@ -120,7 +90,7 @@ export default function SubmissionReviewModal({
                     <Target className="h-6 w-6 text-primary"/>
                     <div>
                         <p className="text-sm text-muted-foreground">Accuracy</p>
-                        <p className="text-2xl font-bold">{submission.accuracy.toFixed(1)}%</p>
+                        <p className="text-2xl font-bold">{score.accuracy.toFixed(1)}%</p>
                     </div>
                 </CardContent>
             </Card>
@@ -129,7 +99,7 @@ export default function SubmissionReviewModal({
                     <AlertCircle className="h-6 w-6 text-destructive"/>
                     <div>
                         <p className="text-sm text-muted-foreground">Mistakes</p>
-                        <p className="text-2xl font-bold">{submission.mistakes}</p>
+                        <p className="text-2xl font-bold">{score.mistakes.length}</p>
                     </div>
                 </CardContent>
             </Card>

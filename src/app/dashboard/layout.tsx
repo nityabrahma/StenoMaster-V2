@@ -8,14 +8,14 @@ import { useAuth } from '@/hooks/use-auth';
 import UserButton from '@/components/UserButton';
 import Logo from '@/components/logo';
 import { useAppRouter } from '@/hooks/use-app-router';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
     const router = useAppRouter();
-    const { fetchAssignments } = useAssignments();
+    const { fetchAssignments, fetchScores } = useDataStore();
     const { fetchClasses } = useClasses();
     const { fetchStudents } = useStudents();
     const [dataLoaded, setDataLoaded] = useState(false);
@@ -33,13 +33,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 await Promise.all([
                     fetchAssignments(),
                     fetchClasses(),
-                    fetchStudents()
+                    fetchStudents(),
+                    fetchScores(),
                 ]);
                 setDataLoaded(true);
             }
         };
         loadData();
-    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents]);
+    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores]);
 
     if (loading || !isAuthenticated || !dataLoaded) {
         // The global loading provider will show an overlay

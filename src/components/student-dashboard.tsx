@@ -3,7 +3,7 @@
 import { Zap, Target, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useStudents } from '@/hooks/use-students';
 import { Button } from './ui/button';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,24 +13,24 @@ import { useAppRouter } from '@/hooks/use-app-router';
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { students } = useStudents();
-  const { assignments, submissions } = useAssignments();
+  const { assignments, scores } = useDataStore();
   const router = useAppRouter();
   
   if (!user || user.role !== 'student') return null;
 
   const student = students.find(s => s.id === user.id);
   
-  const mySubmissions = submissions.filter(s => s.studentId === user.id);
-  const avgWpm = mySubmissions.length > 0 ? Math.round(mySubmissions.reduce((acc, s) => acc + s.wpm, 0) / mySubmissions.length) : 0;
-  const avgAccuracy = mySubmissions.length > 0 ? (mySubmissions.reduce((acc, s) => acc + s.accuracy, 0) / mySubmissions.length).toFixed(1) : 0;
+  const myScores = scores.filter(s => s.studentId === user.id);
+  const avgWpm = myScores.length > 0 ? Math.round(myScores.reduce((acc, s) => acc + s.wpm, 0) / myScores.length) : 0;
+  const avgAccuracy = myScores.length > 0 ? (myScores.reduce((acc, s) => acc + s.accuracy, 0) / myScores.length).toFixed(1) : 0;
 
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
-  const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
+  const pendingAssignments = myAssignments.filter(a => !myScores.some(s => s.assignmentId === a.id));
   
   const stats = [
     { title: 'Average WPM', value: avgWpm, icon: Zap, color: 'from-blue-400 to-sky-400' },
     { title: 'Average Accuracy', value: `${avgAccuracy}%`, icon: Target, color: 'from-violet-400 to-purple-400' },
-    { title: 'Completed', value: mySubmissions.length, icon: ClipboardCheck, color: 'from-emerald-400 to-green-400' },
+    { title: 'Completed', value: myScores.length, icon: ClipboardCheck, color: 'from-emerald-400 to-green-400' },
   ];
 
   return (

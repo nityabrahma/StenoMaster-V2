@@ -8,20 +8,20 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, History } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useAuth } from '@/hooks/use-auth';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
-import type { Assignment, Submission } from '@/lib/types';
+import type { Assignment, Score } from '@/lib/types';
 
 export default function TypingTestPage() {
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
     const { toast } = useToast();
     const { user } = useAuth();
-    const { createSubmission, submissions } = useAssignments();
+    const { createScore, scores } = useDataStore();
 
     const [isListModalOpen, setIsListModalOpen] = useState(false);
-    const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+    const [selectedScore, setSelectedScore] = useState<Score | null>(null);
 
     const currentTest = typingTexts[currentTextIndex];
 
@@ -29,9 +29,9 @@ export default function TypingTestPage() {
         if (!user) return;
         
         try {
-            await createSubmission({
+            await createScore({
                 assignmentId: `practice-${currentTest.id}`,
-                submittedAt: new Date().toISOString(),
+                completedAt: new Date().toISOString(),
                 ...result,
             });
             
@@ -52,18 +52,18 @@ export default function TypingTestPage() {
         setCurrentTextIndex((prevIndex) => (prevIndex + 1) % typingTexts.length);
     };
     
-    const practiceTestSubmissions = submissions.filter(s => s.assignmentId.startsWith('practice-') && s.studentId === user?.id);
+    const practiceTestScores = scores.filter(s => s.assignmentId.startsWith('practice-') && s.studentId === user?.id);
 
-    const handleSelectSubmission = (submission: Submission) => {
-        setSelectedSubmission(submission);
+    const handleSelectScore = (score: Score) => {
+        setSelectedScore(score);
         setIsListModalOpen(false);
     }
     
-    const getAssignmentForSubmission = (submission: Submission): Assignment => {
-        const textId = submission.assignmentId.replace('practice-', '');
+    const getAssignmentForScore = (score: Score): Assignment => {
+        const textId = score.assignmentId.replace('practice-', '');
         const practiceText = typingTexts.find(t => t.id === textId);
         return {
-            id: submission.assignmentId,
+            id: score.assignmentId,
             title: `Practice Text #${textId}`,
             text: practiceText?.text || "Text not found.",
             classId: '',
@@ -99,16 +99,16 @@ export default function TypingTestPage() {
             <PracticeTestsModal
                 isOpen={isListModalOpen}
                 onClose={() => setIsListModalOpen(false)}
-                submissions={practiceTestSubmissions}
-                onSelectSubmission={handleSelectSubmission}
+                scores={practiceTestScores}
+                onSelectScore={handleSelectScore}
             />
 
-            {selectedSubmission && (
+            {selectedScore && (
                 <SubmissionReviewModal
-                    isOpen={!!selectedSubmission}
-                    onClose={() => setSelectedSubmission(null)}
-                    submission={selectedSubmission}
-                    assignment={getAssignmentForSubmission(selectedSubmission)}
+                    isOpen={!!selectedScore}
+                    onClose={() => setSelectedScore(null)}
+                    score={selectedScore}
+                    assignment={getAssignmentForScore(selectedScore)}
                 />
             )}
         </div>

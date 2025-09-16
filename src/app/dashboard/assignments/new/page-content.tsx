@@ -44,7 +44,7 @@ import { CalendarIcon, PlusCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
 import { useClasses } from '@/hooks/use-classes';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useAppRouter } from '@/hooks/use-app-router';
 import CreateClassModal from '@/components/CreateClassModal';
 
@@ -66,7 +66,7 @@ export default function NewAssignmentPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { classes } = useClasses();
-  const { createAssignment } = useAssignments();
+  const { createAssignment } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -24,6 +24,7 @@ export type Class = {
   name: string;
   teacherId: string;
   studentIds: string[];
+  createdAt: string; // ISO Date string
 };
 
 export type Assignment = {
@@ -35,16 +36,24 @@ export type Assignment = {
   imageUrl?: string;
 };
 
-export type Submission = {
+export interface Mistake {
+  expected: string;
+  actual: string;
+  position: number;
+}
+
+export interface Score {
   id: string;
-  assignmentId: string;
   studentId: string;
-  submittedAt: string; // ISO date string
-  wpm: number;
+  assignmentId: string;
+  userInput: string;
   accuracy: number;
-  mistakes: number;
-  userInput: string; // The full text entered by the user
-};
+  wpm: number;
+  timeElapsed: number;
+  completedAt: string; // ISO Date string
+  mistakes: Mistake[];
+}
+
 
 export type LoginCredentials = {
     email: string;

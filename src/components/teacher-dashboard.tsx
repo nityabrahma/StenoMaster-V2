@@ -18,7 +18,7 @@ import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid } from '
 import { useAuth } from '@/hooks/use-auth';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { useMemo } from 'react';
@@ -35,7 +35,7 @@ export default function TeacherDashboard() {
   const { user } = useAuth();
   const { students } = useStudents();
   const { classes } = useClasses();
-  const { assignments, submissions } = useAssignments();
+  const { assignments, scores } = useDataStore();
 
   if (!user || user.role !== 'teacher') return null;
 
@@ -46,27 +46,27 @@ export default function TeacherDashboard() {
   
   const teacherStudents = students.filter(s => teacherClasses.some(c => c.studentIds.includes(s.id)));
   
-  const teacherSubmissions = submissions.filter(s => teacherAssignments.some(a => a.id === s.assignmentId));
+  const teacherScores = scores.filter(s => teacherAssignments.some(a => a.id === s.assignmentId));
 
   const chartData = useMemo(() => {
     return teacherClasses.map(cls => {
       const classAssignments = assignments.filter(a => a.classId === cls.id);
-      const classSubmissions = submissions.filter(s => classAssignments.some(a => a.id === s.assignmentId));
+      const classScores = scores.filter(s => classAssignments.some(a => a.id === s.assignmentId));
       
-      if (classSubmissions.length === 0) {
+      if (classScores.length === 0) {
         return { class: cls.name, avgWpm: 0 };
       }
 
-      const totalWpm = classSubmissions.reduce((acc, sub) => acc + sub.wpm, 0);
-      const avgWpm = Math.round(totalWpm / classSubmissions.length);
+      const totalWpm = classScores.reduce((acc, sub) => acc + sub.wpm, 0);
+      const avgWpm = Math.round(totalWpm / classScores.length);
 
       return { class: cls.name, avgWpm };
     }).slice(0, 5); // show top 5 classes
-  }, [teacherClasses, assignments, submissions]);
+  }, [teacherClasses, assignments, scores]);
 
 
-  const recentSubmissions = teacherSubmissions
-    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+  const recentScores = teacherScores
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
     .slice(0, 5)
     .map(sub => {
       const student = students.find(s => s.id === sub.studentId);
@@ -138,7 +138,7 @@ export default function TeacherDashboard() {
             <CardDescription>Latest assignment submissions from your students.</CardDescription>
           </CardHeader>
           <CardContent>
-            {recentSubmissions.length > 0 ? (
+            {recentScores.length > 0 ? (
                 <div className="space-y-4">
                     <div className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 text-sm font-semibold text-muted-foreground border-b pb-2">
                         <div>Student</div>
@@ -147,7 +147,7 @@ export default function TeacherDashboard() {
                     </div>
                      <ScrollArea className="h-[200px]">
                         <div className="divide-y divide-border">
-                            {recentSubmissions.map(sub => (
+                            {recentScores.map(sub => (
                                 <div key={sub.id} className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 py-3 items-center">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <Avatar className="h-8 w-8">

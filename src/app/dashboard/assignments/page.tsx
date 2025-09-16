@@ -20,11 +20,11 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
 import { useAppRouter } from '@/hooks/use-app-router';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import { useState } from 'react';
-import type { Assignment, Submission } from '@/lib/types';
+import type { Assignment, Score } from '@/lib/types';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,7 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 function TeacherAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
-  const { assignments, submissions, deleteAssignment } = useAssignments();
+  const { assignments, scores, deleteAssignment } = useDataStore();
   const { classes } = useClasses();
   const { toast } = useToast();
   
@@ -91,7 +91,7 @@ function TeacherAssignments() {
                 <ScrollArea className="h-full">
                     <div className="divide-y divide-border">
                         {teacherAssignments.map(assignment => {
-                        const assignmentSubmissions = submissions.filter(s => s.assignmentId === assignment.id);
+                        const assignmentScores = scores.filter(s => s.assignmentId === assignment.id);
                         const assignmentClass = classes.find(c => c.id === assignment.classId);
                         return (
                             <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
@@ -99,7 +99,7 @@ function TeacherAssignments() {
                                 <div className="truncate text-center">{assignmentClass?.name}</div>
                                 <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
                                 <div className="text-center">
-                                    <Badge variant="outline">{assignmentSubmissions.length} / {assignmentClass?.studentIds.length}</Badge>
+                                    <Badge variant="outline">{assignmentScores.length} / {assignmentClass?.studentIds.length}</Badge>
                                 </div>
                                 <div className="flex justify-center">
                                     <DropdownMenu>
@@ -139,23 +139,23 @@ function StudentAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
   const { students } = useStudents();
-  const { assignments, submissions } = useAssignments();
+  const { assignments, scores } = useDataStore();
   
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [selectedScore, setSelectedScore] = useState<Score | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
 
   if(!user) return null;
 
   const student = students.find(s => s.id === user.id);
   const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
-  const mySubmissions = submissions.filter(s => s.studentId === user.id);
+  const myScores = scores.filter(s => s.studentId === user.id);
   
-  const pendingAssignments = myAssignments.filter(a => !mySubmissions.some(s => s.assignmentId === a.id));
+  const pendingAssignments = myAssignments.filter(a => !myScores.some(s => s.assignmentId === a.id));
   
-  const handleCardClick = (assignment: Assignment, submission?: Submission) => {
-    if (submission && assignment) {
+  const handleCardClick = (assignment: Assignment, score?: Score) => {
+    if (score && assignment) {
       setSelectedAssignment(assignment);
-      setSelectedSubmission(submission);
+      setSelectedScore(score);
     }
   };
 
@@ -210,16 +210,16 @@ function StudentAssignments() {
             {/* Completed Assignments */}
             <div>
                 <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
-                {mySubmissions.length > 0 ? (
+                {myScores.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {mySubmissions.map((submission) => {
-                    const assignment = assignments.find(a => a.id === submission.assignmentId);
+                    {myScores.map((score) => {
+                    const assignment = assignments.find(a => a.id === score.assignmentId);
                     const isDeleted = !assignment;
 
                     return (
                         <Card 
-                        key={submission.id} 
-                        onClick={() => !isDeleted && handleCardClick(assignment!, submission)} 
+                        key={score.id} 
+                        onClick={() => !isDeleted && handleCardClick(assignment!, score)} 
                         className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
                         >
                         <CardHeader>
@@ -230,13 +230,13 @@ function StudentAssignments() {
                                 </Badge>
                             </div>
                             <CardDescription>
-                            Submitted {format(new Date(submission.submittedAt), 'PP')}
+                            Submitted {format(new Date(score.completedAt), 'PP')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <div className="text-sm space-y-2">
-                                <p><span className="font-semibold">Score:</span> {submission.wpm} WPM</p>
-                                <p><span className="font-semibold">Accuracy:</span> {submission.accuracy.toFixed(1)}%</p>
+                                <p><span className="font-semibold">Score:</span> {score.wpm} WPM</p>
+                                <p><span className="font-semibold">Accuracy:</span> {score.accuracy.toFixed(1)}%</p>
                             </div>
                         </CardContent>
                         </Card>
@@ -250,14 +250,14 @@ function StudentAssignments() {
         </div>
       </ScrollArea>
 
-      {selectedSubmission && selectedAssignment && (
+      {selectedScore && selectedAssignment && (
         <SubmissionReviewModal
-          isOpen={!!selectedSubmission}
+          isOpen={!!selectedScore}
           onClose={() => {
-            setSelectedSubmission(null);
+            setSelectedScore(null);
             setSelectedAssignment(null);
           }}
-          submission={selectedSubmission}
+          score={selectedScore}
           assignment={selectedAssignment}
         />
       )}

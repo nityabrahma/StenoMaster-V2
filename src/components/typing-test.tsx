@@ -4,11 +4,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Zap, Target, AlertCircle } from 'lucide-react';
+import type { Mistake } from '@/lib/types';
 
 export type SubmissionResult = {
   wpm: number;
   accuracy: number;
-  mistakes: number;
+  mistakes: Mistake[];
+  timeElapsed: number;
   userInput: string;
 };
 
@@ -17,66 +19,18 @@ type TypingTestProps = {
   onComplete: (result: SubmissionResult) => void;
 };
 
-// This advanced status array function will handle insertions/deletions gracefully.
 function getStatusArray(
   original: string,
-  typed: string = '',
-  lookahead = 4
+  typed: string = ''
 ): ("correct" | "wrong" | "pending")[] {
-  const oChars = original.split("");
-  const tChars = typed.split("");
-
-  let oIndex = 0;
-  let tIndex = 0;
-
-  const statusArray: ("correct" | "wrong" | "pending")[] = new Array(
-    oChars.length
-  ).fill("pending");
-
-  while (oIndex < oChars.length && tIndex < tChars.length) {
-      if (oChars[oIndex] === tChars[tIndex]) {
-        statusArray[oIndex] = "correct";
-        oIndex++;
-        tIndex++;
-      } else {
-        let found = false;
-        // Check for an insertion in typed text (extra characters)
-        for (let la = 1; la <= lookahead; la++) {
-          if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
-            // Mistake found, but we will advance tIndex to resync
-            statusArray[oIndex] = "wrong";
-            tIndex += la;
-            found = true;
-            break; 
-          }
-        }
-
-        if(found) continue;
-
-        // Check for a deletion in typed text (missing characters)
-        for (let la = 1; la <= lookahead; la++) {
-            if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
-                for (let k = 0; k < la; k++) {
-                    statusArray[oIndex + k] = "wrong";
-                }
-                oIndex += la;
-                found = true;
-                break;
-            }
-        }
-        
-        if(found) continue;
-
-        // If no resync possible within lookahead, mark as wrong and advance both
-        statusArray[oIndex] = "wrong";
-        oIndex++;
-        tIndex++;
-      }
+  const status: ("correct" | "wrong" | "pending")[] = new Array(original.length).fill("pending");
+  for (let i = 0; i < typed.length; i++) {
+    if (i < original.length) {
+      status[i] = typed[i] === original[i] ? "correct" : "wrong";
+    }
   }
-
-  return statusArray;
+  return status;
 }
-
 
 export default function TypingTest({ text, onComplete }: TypingTestProps) {
   const [userInput, setUserInput] = useState('');
@@ -87,7 +41,7 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
 
   const statusArray = getStatusArray(text, userInput);
   const correctChars = statusArray.filter(s => s === 'correct').length;
-  const mistakes = statusArray.slice(0, userInput.length).filter(s => s === 'wrong').length;
+  const mistakeCount = statusArray.slice(0, userInput.length).filter(s => s === 'wrong').length;
   
   const resetTest = useCallback(() => {
     setUserInput('');
@@ -116,23 +70,8 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
 
     let value = e.target.value;
 
-    // Auto-replace multiple spaces with a single space
-    value = value.replace(/ {2,}/g, ' ');
-
     if (!startTime && value.length > 0) {
       setStartTime(Date.now());
-    }
-
-    if (value.endsWith(' ')) {
-        const originalWords = text.split(' ');
-        const typedWords = value.trim().split(' ');
-        
-        if (typedWords.length < originalWords.length) {
-            // Move cursor to the start of the next word.
-            const nextWordStartIndex = text.indexOf(originalWords[typedWords.length] as string, userInput.length);
-            // This is a simplified conceptual step. In reality, we just update the input.
-            // The visual cursor movement is handled by the `renderText` logic.
-        }
     }
     
     setUserInput(value);
@@ -146,20 +85,26 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
     setElapsedTime(finalElapsedTime);
     
     const finalStatusArray = getStatusArray(text, userInput);
-    const finalMistakes = finalStatusArray.filter(s => s === 'wrong').length;
+    const finalMistakes: Mistake[] = [];
+    finalStatusArray.forEach((status, index) => {
+      if (status === 'wrong') {
+        finalMistakes.push({
+          expected: text[index],
+          actual: userInput[index] || '',
+          position: index,
+        });
+      }
+    });
     
     const wordsTyped = text.length / 5;
     const wpm = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
-    const accuracy = ((text.length - finalMistakes) / text.length) * 100;
+    const accuracy = ((text.length - finalMistakes.length) / text.length) * 100;
     
-    onComplete({ wpm, accuracy, mistakes: finalMistakes, userInput });
+    onComplete({ wpm, accuracy, mistakes: finalMistakes, timeElapsed: finalElapsedTime, userInput });
   }, [isFinished, startTime, userInput, text, onComplete]);
   
   useEffect(() => {
-    // Only finish if the typed text is at least as long as the original,
-    // or if the last character typed matches the last character of the text.
-    if (!isFinished && userInput.length > 0 && (userInput.length >= text.length || userInput.trim() === text.trim())) {
-      // A small delay to allow the last character's state to be processed.
+    if (!isFinished && userInput.length >= text.length) {
       setTimeout(() => finishTest(), 50);
     }
   }, [userInput, text, isFinished, finishTest]);
@@ -219,7 +164,7 @@ export default function TypingTest({ text, onComplete }: TypingTestProps) {
             </div>
             <div className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-destructive"/>
-                <span className="text-xl font-bold">{mistakes}</span>
+                <span className="text-xl font-bold">{mistakeCount}</span>
                 <span className="text-sm text-muted-foreground">Mistakes</span>
             </div>
         </div>

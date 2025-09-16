@@ -47,7 +47,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useAppRouter } from '@/hooks/use-app-router';
 import AssignStudentModal from '@/components/AssignStudentModal';
 import type { Student } from '@/lib/types';
@@ -151,7 +151,7 @@ export default function StudentsPage() {
   const { user } = useAuth();
   const { students, removeStudent } = useStudents();
   const { classes } = useClasses();
-  const { submissions } = useAssignments();
+  const { scores } = useDataStore();
   const router = useAppRouter();
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
@@ -222,9 +222,9 @@ export default function StudentsPage() {
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
                 {teacherStudents.map(student => {
-                    const studentSubmissions = submissions.filter(s => s.studentId === student.id);
-                    const avgWpm = studentSubmissions.length > 0 ? Math.round(studentSubmissions.reduce((acc, s) => acc + s.wpm, 0) / studentSubmissions.length) : 'N/A';
-                    const avgAccuracy = studentSubmissions.length > 0 ? (studentSubmissions.reduce((acc, s) => acc + s.accuracy, 0) / studentSubmissions.length).toFixed(1) + '%' : 'N/A';
+                    const studentScores = scores.filter(s => s.studentId === student.id);
+                    const avgWpm = studentScores.length > 0 ? Math.round(studentScores.reduce((acc, s) => acc + s.wpm, 0) / studentScores.length) : 'N/A';
+                    const avgAccuracy = studentScores.length > 0 ? (studentScores.reduce((acc, s) => acc + s.accuracy, 0) / studentScores.length).toFixed(1) + '%' : 'N/A';
                     const studentClasses = classes.filter(c => student.classIds.includes(c.id));
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1

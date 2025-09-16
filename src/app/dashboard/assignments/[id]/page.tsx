@@ -2,7 +2,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -10,7 +10,7 @@ import TypingTest from '@/components/typing-test';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import type { SubmissionResult } from '@/components/typing-test';
 import { useAppRouter } from '@/hooks/use-app-router';
 
@@ -19,15 +19,12 @@ export default function AssignmentPage() {
   const router = useAppRouter();
   const params = useParams();
   const { toast } = useToast();
-  const { assignments, createSubmission } = useAssignments();
+  const { assignments, createScore } = useDataStore();
 
   const assignmentId = typeof params.id === 'string' ? params.id : '';
   const assignment = assignments.find((a) => a.id === assignmentId);
 
   if (!assignment) {
-    // Data might not be loaded yet, or not found.
-    // A loading skeleton or notFound() are options.
-    // For now, returning null to avoid flashing not-found page.
     return null;
   }
 
@@ -35,9 +32,9 @@ export default function AssignmentPage() {
     if (!user) return;
 
     try {
-      await createSubmission({
+      await createScore({
         assignmentId: assignment.id,
-        submittedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
         ...result,
       });
       

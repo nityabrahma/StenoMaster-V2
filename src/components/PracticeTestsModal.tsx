@@ -10,21 +10,21 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Submission } from '@/lib/types';
+import type { Score } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface PracticeTestsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  submissions: Submission[];
-  onSelectSubmission: (submission: Submission) => void;
+  scores: Score[];
+  onSelectScore: (score: Score) => void;
 }
 
 export default function PracticeTestsModal({
   isOpen,
   onClose,
-  submissions,
-  onSelectSubmission,
+  scores,
+  onSelectScore,
 }: PracticeTestsModalProps) {
 
   return (
@@ -38,27 +38,27 @@ export default function PracticeTestsModal({
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-3">
-            {submissions.length > 0 ? (
-                [...submissions]
-                .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
-                .map((submission) => (
+            {scores.length > 0 ? (
+                [...scores]
+                .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+                .map((score) => (
                     <Card
-                        key={submission.id}
+                        key={score.id}
                         className="cursor-pointer bg-card/70 hover:bg-card/90 transition-colors"
-                        onClick={() => onSelectSubmission(submission)}
+                        onClick={() => onSelectScore(score)}
                     >
                         <CardContent className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold">
-                                    {format(new Date(submission.submittedAt), 'MMMM d, yyyy - h:mm a')}
+                                    {format(new Date(score.completedAt), 'MMMM d, yyyy - h:mm a')}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Text ID: {submission.assignmentId.replace('practice-', '')}
+                                    Text ID: {score.assignmentId.replace('practice-', '')}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="font-bold text-primary">{submission.wpm} WPM</p>
-                                <p className="text-sm">{submission.accuracy.toFixed(1)}% Accuracy</p>
+                                <p className="font-bold text-primary">{score.wpm} WPM</p>
+                                <p className="text-sm">{score.accuracy.toFixed(1)}% Accuracy</p>
                             </div>
                         </CardContent>
                     </Card>

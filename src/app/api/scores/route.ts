@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllSubmissions, createSubmission } from '@/lib/services/submission.service';
-import type { Submission } from '@/lib/types';
+import { getAllScores, createScore } from '@/lib/services/score.service';
+import type { Score } from '@/lib/types';
 import { validateRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const submissions = await getAllSubmissions();
-        return NextResponse.json(submissions);
+        const scores = await getAllScores();
+        return NextResponse.json(scores);
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
     }
     
     try {
-        const submissionData = await req.json() as Omit<Submission, 'id' | 'studentId'>;
-        const newSubmission = await createSubmission({ ...submissionData, studentId: validation.user!.id });
-        return NextResponse.json(newSubmission, { status: 201 });
+        const scoreData = await req.json() as Omit<Score, 'id' | 'studentId'>;
+        const newScore = await createScore({ ...scoreData, studentId: validation.user!.id });
+        return NextResponse.json(newScore, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 400 });
     }

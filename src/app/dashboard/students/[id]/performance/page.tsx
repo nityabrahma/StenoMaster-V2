@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { useStudents } from '@/hooks/use-students';
-import { useAssignments } from '@/hooks/use-assignments';
+import { useDataStore } from '@/hooks/use-data-store';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Card,
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { BookOpen, CheckCircle } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
-import type { Submission, Assignment } from '@/lib/types';
+import type { Score, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -26,9 +26,9 @@ export default function StudentPerformancePage() {
   const params = useParams();
   const { user } = useAuth();
   const { students } = useStudents();
-  const { assignments, submissions } = useAssignments();
+  const { assignments, scores } = useDataStore();
 
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [selectedScore, setSelectedScore] = useState<Score | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
 
   const studentId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -42,26 +42,26 @@ export default function StudentPerformancePage() {
     return <p>Access Denied.</p>;
   }
 
-  const studentSubmissions = submissions
+  const studentScores = scores
     .filter((s) => s.studentId === student.id)
-    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
-  const getAssignmentForSubmission = (submission: Submission): Assignment => {
-    if (submission.assignmentId.startsWith('practice-')) {
-      const textId = submission.assignmentId.replace('practice-', '');
+  const getAssignmentForScore = (score: Score): Assignment => {
+    if (score.assignmentId.startsWith('practice-')) {
+      const textId = score.assignmentId.replace('practice-', '');
       const practiceText = typingTexts.find((t) => t.id === textId);
       return {
-        id: submission.assignmentId,
+        id: score.assignmentId,
         title: `Practice: ${practiceText?.text.substring(0, 20)}...` || 'Practice Text',
         text: practiceText?.text || 'Text not found.',
         classId: '',
         deadline: '',
       };
     }
-    const assignment = assignments.find((a) => a.id === submission.assignmentId);
+    const assignment = assignments.find((a) => a.id === score.assignmentId);
     return (
       assignment || {
-        id: submission.assignmentId,
+        id: score.assignmentId,
         title: 'Unknown Assignment',
         text: 'Assignment text not available.',
         classId: '',
@@ -70,13 +70,13 @@ export default function StudentPerformancePage() {
     );
   };
 
-  const handleRowClick = (submission: Submission) => {
-    setSelectedSubmission(submission);
-    setSelectedAssignment(getAssignmentForSubmission(submission));
+  const handleRowClick = (score: Score) => {
+    setSelectedScore(score);
+    setSelectedAssignment(getAssignmentForScore(score));
   };
 
   const closeModal = () => {
-    setSelectedSubmission(null);
+    setSelectedScore(null);
     setSelectedAssignment(null);
   };
 
@@ -87,11 +87,11 @@ export default function StudentPerformancePage() {
 
   return (
     <>
-      {selectedSubmission && selectedAssignment && (
+      {selectedScore && selectedAssignment && (
         <SubmissionReviewModal
           isOpen={true}
           onClose={closeModal}
-          submission={selectedSubmission}
+          score={selectedScore}
           assignment={selectedAssignment}
         />
       )}
@@ -124,20 +124,20 @@ export default function StudentPerformancePage() {
                 <div className="text-right">Accuracy</div>
                 <div className="text-right">Mistakes</div>
             </div>
-            {studentSubmissions.length === 0 ? (
+            {studentScores.length === 0 ? (
                 <div className="text-center p-8 text-muted-foreground">
                     This student has not submitted any assignments or practice tests yet.
                 </div>
             ) : (
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
-                    {studentSubmissions.map((submission) => {
-                    const assignment = getAssignmentForSubmission(submission);
+                    {studentScores.map((score) => {
+                    const assignment = getAssignmentForScore(score);
                     const isPractice = assignment.id.startsWith('practice-');
                     return (
                         <div
-                            key={submission.id}
-                            onClick={() => handleRowClick(submission)}
+                            key={score.id}
+                            onClick={() => handleRowClick(score)}
                             className="grid grid-cols-[2fr_1fr_2fr_repeat(3,minmax(0,1fr))] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
                         >
                             <div className="font-medium truncate text-center">{assignment.title}</div>
@@ -152,10 +152,10 @@ export default function StudentPerformancePage() {
                                 </Badge>
                                 )}
                             </div>
-                            <div className="truncate text-center">{format(new Date(submission.submittedAt), 'PPp')}</div>
-                            <div className="font-semibold text-right">{submission.wpm}</div>
-                            <div className="text-right">{submission.accuracy.toFixed(1)}%</div>
-                            <div className="text-right">{submission.mistakes}</div>
+                            <div className="truncate text-center">{format(new Date(score.completedAt), 'PPp')}</div>
+                            <div className="font-semibold text-right">{score.wpm}</div>
+                            <div className="text-right">{score.accuracy.toFixed(1)}%</div>
+                            <div className="text-right">{score.mistakes.length}</div>
                         </div>
                     );
                     })}
