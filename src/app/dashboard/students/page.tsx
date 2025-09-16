@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -53,7 +54,7 @@ import type { Student } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 function CreateStudentDialog() {
-    const { signup } = useAuth();
+    const { user: teacher, signup } = useAuth();
     const { toast } = useToast();
     const { fetchStudents } = useStudents();
     const [name, setName] = useState('');
@@ -72,8 +73,17 @@ function CreateStudentDialog() {
             return;
         }
 
+        if (!teacher) {
+            toast({
+                title: 'Error',
+                description: 'You must be logged in to create a student.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         try {
-            await signup({ name, email, password, role: 'student' });
+            await signup({ name, email, password, role: 'student', teacherId: teacher.id as string });
             await fetchStudents(); // Re-fetch students list
             toast({
                 title: 'Success',
@@ -105,7 +115,7 @@ function CreateStudentDialog() {
             <DialogHeader>
                 <DialogTitle>Create Student Account</DialogTitle>
                 <DialogDescription>
-                Enter the student's details to create a new account.
+                Enter the student's details to create a new account. They will be associated with you.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -195,7 +205,7 @@ export default function StudentsPage() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="font-headline text-2xl">All Students</CardTitle>
-              <CardDescription>View and manage all students in the system.</CardDescription>
+              <CardDescription>View and manage all students assigned to you.</CardDescription>
             </div>
             <CreateStudentDialog />
           </div>
@@ -285,7 +295,7 @@ export default function StudentsPage() {
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                         className="bg-destructive hover:bg-destructive/90"
-                                        onClick={() => handleDeleteStudent(student.id)}
+                                        onClick={() => handleDeleteStudent(student.id as string)}
                                     >
                                         Yes, delete student
                                     </AlertDialogAction>

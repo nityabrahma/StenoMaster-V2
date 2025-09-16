@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -7,7 +8,7 @@ import {
   useState,
   useEffect
 } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -17,9 +18,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const { isLoading, setIsLoading } = useLoading();
   const [firstLoadDone, setFirstLoadDone] = useState(false);
-  const router = useRouter(); // Using the standard Next.js router
+  const router = useRouter(); 
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const logout = useCallback(() => {
@@ -27,7 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      // The redirect is handled by the useEffect which reacts to isAuthenticated
       setIsLoading(false);
       router.push('/');
     });
@@ -49,29 +48,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             if (!firstLoadDone) {
                 setFirstLoadDone(true);
+                setIsLoading(false); // Initial load complete
             }
         }
     }
     validate();
-  }, [pathname, firstLoadDone]);
+  }, [pathname, firstLoadDone, setIsLoading]);
 
-  
   const isAuthenticated = !!user;
-
-  // This effect handles the very first load of the application
-  useEffect(() => {
-    if(firstLoadDone) {
-        setIsLoading(false);
-    }
-  }, [firstLoadDone, setIsLoading]);
-
-  // Protected route handling
-  useEffect(() => {
-    if (firstLoadDone && !isLoading && !isAuthenticated && pathname.startsWith('/dashboard')) {
-        const redirectUrl = `/`;
-        router.push(redirectUrl);
-    }
-  }, [firstLoadDone, isLoading, isAuthenticated, pathname, router, searchParams]);
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -97,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
-        } finally {
             setIsLoading(false);
         }
     },
@@ -105,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<User> => {
+    async (credentials: SignupCredentials): Promise<any> => {
         try {
             const res = await fetch('/api/auth/register', {
               method: 'POST',
@@ -114,7 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   fullName: credentials.name,
                   email: credentials.email,
                   password: credentials.password,
-                  userType: credentials.role
+                  userType: credentials.role,
+                  teacherId: credentials.teacherId
               }),
             });
 
@@ -123,9 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!res.ok) {
                 throw new Error(data.message || 'Signup failed');
             }
-            // We return the user data but don't set the session here.
-            // The component handles routing, which leads to login.
-            return data.data.user;
+            return data.data; 
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error; // Re-throw to be caught in the component

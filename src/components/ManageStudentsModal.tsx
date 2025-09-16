@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -28,7 +29,7 @@ interface ManageStudentsModalProps {
 }
 
 function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToManage: Class, onStudentCreated: (student: Student) => void }) {
-    const { signup } = useAuth();
+    const { user: teacher, signup } = useAuth();
     const { toast } = useToast();
     const { fetchStudents } = useStudents();
     const { updateClass } = useClasses();
@@ -47,11 +48,21 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
             return;
         }
 
+        if (!teacher) {
+             toast({
+                title: 'Error',
+                description: 'You must be logged in as a teacher.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         try {
-            const newStudent = await signup({ name, email, password, role: 'student' });
-            
+            const { user: newStudentData } = await signup({ name, email, password, role: 'student', teacherId: teacher.id as string });
+            const newStudentId = newStudentData.userId;
+
             await updateClass(classToManage.id, {
-                studentIds: [...classToManage.studentIds, newStudent.id],
+                studentIds: [...classToManage.studentIds, newStudentId],
             });
 
             await fetchStudents();
@@ -63,7 +74,7 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
             setName('');
             setEmail('');
             setPassword('');
-            onStudentCreated(newStudent);
+            onStudentCreated(newStudentData);
         } catch (error: any) {
             toast({
                 title: 'Error',
@@ -98,13 +109,12 @@ export default function ManageStudentsModal({
   classToManage,
 }: ManageStudentsModalProps) {
     const { toast } = useToast();
-    const { students } = useStudents();
+    const { students, updateStudent } = useStudents();
     const { classes, updateClass } = useClasses();
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     
     // Find students who are not in any class yet
-    const allEnrolledStudentIds = classes.flatMap(c => c.studentIds);
-    const availableStudents = students.filter(s => !allEnrolledStudentIds.includes(s.id));
+    const availableStudents = students.filter(s => !s.classIds || s.classIds.length === 0);
     
     const handleStudentSelect = (studentId: string) => {
         setSelectedStudents(prev => 
@@ -122,6 +132,17 @@ export default function ManageStudentsModal({
             await updateClass(classToManage.id, {
                 studentIds: [...classToManage.studentIds, ...selectedStudents],
             });
+
+            // Update each student to add the new classId
+            const studentUpdatePromises = selectedStudents.map(studentId => {
+                const student = students.find(s => s.id === studentId);
+                if (student) {
+                    return updateStudent(student.id, { classIds: [...student.classIds, classToManage.id]});
+                }
+                return Promise.resolve();
+            });
+
+            await Promise.all(studentUpdatePromises);
             
             toast({
                 title: "Students Enrolled!",
@@ -166,7 +187,7 @@ export default function ManageStudentsModal({
                                     htmlFor={`student-${student.id}`}
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
-                                    {student.name} ({student.id})
+                                    {student.name} ({student.email})
                                 </label>
                             </div>
                         )) : (

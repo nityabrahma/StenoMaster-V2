@@ -7,6 +7,7 @@ export type User = {
   name: string;
   email: string;
   role: 'teacher' | 'student';
+  teacherId?: string; // Add teacherId to the base user
 };
 
 export type Student = User & {
@@ -63,4 +64,5 @@ export type SignupCredentials = {
   email: string;
   password: string;
   role: 'student' | 'teacher';
+  teacherId?: string; // Optional teacherId for student signup
 }
