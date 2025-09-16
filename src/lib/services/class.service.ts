@@ -1,23 +1,23 @@
 
-import { db } from '@/lib/data-store';
+import { classes as initialClasses } from '@/lib/data';
 import type { Class } from '@/lib/types';
 
+const classes: Class[] = [...initialClasses];
+
 export async function getAllClasses(): Promise<Class[]> {
-    return new Promise(resolve => resolve(db.read<Class>('classes')));
+    return new Promise(resolve => resolve(classes));
 }
 
 export async function createClass(data: Omit<Class, 'id'>): Promise<Class> {
-    const classes = await getAllClasses();
     const newClass: Class = {
         ...data,
         id: `class-${Date.now()}`,
     };
-    db.write('classes', [...classes, newClass]);
+    classes.push(newClass);
     return new Promise(resolve => resolve(newClass));
 }
 
 export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>): Promise<Class> {
-    const classes = await getAllClasses();
     const classIndex = classes.findIndex(c => c.id === id);
 
     if (classIndex === -1) {
@@ -26,7 +26,6 @@ export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>):
 
     const updatedClass = { ...classes[classIndex], ...data } as Class;
     classes[classIndex] = updatedClass;
-    db.write('classes', classes);
 
     return new Promise(resolve => resolve(updatedClass));
 }

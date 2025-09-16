@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/auth-provider";
-import { UserPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import { UserPlus, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useAppRouter } from "@/hooks/use-app-router";
 
@@ -176,7 +176,7 @@ const TeacherRegistrationContent = () => {
                 type="submit"
                 className="w-2/3"
               >
-                <UserPlus className="h-4 w-4 mr-2" />
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
                 Create Account
               </Button>
             </div>

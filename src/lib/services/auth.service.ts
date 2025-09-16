@@ -1,13 +1,15 @@
 
-import { db } from '@/lib/data-store';
 import { sign } from '@/lib/auth';
-import type { LoginCredentials, SignupCredentials, User, Student, CheckUserResponse } from '@/lib/types';
+import type { LoginCredentials, SignupCredentials, User, Student, Teacher, CheckUserResponse } from '@/lib/types';
+import { teachers, students } from '@/lib/data';
+
+// This is our in-memory "database" for the server.
+const allUsers: User[] = [...teachers, ...students];
+
 
 export async function checkUserExists(email: string): Promise<CheckUserResponse> {
     return new Promise((resolve) => {
-        const userList = db.read<User>('users');
-        const user = userList.find(u => u.email === email);
-
+        const user = allUsers.find(u => u.email === email);
         if (user) {
             resolve({ exists: true, role: user.role });
         } else {
@@ -19,16 +21,15 @@ export async function checkUserExists(email: string): Promise<CheckUserResponse>
 
 export async function signIn(credentials: LoginCredentials): Promise<{ token: string, user: User }> {
     return new Promise((resolve, reject) => {
-        const userList = db.read<User>('users');
-        const user = userList.find(u => u.email === credentials.email && u.role === credentials.role);
+        const user = allUsers.find(u => u.email === credentials.email && u.role === credentials.role);
         
         if (!user) {
             return reject(new Error('User not found. Please check your email and role.'));
         }
 
         // In a real app, you would verify the hashed password here.
-        // For this simulation, we assume if the user exists, the password is "correct".
-        if (credentials.password === "incorrect") { // Simulate incorrect password
+        // We will simulate a password check. Let's assume no password is 'incorrect' for now.
+        if (credentials.password === "incorrect") { 
             return reject(new Error('Incorrect password. Please try again.'));
         }
         
@@ -47,8 +48,7 @@ export async function signIn(credentials: LoginCredentials): Promise<{ token: st
 
 export async function signUp(credentials: SignupCredentials): Promise<User> {
     return new Promise((resolve, reject) => {
-        const users = db.read<User>('users');
-        const existingUser = users.find(u => u.email === credentials.email);
+        const existingUser = allUsers.find(u => u.email === credentials.email);
 
         if (existingUser) {
             return reject(new Error('An account with this email already exists.'));
@@ -65,16 +65,26 @@ export async function signUp(credentials: SignupCredentials): Promise<User> {
                 classIds: []
             };
             newUser = newStudent;
-        } else {
-             newUser = {
+        } else { // Teacher
+             const newTeacher: Teacher = {
                 id: `teacher-${Date.now()}`,
                 name: credentials.name,
                 email: credentials.email,
-                role: credentials.role,
+                role: 'teacher',
             };
+            newUser = newTeacher
         }
         
-        db.write('users', [...users, newUser]);
+        // Add the new user to our in-memory store for the current server session
+        allUsers.push(newUser);
+        
+        // This is important: For simulation, we also need to update the original arrays
+        // so that subsequent client-side fetches get the new user. In a real DB, this is one transaction.
+        if (newUser.role === 'student') {
+            students.push(newUser as Student);
+        } else {
+            teachers.push(newUser as Teacher);
+        }
         
         resolve(newUser);
     });

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
@@ -5,6 +6,7 @@ import { useAppRouter } from '@/hooks/use-app-router';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
+import { useStudents } from './use-students';
 
 type AuthContextType = {
   user: User | null;
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useAppRouter();
   const { toast } = useToast();
   const { isLoading, setIsLoading } = useLoading();
+  const { fetchStudents } = useStudents();
 
   const validateAndSetUser = useCallback(async () => {
     setIsLoading(true);
@@ -77,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: error.message,
           variant: 'destructive',
         });
-      } finally {
         setIsLoading(false);
       }
     },
@@ -99,6 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(errorData.message || 'Signup failed');
             }
             const newUser = await res.json();
+            
+            // Manually trigger a refresh of the students list on the client
+            if (newUser.role === 'student') {
+                await fetchStudents();
+            }
+
             return newUser;
         } catch (error: any) {
             console.error("Signup failed", error);
@@ -107,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
         }
     },
-    [setIsLoading]
+    [setIsLoading, fetchStudents]
   );
 
   const logout = useCallback(async () => {
@@ -118,9 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Logout request failed:", error);
     } finally {
       setUser(null);
-      // Clear all client-side state
-      // Note: Zustand persist middleware will clear storage on its own.
-      // This is more of a manual clear if needed.
       window.localStorage.removeItem('assignments-storage');
       window.localStorage.removeItem('classes-storage');
       window.localStorage.removeItem('students-storage');
