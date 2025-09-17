@@ -7,11 +7,22 @@ const classesCollection = db.collection('classes');
 
 function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
     const data = doc.data();
+    
+    let createdAt: string;
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') { 
+        createdAt = data.createdAt.toDate().toISOString();
+    } else if (typeof data.createdAt === 'string' && data.createdAt) {
+        createdAt = new Date(data.createdAt).toISOString();
+    } else {
+        createdAt = new Date().toISOString(); // Fallback to a valid date
+    }
+
     return {
       id: doc.id,
       name: data.name || 'Unnamed Class',
       teacherId: data.teacherId || '',
-      studentIds: data.studentIds || data.students || [], // Map old 'students' field
+      studentIds: data.studentIds || data.students || [],
+      createdAt: createdAt,
     };
 }
 
@@ -23,8 +34,12 @@ export async function getAllClasses(): Promise<Class[]> {
     return snapshot.docs.map(mapDocToClass);
 }
 
-export async function createClass(data: Omit<Class, 'id'>): Promise<Class> {
-    const docRef = await classesCollection.add(data);
+export async function createClass(data: Omit<Class, 'id' | 'createdAt'>): Promise<Class> {
+    const payload = {
+        ...data,
+        createdAt: new Date(),
+    }
+    const docRef = await classesCollection.add(payload);
     const newDoc = await docRef.get();
     return mapDocToClass(newDoc);
 }
@@ -37,4 +52,12 @@ export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>):
         throw new Error('Class not found after update');
     }
     return mapDocToClass(updatedDoc);
+}
+
+export async function getClassesByStudentId(studentId: string): Promise<Class[]> {
+    const snapshot = await classesCollection.where('studentIds', 'array-contains', studentId).get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToClass);
 }

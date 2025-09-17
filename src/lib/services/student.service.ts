@@ -2,12 +2,12 @@
 import { connectToDatabase } from '@/lib/database/mongoose';
 import UserModel from '@/lib/database/models/user.model';
 import type { Student } from '@/lib/types';
-import { getClassesByStudent } from './class.service';
+import { getClassesByStudentId } from './class.service';
 
 // Map the MongoDB user document to the Student type used in the frontend
 async function mapUserToStudent(user: any): Promise<Student> {
     // Fetch class enrollments for the student from Firestore
-    const classes = await getClassesByStudent(user.userId);
+    const classes = await getClassesByStudentId(user.userId);
     const classIds = classes.map(c => c.id);
 
     return {

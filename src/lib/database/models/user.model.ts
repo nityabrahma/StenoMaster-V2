@@ -6,7 +6,7 @@ export interface IUser extends Document {
   email: string;
   photo?: string;
   fullName: string;
-  password: string;
+  password?: string;
   userType: "student" | "teacher";
   sessionToken?: string;
   teacherId?: string;
@@ -33,7 +33,7 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     select: false,
   },
   userType: {
