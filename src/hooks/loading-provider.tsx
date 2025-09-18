@@ -29,7 +29,7 @@ const LoadingOverlay = () => {
       }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
     >
-      <Card className="p-8 space-y-4 shadow-2xl">
+      <Card className="w-full max-w-md p-8 space-y-4 shadow-2xl">
         <LogoStatic />
         <p className="text-center text-muted-foreground animate-pulse">Loading, please wait...</p>
       </Card>
@@ -43,8 +43,8 @@ export const LoadingProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
-      {isLoading && <LoadingOverlay />}
       {children}
+      {isLoading && <LoadingOverlay />}
     </LoadingContext.Provider>
   );
 };
