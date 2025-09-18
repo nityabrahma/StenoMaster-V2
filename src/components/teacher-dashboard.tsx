@@ -7,55 +7,24 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter
 } from './ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from '@/components/ui/chart';
-import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Button } from './ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
 import { useDataStore } from '@/hooks/use-data-store';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Badge } from './ui/badge';
-import { useMemo, useEffect, useState } from 'react';
+import { useAppRouter } from '@/hooks/use-app-router';
 import { ScrollArea } from './ui/scroll-area';
-import { Skeleton } from './ui/skeleton';
-import type { Score } from '@/lib/types';
-
-const chartConfig = {
-  avgWpm: {
-    label: 'Avg. WPM',
-    color: 'hsl(var(--primary))',
-  },
-} satisfies ChartConfig;
+import { Badge } from './ui/badge';
+import { format } from 'date-fns';
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
   const { students } = useStudents();
   const { classes } = useClasses();
-  const { assignments, scores, fetchScores } = useDataStore();
-  const [recentScores, setRecentScores] = useState<Score[]>([]);
-  const [isLoadingScores, setIsLoadingScores] = useState(true);
-
-  useEffect(() => {
-    const loadRecentScores = async () => {
-        setIsLoadingScores(true);
-        // We'll fetch just the last 5 scores for the dashboard
-        await fetchScores(5); 
-        setIsLoadingScores(false);
-    }
-    loadRecentScores();
-  }, [fetchScores]);
-
-  useEffect(() => {
-    // This effect reacts to changes in the global scores state
-    const sortedScores = [...scores].sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-    setRecentScores(sortedScores.slice(0, 5));
-  }, [scores]);
+  const { assignments } = useDataStore();
+  const router = useAppRouter();
 
   if (!user || user.role !== 'teacher') return null;
 
@@ -63,30 +32,18 @@ export default function TeacherDashboard() {
   const teacherClassIds = teacherClasses.map(c => c.id);
   
   const teacherAssignments = assignments.filter(a => teacherClassIds.includes(a.classId));
-  const teacherStudents = students.filter(s => teacherClasses.some(c => c.studentIds.includes(s.id)));
-  
-
-  const chartData = useMemo(() => {
-    return teacherClasses.map(cls => {
-      const classAssignments = assignments.filter(a => a.classId === cls.id);
-      const classScores = scores.filter(s => classAssignments.some(a => a.id === s.assignmentId) && cls.studentIds.includes(s.studentId));
-      
-      if (classScores.length === 0) {
-        return { class: cls.name, avgWpm: 0 };
-      }
-
-      const totalWpm = classScores.reduce((acc, sub) => acc + sub.wpm, 0);
-      const avgWpm = Math.round(totalWpm / classScores.length);
-
-      return { class: cls.name, avgWpm };
-    }).slice(0, 5); // show top 5 classes
-  }, [teacherClasses, assignments, scores]);
+  const teacherStudents = students.filter(s => s.teacherId === user.id);
 
   const stats = [
     { title: 'Total Students', value: teacherStudents.length, icon: Users, color: 'from-blue-400 to-sky-400' },
     { title: 'Your Classes', value: teacherClasses.length, icon: Book, color: 'from-violet-400 to-purple-400' },
     { title: 'Active Assignments', value: teacherAssignments.length, icon: ClipboardCheck, color: 'from-emerald-400 to-green-400' },
   ];
+  
+  const recentAssignments = [...teacherAssignments]
+    .sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime())
+    .slice(0, 5);
+
 
   return (
     <div className="flex flex-1 flex-col p-4 md:p-8">
@@ -117,75 +74,64 @@ export default function TeacherDashboard() {
       <div className="grid gap-8 md:grid-cols-2 mt-8">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Class Performance</CardTitle>
-            <CardDescription>Average Words Per Minute (WPM) across your classes. (Based on available scores)</CardDescription>
+            <CardTitle className="font-headline">Your Classes</CardTitle>
+            <CardDescription>A quick look at the classes you manage.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px] w-full">
-              <RechartsBarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="class" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                <YAxis tickLine={false} axisLine={false} />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent 
-                    className="glass-card"
-                    labelClassName="font-bold"
-                    hideLabel 
-                   />}
-                />
-                <Bar dataKey="avgWpm" fill="var(--color-avgWpm)" radius={8} />
-              </RechartsBarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Recent Activity</CardTitle>
-            <CardDescription>Latest assignment submissions from your students.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingScores ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : recentScores.length > 0 ? (
+             {teacherClasses.length > 0 ? (
                 <div className="space-y-4">
-                    <div className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 text-sm font-semibold text-muted-foreground border-b pb-2">
-                        <div>Student</div>
-                        <div>Assignment</div>
-                        <div className="text-right">WPM</div>
-                    </div>
                      <ScrollArea className="h-[200px]">
                         <div className="divide-y divide-border">
-                            {recentScores.map(sub => {
-                                const student = students.find(s => s.id === sub.studentId);
-                                const assignment = assignments.find(a => a.id === sub.assignmentId);
-                                return (
-                                <div key={sub.id} className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 py-3 items-center">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={`https://avatar.vercel.sh/${student?.email}.png`} />
-                                            <AvatarFallback>{student?.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="truncate">{student?.name}</span>
+                            {teacherClasses.map(cls => (
+                                <div key={cls.id} className="flex justify-between items-center py-3">
+                                    <div>
+                                        <p className="font-semibold">{cls.name}</p>
+                                        <p className="text-sm text-muted-foreground">{cls.studentIds.length} students</p>
                                     </div>
-                                    <div className="truncate">{assignment?.title}</div>
-                                    <div className="text-right">
-                                        <Badge variant={sub.wpm > 60 ? "default" : "secondary"}>{sub.wpm}</Badge>
-                                    </div>
+                                    <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/classes')}>Manage</Button>
                                 </div>
-                            )})}
+                            ))}
                         </div>
                     </ScrollArea>
                 </div>
             ) : (
-              <div className="text-center text-muted-foreground p-8">No recent submissions.</div>
+              <div className="text-center text-muted-foreground p-8">You haven't created any classes yet.</div>
             )}
           </CardContent>
+           <CardFooter>
+                <Button className="w-full" onClick={() => router.push('/dashboard/classes/new')}>Create New Class</Button>
+           </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline">Recent Assignments</CardTitle>
+            <CardDescription>Your 5 most recently created assignments.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentAssignments.length > 0 ? (
+                <div className="space-y-4">
+                     <ScrollArea className="h-[200px]">
+                        <div className="divide-y divide-border">
+                            {recentAssignments.map(assignment => (
+                                <div key={assignment.id} className="flex justify-between items-center py-3">
+                                     <div>
+                                        <p className="font-semibold truncate">{assignment.title}</p>
+                                        <p className="text-sm text-muted-foreground">Due: {format(new Date(assignment.deadline), 'PP')}</p>
+                                    </div>
+                                    <Badge variant="outline">{classes.find(c => c.id === assignment.classId)?.name}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            ) : (
+              <div className="text-center text-muted-foreground p-8">No assignments have been created yet.</div>
+            )}
+          </CardContent>
+           <CardFooter>
+                <Button className="w-full" onClick={() => router.push('/dashboard/assignments/new')}>Create New Assignment</Button>
+           </CardFooter>
         </Card>
       </div>
     </div>

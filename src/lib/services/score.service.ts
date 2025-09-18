@@ -44,7 +44,7 @@ export async function getScoresByStudent(studentId: string): Promise<Score[]> {
     return snapshot.docs.map(mapDocToScore);
 }
 
-export async function getScoresByTeacher(teacherId: string, limit?: number): Promise<Score[]> {
+export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
     const students = await getStudentsByTeacher(teacherId);
     if (students.length === 0) {
         return [];
@@ -52,20 +52,9 @@ export async function getScoresByTeacher(teacherId: string, limit?: number): Pro
 
     const studentIds = students.map(s => s.id);
     
-    // If a limit is passed, we are likely looking for recent scores across all students.
-    // A simple query with a limit will work here.
-    if (limit) {
-        const snapshot = await scoresCollection
-            .where('studentId', 'in', studentIds)
-            .orderBy('completedAt', 'desc')
-            .limit(limit)
-            .get();
-        return snapshot.docs.map(mapDocToScore);
-    }
-
-    // If no limit, we fetch all scores for all students, chunking the request.
+    // Firestore 'in' query is limited to 30 values. We must chunk the requests.
     const allScores: Score[] = [];
-    const chunkSize = 30; // Firestore 'in' query limit
+    const chunkSize = 30; 
     for (let i = 0; i < studentIds.length; i += chunkSize) {
         const chunk = studentIds.slice(i, i + chunkSize);
         const snapshot = await scoresCollection.where('studentId', 'in', chunk).get();
