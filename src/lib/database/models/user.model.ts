@@ -1,3 +1,4 @@
+
 import { Schema, model, models, Document } from "mongoose";
 import { nanoid } from "nanoid";
 
@@ -9,7 +10,7 @@ export interface IUser extends Document {
   password?: string;
   userType: "student" | "teacher";
   sessionToken?: string;
-  teacherId?: string;
+  teacherId?: string; // For students, the ID of their teacher
 }
 
 const UserSchema = new Schema<IUser>({
@@ -33,8 +34,8 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: false,
-    select: false,
+    required: false, // Not required for OAuth, but required for email/pass
+    select: false, // Do not return password by default
   },
   userType: {
     type: String,
@@ -44,10 +45,11 @@ const UserSchema = new Schema<IUser>({
   sessionToken: {
     type: String,
     unique: true,
-    sparse: true,
+    sparse: true, // Allows multiple null values
   },
   teacherId: {
     type: String,
+    // This field is only required if the userType is 'student'
     required: function (this: IUser) {
       return this.userType === "student";
     },

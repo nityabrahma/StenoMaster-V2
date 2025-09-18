@@ -39,6 +39,8 @@ export async function getAllScores(): Promise<Score[]> {
 }
 
 export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
+    // Check if a score for this assignment by this student already exists.
+    // If so, overwrite it. This is useful for practice tests.
     const query = scoresCollection
         .where('assignmentId', '==', data.assignmentId)
         .where('studentId', '==', data.studentId);
@@ -46,6 +48,7 @@ export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
     const existing = await query.get();
 
     if (!existing.empty) {
+        // Delete existing scores for this assignment/student pair.
         const batch = db.batch();
         existing.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();

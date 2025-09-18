@@ -35,6 +35,21 @@ export async function getAllStudents(): Promise<Student[]> {
     }
 }
 
+export async function getStudentsByTeacher(teacherId: string): Promise<Student[]> {
+     try {
+        await connectToDatabase();
+        const users = await UserModel.find({ userType: 'student', teacherId: teacherId }).lean();
+        
+        // Map all users to students with their class info
+        const studentPromises = users.map(user => mapUserToStudent(user));
+        return Promise.all(studentPromises);
+
+    } catch (error) {
+        console.error('Error fetching students by teacher:', error);
+        return [];
+    }
+}
+
 export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
     try {
         await connectToDatabase();

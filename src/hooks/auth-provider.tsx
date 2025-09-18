@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -8,17 +7,18 @@ import {
   useState,
   useEffect
 } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
+import { useAppRouter } from './use-app-router';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const { isLoading, setIsLoading } = useLoading();
   const [firstLoadDone, setFirstLoadDone] = useState(false);
-  const router = useRouter(); 
+  const router = useAppRouter();
   const pathname = usePathname();
   const { toast } = useToast();
 
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             if (!firstLoadDone) {
                 setFirstLoadDone(true);
-                setIsLoading(false); // Initial load complete
+                setIsLoading(false);
             }
         }
     }
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
-            setIsLoading(false);
+            setIsLoading(false); // Important: stop loading on error
         }
     },
     [router, toast, setIsLoading]
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const signup = useCallback(
     async (credentials: SignupCredentials): Promise<any> => {
+        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
               method: 'POST',
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   email: credentials.email,
                   password: credentials.password,
                   userType: credentials.role,
-                  teacherId: credentials.teacherId
+                  teacherId: credentials.teacherId,
               }),
             });
 
@@ -107,13 +108,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!res.ok) {
                 throw new Error(data.message || 'Signup failed');
             }
-            return data.data; 
+            return data.data; // Return the nested data object on success
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error; // Re-throw to be caught in the component
+        } finally {
+            setIsLoading(false);
         }
     },
-    []
+    [setIsLoading]
   );
 
   const value = useMemo(

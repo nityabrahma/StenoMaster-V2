@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; name: string; email: string; role: 'student' | 'teacher' };
+    
     const user = await getUserByEmail(decoded.email);
     if (!user) {
         throw new Error("User not found")
