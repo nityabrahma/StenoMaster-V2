@@ -57,14 +57,22 @@ export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
     if (students.length === 0) {
         return [];
     }
-    
-    const studentIds = students.map(s => s.id);
-    const snapshot = await scoresCollection.where('studentId', 'in', studentIds).get();
 
-    if (snapshot.empty) {
-        return [];
+    const studentIds = students.map(s => s.id);
+    const allScores: Score[] = [];
+    
+    // Firestore 'in' query has a limit of 30 elements. Chunk the array.
+    const chunkSize = 30;
+    for (let i = 0; i < studentIds.length; i += chunkSize) {
+        const chunk = studentIds.slice(i, i + chunkSize);
+        const snapshot = await scoresCollection.where('studentId', 'in', chunk).get();
+        if (!snapshot.empty) {
+            const chunkScores = snapshot.docs.map(mapDocToScore);
+            allScores.push(...chunkScores);
+        }
     }
-    return snapshot.docs.map(mapDocToScore);
+
+    return allScores;
 }
 
 export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
