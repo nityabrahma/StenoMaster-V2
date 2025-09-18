@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/hooks/auth-provider';
 import { Toaster } from '@/components/ui/toaster';

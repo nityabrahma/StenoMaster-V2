@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import LogoStatic from '@/components/logo-static';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -21,18 +21,20 @@ export const useLoading = () => {
 };
 
 const LoadingOverlay = () => {
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="w-full max-w-sm p-4">
-                <Card className="p-8 space-y-4">
-                    <div className="flex justify-center">
-                        <LogoStatic />
-                    </div>
-                    <p className="text-center text-muted-foreground">Loading, please wait...</p>
-                </Card>
-            </div>
-        </div>
-    );
+  return (
+    <div
+      style={{
+        backdropFilter: 'blur(3px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+    >
+      <Card className="p-8 space-y-4 shadow-2xl">
+        <LogoStatic />
+        <p className="text-center text-muted-foreground animate-pulse">Loading, please wait...</p>
+      </Card>
+    </div>
+  );
 };
 
 
