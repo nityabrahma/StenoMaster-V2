@@ -1,7 +1,8 @@
 
-import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Score } from '@/lib/types';
+import { getStudentsByTeacher } from './student.service';
 
 const scoresCollection = db.collection('scores');
 
@@ -45,6 +46,21 @@ export async function getAllScores(): Promise<Score[]> {
 
 export async function getScoresByStudent(studentId: string): Promise<Score[]> {
     const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToScore);
+}
+
+export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
+    const students = await getStudentsByTeacher(teacherId);
+    if (students.length === 0) {
+        return [];
+    }
+    
+    const studentIds = students.map(s => s.id);
+    const snapshot = await scoresCollection.where('studentId', 'in', studentIds).get();
+
     if (snapshot.empty) {
         return [];
     }

@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllScores, createScore, getScoresByStudent } from '@/lib/services/score.service';
+import { getScoresByStudent, getScoresByTeacher, createScore } from '@/lib/services/score.service';
 import type { Score } from '@/lib/types';
 import { validateRequest } from '@/lib/auth';
 
@@ -14,10 +14,7 @@ export async function GET(req: NextRequest) {
     try {
         let scores: Score[] = [];
         if (user.role === 'teacher') {
-            // A teacher might want to see all scores for their students, which is a heavy query.
-            // For now, let's stick to fetching all scores and filtering on the client,
-            // but this is a candidate for optimization.
-            scores = await getAllScores();
+            scores = await getScoresByTeacher(user.id as string);
         } else if (user.role === 'student') {
             scores = await getScoresByStudent(user.id as string);
         }
