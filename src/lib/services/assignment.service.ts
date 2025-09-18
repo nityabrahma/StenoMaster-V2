@@ -11,10 +11,16 @@ function mapDocToAssignment(doc: QueryDocumentSnapshot | DocumentData): Assignme
     let deadline: string;
     if (data.deadline && typeof data.deadline.toDate === 'function') { 
         deadline = data.deadline.toDate().toISOString();
-    } else if (typeof data.deadline === 'string' && data.deadline) {
-        deadline = new Date(data.deadline).toISOString();
+    } else if (data.deadline && typeof data.deadline === 'string') {
+        const d = new Date(data.deadline);
+        // Check if the date is valid
+        if (!isNaN(d.getTime())) {
+            deadline = d.toISOString();
+        } else {
+            deadline = new Date().toISOString(); // Fallback for invalid string
+        }
     } else {
-        deadline = new Date().toISOString();
+        deadline = new Date().toISOString(); // Fallback for null, undefined, or other types
     }
 
     return {

@@ -11,8 +11,13 @@ function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
     let createdAt: string;
     if (data.createdAt && typeof data.createdAt.toDate === 'function') { 
         createdAt = data.createdAt.toDate().toISOString();
-    } else if (typeof data.createdAt === 'string' && data.createdAt) {
-        createdAt = new Date(data.createdAt).toISOString();
+    } else if (data.createdAt && typeof data.createdAt === 'string') {
+        const d = new Date(data.createdAt);
+        if(!isNaN(d.getTime())) {
+            createdAt = d.toISOString();
+        } else {
+            createdAt = new Date().toISOString();
+        }
     } else {
         createdAt = new Date().toISOString();
     }

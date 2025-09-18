@@ -11,8 +11,13 @@ function mapDocToScore(doc: QueryDocumentSnapshot | DocumentData): Score {
     let completedAt: string;
     if (data.completedAt && typeof data.completedAt.toDate === 'function') { 
         completedAt = data.completedAt.toDate().toISOString();
-    } else if (typeof data.completedAt === 'string' && data.completedAt) {
-        completedAt = new Date(data.completedAt).toISOString();
+    } else if (data.completedAt && typeof data.completedAt === 'string') {
+        const d = new Date(data.completedAt);
+        if(!isNaN(d.getTime())) {
+            completedAt = d.toISOString();
+        } else {
+            completedAt = new Date().toISOString();
+        }
     } else {
         completedAt = new Date().toISOString();
     }
