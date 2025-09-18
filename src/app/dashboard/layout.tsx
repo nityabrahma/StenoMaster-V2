@@ -11,13 +11,15 @@ import { useAppRouter } from '@/hooks/use-app-router';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
+import { useLoading } from '@/hooks/loading-provider';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
     const router = useAppRouter();
-    const { fetchAssignments } = useDataStore();
+    const { fetchAssignments, fetchScores } = useDataStore();
     const { fetchClasses } = useClasses();
     const { fetchStudents } = useStudents();
+    const { setIsLoading } = useLoading();
     const [dataLoaded, setDataLoaded] = useState(false);
 
 
@@ -30,20 +32,21 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const loadData = async () => {
             if (user && !dataLoaded) {
+                setIsLoading(true);
                 await Promise.all([
                     fetchAssignments(),
                     fetchClasses(),
                     fetchStudents(),
-                    // Scores are now fetched on a per-page basis
+                    fetchScores(5)
                 ]);
                 setDataLoaded(true);
+                setIsLoading(false);
             }
         };
         loadData();
-    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents]);
+    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores, setIsLoading]);
 
-    if (loading || !isAuthenticated || !dataLoaded) {
-        // The global loading provider will show an overlay
+    if (loading || !isAuthenticated) {
         return null;
     }
 
@@ -71,7 +74,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
                     <AppSidebar />
                     <main className="flex-1 overflow-auto size-full">
-                        {children}
+                        {dataLoaded ? children : null}
                     </main>
                 </div>
             </div>
@@ -80,6 +83,5 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    // AuthProvider is already in the root layout, so we don't need it here.
     return <DashboardLayout>{children}</DashboardLayout>
 }

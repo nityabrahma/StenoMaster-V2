@@ -27,13 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      setIsLoading(false);
+      // No need to setIsLoading(false) because the page will redirect and re-mount.
       router.push('/');
     });
   }, [setIsLoading, router]);
 
   useEffect(() => {
     const validate = async () => {
+        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/validate');
             if (res.ok) {
@@ -41,19 +42,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(validatedUser);
             } else {
                 setUser(null);
+                if (pathname.startsWith('/dashboard')) {
+                    router.push('/');
+                }
             }
         } catch (error) {
             console.error('Validation failed:', error);
             setUser(null);
+            if (pathname.startsWith('/dashboard')) {
+                router.push('/');
+            }
         } finally {
-            if (!firstLoadDone) {
-                setFirstLoadDone(true);
+            setFirstLoadDone(true);
+            // Let the data loading in DashboardLayout handle turning this off
+            if (!pathname.startsWith('/dashboard')) {
                 setIsLoading(false);
             }
         }
     }
     validate();
-  }, [pathname, firstLoadDone, setIsLoading]);
+  }, []); // Run only once on initial mount
 
   const isAuthenticated = !!user;
 
@@ -74,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             setUser(data.user);
             router.push('/dashboard');
+            // The loading will be turned off by the dashboard layout's data fetching.
         } catch (error: any) {
             console.error("Authentication failed", error);
             toast({
@@ -81,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
-            setIsLoading(false); // Important: stop loading on error
+            setIsLoading(false); // Stop loading on error
         }
     },
     [router, toast, setIsLoading]
@@ -120,8 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ user, loading: isLoading, login, logout, isAuthenticated, firstLoadDone, signup }),
-    [user, isLoading, login, logout, isAuthenticated, firstLoadDone, signup]
+    () => ({ user, loading: !firstLoadDone, login, logout, isAuthenticated, firstLoadDone, signup }),
+    [user, firstLoadDone, login, logout, isAuthenticated, signup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
