@@ -99,7 +99,7 @@ export default function TeacherDashboard() {
             )}
           </CardContent>
            <CardFooter>
-                <Button className="w-full" onClick={() => router.push('/dashboard/classes/new')}>Create New Class</Button>
+                <Button className="w-full" onClick={() => router.push('/dashboard/classes')}>Create New Class</Button>
            </CardFooter>
         </Card>
 
