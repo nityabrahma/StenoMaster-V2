@@ -45,7 +45,8 @@ export default function AssignStudentModal({
   if (!user || user.role !== 'teacher') return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
-  const availableClasses = teacherClasses.filter(c => !c.studentIds.includes(student.id));
+  // Filter out classes the student is already enrolled in
+  const availableClasses = teacherClasses.filter(c => !student.classIds.includes(c.id));
 
   const handleAssign = async () => {
     if (!selectedClassId) return;
@@ -58,8 +59,8 @@ export default function AssignStudentModal({
         studentIds: [...classToUpdate.studentIds, student.id]
     });
 
-    // Update the student's classIds array
-    await updateStudent(student.id, {
+    // Update the student's classIds array in the local state
+    await updateStudent(student.id as string, {
         classIds: [...student.classIds, selectedClassId]
     });
 
@@ -88,7 +89,7 @@ export default function AssignStudentModal({
                             {c.name}
                         </SelectItem>
                     )) : (
-                        <p className="p-2 text-sm text-muted-foreground">No available classes.</p>
+                        <p className="p-2 text-sm text-muted-foreground">No available classes for this student.</p>
                     )}
                 </SelectContent>
             </Select>
