@@ -146,8 +146,8 @@ export default function StudentPerformancePage() {
         />
       )}
       <div className="container mx-auto p-4 md:p-8 h-full flex flex-col gap-4">
-        <Card className="flex-shrink-0 relative">
-          <CardContent className="p-4 flex justify-between items-center">
+        <Card className="flex-shrink-0">
+          <CardContent className="p-4 flex justify-between items-start">
             <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
                     <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
@@ -159,62 +159,64 @@ export default function StudentPerformancePage() {
                 </div>
             </div>
             
-            <div className="flex items-center gap-2">
-                <Card className='p-2 bg-background/50'>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
-                        <CardTitle className="text-xs font-medium">Avg. WPM</CardTitle>
-                        <Zap className="h-3 w-3 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className='p-2 pb-0'>
-                        <div className="text-lg font-bold">{avgWpm}</div>
-                    </CardContent>
-                </Card>
-                 <Card className='p-2 bg-background/50'>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
-                        <CardTitle className="text-xs font-medium">Avg. Acc</CardTitle>
-                        <Target className="h-3 w-3 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className='p-2 pb-0'>
-                        <div className="text-lg font-bold">{avgAccuracy}%</div>
-                    </CardContent>
-                </Card>
-                 <Card className='p-2 bg-background/50'>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
-                        <CardTitle className="text-xs font-medium">Submissions</CardTitle>
-                        <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className='p-2 pb-0'>
-                        <div className="text-lg font-bold">{studentScores.length}</div>
-                    </CardContent>
-                </Card>
+            <div className="flex items-start gap-4">
+                <div className="flex items-center gap-2">
+                    <Card className='p-2 bg-background/50'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                            <CardTitle className="text-xs font-medium">Avg. WPM</CardTitle>
+                            <Zap className="h-3 w-3 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className='p-2 pb-0'>
+                            <div className="text-lg font-bold">{avgWpm}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className='p-2 bg-background/50'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                            <CardTitle className="text-xs font-medium">Avg. Acc</CardTitle>
+                            <Target className="h-3 w-3 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className='p-2 pb-0'>
+                            <div className="text-lg font-bold">{avgAccuracy}%</div>
+                        </CardContent>
+                    </Card>
+                    <Card className='p-2 bg-background/50'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                            <CardTitle className="text-xs font-medium">Submissions</CardTitle>
+                            <CheckCircle className="h-3 w-3 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className='p-2 pb-0'>
+                            <div className="text-lg font-bold">{studentScores.length}</div>
+                        </CardContent>
+                    </Card>
+                </div>
+                 {user?.role === 'teacher' && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive flex-shrink-0">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete {student.name}'s account and all associated data.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive hover:bg-destructive/90"
+                                onClick={handleDeleteStudent}
+                            >
+                                Yes, delete student
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </div>
           </CardContent>
-          {user?.role === 'teacher' && (
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete {student.name}'s account and all associated data.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                        className="bg-destructive hover:bg-destructive/90"
-                        onClick={handleDeleteStudent}
-                    >
-                        Yes, delete student
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-          )}
         </Card>
 
         <Card className="flex-1 min-h-0">
@@ -281,3 +283,5 @@ export default function StudentPerformancePage() {
     </>
   );
 }
+
+    
