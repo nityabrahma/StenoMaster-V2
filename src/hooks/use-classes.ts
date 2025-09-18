@@ -3,13 +3,14 @@
 import { create } from 'zustand';
 import type { Class } from '@/lib/types';
 
-type NewClass = Omit<Class, 'id' | 'teacherId'>;
+type NewClass = Omit<Class, 'id' | 'teacherId' | 'createdAt'>;
 
 interface ClassesState {
   classes: Class[];
   fetchClasses: () => Promise<void>;
   createClass: (newClassData: NewClass) => Promise<Class>;
   updateClass: (classId: string, updatedData: Partial<Class>) => Promise<void>;
+  deleteClass: (classId: string) => Promise<void>;
 }
 
 async function api<T>(url: string, options?: RequestInit): Promise<T> {
@@ -53,4 +54,10 @@ export const useClasses = create<ClassesState>((set) => ({
             classes: state.classes.map(c => c.id === classId ? updatedClass : c)
         }));
     },
+    deleteClass: async (classId: string) => {
+        await api(`/api/classes/${classId}`, { method: 'DELETE' });
+        set(state => ({
+            classes: state.classes.filter(c => c.id !== classId)
+        }));
+    }
 }));

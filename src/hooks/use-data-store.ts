@@ -11,6 +11,7 @@ interface DataStoreState {
   scores: Score[];
   fetchAssignments: () => Promise<void>;
   createAssignment: (assignment: NewAssignment) => Promise<Assignment>;
+  updateAssignment: (id: string, data: Partial<NewAssignment>) => Promise<void>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
   fetchScores: () => Promise<void>;
   createScore: (score: NewScore) => Promise<Score>;
@@ -46,6 +47,16 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
         });
         set(state => ({ assignments: [...state.assignments, newAssignment] }));
         return newAssignment;
+    },
+    updateAssignment: async (id, data) => {
+        const updatedAssignment = await api<Assignment>(`/api/assignments/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        set(state => ({
+            assignments: state.assignments.map(a => a.id === id ? updatedAssignment : a)
+        }));
     },
     deleteAssignment: async (assignmentId) => {
         await api(`/api/assignments/${assignmentId}`, { method: 'DELETE' });

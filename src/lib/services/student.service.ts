@@ -6,7 +6,6 @@ import { getClassesByStudentId } from './class.service';
 
 // Map the MongoDB user document to the Student type used in the frontend
 async function mapUserToStudent(user: any): Promise<Student> {
-    // Fetch class enrollments for the student from Firestore
     const classes = await getClassesByStudentId(user.userId);
     const classIds = classes.map(c => c.id);
 
@@ -25,7 +24,6 @@ export async function getAllStudents(): Promise<Student[]> {
         await connectToDatabase();
         const users = await UserModel.find({ userType: 'student' }).lean();
         
-        // Map all users to students with their class info
         const studentPromises = users.map(user => mapUserToStudent(user));
         return Promise.all(studentPromises);
 
@@ -40,7 +38,6 @@ export async function getStudentsByTeacher(teacherId: string): Promise<Student[]
         await connectToDatabase();
         const users = await UserModel.find({ userType: 'student', teacherId: teacherId }).lean();
         
-        // Map all users to students with their class info
         const studentPromises = users.map(user => mapUserToStudent(user));
         return Promise.all(studentPromises);
 
@@ -53,7 +50,6 @@ export async function getStudentsByTeacher(teacherId: string): Promise<Student[]
 export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
     try {
         await connectToDatabase();
-        // Assuming 'id' is the 'userId'
         const updatedUser = await UserModel.findOneAndUpdate({ userId: id }, data, { new: true }).lean();
         if (!updatedUser) {
             throw new Error('Student not found for update');
@@ -68,8 +64,7 @@ export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'
 export async function deleteStudent(id: string): Promise<void> {
     try {
         await connectToDatabase();
-        // Assuming 'id' is the 'userId'
-        const result = await UserModel.deleteOne({ userId: id });
+        const result = await UserModel.deleteOne({ userId: id, userType: 'student' });
         if (result.deletedCount === 0) {
             throw new Error('Student not found for deletion');
         }

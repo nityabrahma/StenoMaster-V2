@@ -1,5 +1,5 @@
 
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Score } from '@/lib/types';
 
@@ -14,7 +14,7 @@ function mapDocToScore(doc: QueryDocumentSnapshot | DocumentData): Score {
     } else if (typeof data.completedAt === 'string' && data.completedAt) {
         completedAt = new Date(data.completedAt).toISOString();
     } else {
-        completedAt = new Date().toISOString(); // Fallback to a valid date
+        completedAt = new Date().toISOString();
     }
 
     return {
@@ -38,9 +38,15 @@ export async function getAllScores(): Promise<Score[]> {
     return snapshot.docs.map(mapDocToScore);
 }
 
+export async function getScoresByStudent(studentId: string): Promise<Score[]> {
+    const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToScore);
+}
+
 export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
-    // Check if a score for this assignment by this student already exists.
-    // If so, overwrite it. This is useful for practice tests.
     const query = scoresCollection
         .where('assignmentId', '==', data.assignmentId)
         .where('studentId', '==', data.studentId);
@@ -48,7 +54,6 @@ export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
     const existing = await query.get();
 
     if (!existing.empty) {
-        // Delete existing scores for this assignment/student pair.
         const batch = db.batch();
         existing.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();

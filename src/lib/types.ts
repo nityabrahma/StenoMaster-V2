@@ -34,6 +34,7 @@ export type Assignment = {
   deadline: string; // ISO date string
   text: string;
   imageUrl?: string;
+  isActive: boolean;
 };
 
 export interface Mistake {

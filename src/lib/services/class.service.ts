@@ -1,5 +1,5 @@
 
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Class } from '@/lib/types';
 
@@ -14,7 +14,7 @@ function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
     } else if (typeof data.createdAt === 'string' && data.createdAt) {
         createdAt = new Date(data.createdAt).toISOString();
     } else {
-        createdAt = new Date().toISOString(); // Fallback to a valid date
+        createdAt = new Date().toISOString();
     }
 
     return {
@@ -28,6 +28,14 @@ function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
 
 export async function getAllClasses(): Promise<Class[]> {
     const snapshot = await classesCollection.get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToClass);
+}
+
+export async function getClassesByTeacher(teacherId: string): Promise<Class[]> {
+    const snapshot = await classesCollection.where('teacherId', '==', teacherId).get();
     if (snapshot.empty) {
         return [];
     }
@@ -60,4 +68,13 @@ export async function getClassesByStudentId(studentId: string): Promise<Class[]>
         return [];
     }
     return snapshot.docs.map(mapDocToClass);
+}
+
+export async function deleteClass(classId: string): Promise<void> {
+    const docRef = classesCollection.doc(classId);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+        throw new Error('Class not found');
+    }
+    await docRef.delete();
 }
