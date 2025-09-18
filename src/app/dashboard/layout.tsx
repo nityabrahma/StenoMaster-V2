@@ -37,7 +37,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     fetchAssignments(),
                     fetchClasses(),
                     fetchStudents(),
-                    fetchScores(5)
+                    fetchScores(5) // Fetch only the last 5 scores for recent activity feeds
                 ]);
                 setDataLoaded(true);
                 setIsLoading(false);
@@ -46,10 +46,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         loadData();
     }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores, setIsLoading]);
 
-    if (loading || !isAuthenticated) {
-        return null;
-    }
-
+    // Don't return null. Let the page render so the loading overlay can work correctly.
     return (
         <SidebarProvider>
             <div className="h-screen w-full flex flex-col bg-transparent">

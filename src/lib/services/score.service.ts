@@ -52,29 +52,29 @@ export async function getScoresByTeacher(teacherId: string, limit?: number): Pro
 
     const studentIds = students.map(s => s.id);
     
-    let query = scoresCollection.where('studentId', 'in', studentIds);
-    
-    // Note: We are not sorting by date here to avoid needing a composite index.
-    // Sorting should be done on the client if needed.
+    // Firestore 'in' query has a limit of 30 items. We must chunk the queries.
+    const chunks: string[][] = [];
+    for (let i = 0; i < studentIds.length; i += 30) {
+        chunks.push(studentIds.slice(i, i + 30));
+    }
+
+    const scorePromises = chunks.map(async (chunk) => {
+        let query = scoresCollection.where('studentId', 'in', chunk);
+        const snapshot = await query.get();
+        return snapshot.docs.map(mapDocToScore);
+    });
+
+    const chunkedScores = await Promise.all(scorePromises);
+    const allScores = chunkedScores.flat();
+
+    // Now sort and limit the combined result.
+    allScores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
     if (limit) {
-        query = query.limit(limit);
-    }
-    
-    const snapshot = await query.get();
-    
-    if (snapshot.empty) {
-        return [];
+        return allScores.slice(0, limit);
     }
 
-    const scores = snapshot.docs.map(mapDocToScore);
-    
-    // If a limit was applied, it's efficient to sort on the server after fetching.
-    if (limit) {
-        return scores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-    }
-
-    return scores;
+    return allScores;
 }
 
 
