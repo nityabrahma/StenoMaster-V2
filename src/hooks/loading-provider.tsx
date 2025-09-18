@@ -22,13 +22,15 @@ export const useLoading = () => {
 
 const LoadingOverlay = () => {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/50">
-            <Card className="w-full max-w-sm p-8 space-y-4">
-                <div className="flex justify-center">
-                    <LogoStatic />
-                </div>
-                <p className="text-center text-muted-foreground">Loading, please wait...</p>
-            </Card>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="w-full max-w-sm p-4">
+                <Card className="p-8 space-y-4">
+                    <div className="flex justify-center">
+                        <LogoStatic />
+                    </div>
+                    <p className="text-center text-muted-foreground">Loading, please wait...</p>
+                </Card>
+            </div>
         </div>
     );
 };
