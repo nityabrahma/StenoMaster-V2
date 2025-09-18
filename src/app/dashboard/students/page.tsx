@@ -47,7 +47,6 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
-import { useDataStore } from '@/hooks/use-data-store';
 import { useAppRouter } from '@/hooks/use-app-router';
 import AssignStudentModal from '@/components/AssignStudentModal';
 import type { Student } from '@/lib/types';
@@ -151,7 +150,6 @@ export default function StudentsPage() {
   const { user } = useAuth();
   const { students, removeStudent } = useStudents();
   const { classes } = useClasses();
-  const { scores } = useDataStore();
   const router = useAppRouter();
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
@@ -207,11 +205,9 @@ export default function StudentsPage() {
       </Card>
       <Card className="flex-1 min-h-0">
         <CardContent className="h-full p-6 flex flex-col">
-            <div className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+            <div className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
                 <div className="text-center">Student</div>
                 <div className="text-center">Classes</div>
-                <div className="text-right">Avg. WPM</div>
-                <div className="text-right">Avg. Accuracy</div>
                 <div className="w-8"><span className="sr-only">Actions</span></div>
             </div>
             {teacherStudents.length === 0 ? (
@@ -222,9 +218,6 @@ export default function StudentsPage() {
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
                 {teacherStudents.map(student => {
-                    const studentScores = scores.filter(s => s.studentId === student.id);
-                    const avgWpm = studentScores.length > 0 ? Math.round(studentScores.reduce((acc, s) => acc + s.wpm, 0) / studentScores.length) : 'N/A';
-                    const avgAccuracy = studentScores.length > 0 ? (studentScores.reduce((acc, s) => acc + s.accuracy, 0) / studentScores.length).toFixed(1) + '%' : 'N/A';
                     const studentClasses = classes.filter(c => student.classIds.includes(c.id));
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1
@@ -232,7 +225,7 @@ export default function StudentsPage() {
                         : student.name.substring(0, 2);
 
                     return (
-                    <div key={student.id} className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
+                    <div key={student.id} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
                         <div className="min-w-0">
                             <div className="flex items-center gap-3">
                                 <Avatar>
@@ -251,8 +244,6 @@ export default function StudentsPage() {
                                 {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
                             </div>
                         </div>
-                        <div className="truncate text-right">{avgWpm}</div>
-                        <div className="truncate text-right">{avgAccuracy}</div>
                         <div className="flex justify-center">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

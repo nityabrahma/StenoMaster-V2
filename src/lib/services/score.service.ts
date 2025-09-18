@@ -36,33 +36,36 @@ function mapDocToScore(doc: QueryDocumentSnapshot | DocumentData): Score {
     };
 }
 
-export async function getAllScores(): Promise<Score[]> {
-    const snapshot = await scoresCollection.orderBy('completedAt', 'desc').get();
-    if (snapshot.empty) {
-        return [];
-    }
-    return snapshot.docs.map(mapDocToScore);
-}
-
 export async function getScoresByStudent(studentId: string): Promise<Score[]> {
-    const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
+    const snapshot = await scoresCollection.where('studentId', '==', studentId).orderBy('completedAt', 'desc').get();
     if (snapshot.empty) {
         return [];
     }
     return snapshot.docs.map(mapDocToScore);
 }
 
-export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
+export async function getScoresByTeacher(teacherId: string, limit?: number): Promise<Score[]> {
     const students = await getStudentsByTeacher(teacherId);
     if (students.length === 0) {
         return [];
     }
 
     const studentIds = students.map(s => s.id);
-    const allScores: Score[] = [];
     
-    // Firestore 'in' query has a limit of 30 elements. Chunk the array.
-    const chunkSize = 30;
+    // If a limit is passed, we are likely looking for recent scores across all students.
+    // A simple query with a limit will work here.
+    if (limit) {
+        const snapshot = await scoresCollection
+            .where('studentId', 'in', studentIds)
+            .orderBy('completedAt', 'desc')
+            .limit(limit)
+            .get();
+        return snapshot.docs.map(mapDocToScore);
+    }
+
+    // If no limit, we fetch all scores for all students, chunking the request.
+    const allScores: Score[] = [];
+    const chunkSize = 30; // Firestore 'in' query limit
     for (let i = 0; i < studentIds.length; i += chunkSize) {
         const chunk = studentIds.slice(i, i + chunkSize);
         const snapshot = await scoresCollection.where('studentId', 'in', chunk).get();
@@ -72,10 +75,14 @@ export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
         }
     }
 
+    // Sort all fetched scores by date
+    allScores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+
     return allScores;
 }
 
 export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
+    // Overwrite any previous score for the same assignment by the same student.
     const query = scoresCollection
         .where('assignmentId', '==', data.assignmentId)
         .where('studentId', '==', data.studentId);

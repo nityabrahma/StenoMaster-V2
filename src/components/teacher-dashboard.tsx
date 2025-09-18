@@ -21,8 +21,10 @@ import { useClasses } from '@/hooks/use-classes';
 import { useDataStore } from '@/hooks/use-data-store';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { ScrollArea } from './ui/scroll-area';
+import { Skeleton } from './ui/skeleton';
+import type { Score } from '@/lib/types';
 
 const chartConfig = {
   avgWpm: {
@@ -35,7 +37,25 @@ export default function TeacherDashboard() {
   const { user } = useAuth();
   const { students } = useStudents();
   const { classes } = useClasses();
-  const { assignments, scores } = useDataStore();
+  const { assignments, scores, fetchScores } = useDataStore();
+  const [recentScores, setRecentScores] = useState<Score[]>([]);
+  const [isLoadingScores, setIsLoadingScores] = useState(true);
+
+  useEffect(() => {
+    const loadRecentScores = async () => {
+        setIsLoadingScores(true);
+        // We'll fetch just the last 5 scores for the dashboard
+        await fetchScores(5); 
+        setIsLoadingScores(false);
+    }
+    loadRecentScores();
+  }, [fetchScores]);
+
+  useEffect(() => {
+    // This effect reacts to changes in the global scores state
+    const sortedScores = [...scores].sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+    setRecentScores(sortedScores.slice(0, 5));
+  }, [scores]);
 
   if (!user || user.role !== 'teacher') return null;
 
@@ -43,15 +63,13 @@ export default function TeacherDashboard() {
   const teacherClassIds = teacherClasses.map(c => c.id);
   
   const teacherAssignments = assignments.filter(a => teacherClassIds.includes(a.classId));
-  
   const teacherStudents = students.filter(s => teacherClasses.some(c => c.studentIds.includes(s.id)));
   
-  const teacherScores = scores.filter(s => teacherAssignments.some(a => a.id === s.assignmentId));
 
   const chartData = useMemo(() => {
     return teacherClasses.map(cls => {
       const classAssignments = assignments.filter(a => a.classId === cls.id);
-      const classScores = scores.filter(s => classAssignments.some(a => a.id === s.assignmentId));
+      const classScores = scores.filter(s => classAssignments.some(a => a.id === s.assignmentId) && cls.studentIds.includes(s.studentId));
       
       if (classScores.length === 0) {
         return { class: cls.name, avgWpm: 0 };
@@ -63,16 +81,6 @@ export default function TeacherDashboard() {
       return { class: cls.name, avgWpm };
     }).slice(0, 5); // show top 5 classes
   }, [teacherClasses, assignments, scores]);
-
-
-  const recentScores = teacherScores
-    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
-    .slice(0, 5)
-    .map(sub => {
-      const student = students.find(s => s.id === sub.studentId);
-      const assignment = assignments.find(a => a.id === sub.assignmentId);
-      return { ...sub, student, assignment };
-  });
 
   const stats = [
     { title: 'Total Students', value: teacherStudents.length, icon: Users, color: 'from-blue-400 to-sky-400' },
@@ -110,7 +118,7 @@ export default function TeacherDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Class Performance</CardTitle>
-            <CardDescription>Average Words Per Minute (WPM) across your classes.</CardDescription>
+            <CardDescription>Average Words Per Minute (WPM) across your classes. (Based on available scores)</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -138,7 +146,13 @@ export default function TeacherDashboard() {
             <CardDescription>Latest assignment submissions from your students.</CardDescription>
           </CardHeader>
           <CardContent>
-            {recentScores.length > 0 ? (
+            {isLoadingScores ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : recentScores.length > 0 ? (
                 <div className="space-y-4">
                     <div className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 text-sm font-semibold text-muted-foreground border-b pb-2">
                         <div>Student</div>
@@ -147,21 +161,24 @@ export default function TeacherDashboard() {
                     </div>
                      <ScrollArea className="h-[200px]">
                         <div className="divide-y divide-border">
-                            {recentScores.map(sub => (
+                            {recentScores.map(sub => {
+                                const student = students.find(s => s.id === sub.studentId);
+                                const assignment = assignments.find(a => a.id === sub.assignmentId);
+                                return (
                                 <div key={sub.id} className="grid grid-cols-[2fr_1.5fr_auto] gap-4 px-2 py-3 items-center">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={`https://avatar.vercel.sh/${sub.student?.email}.png`} />
-                                            <AvatarFallback>{sub.student?.name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={`https://avatar.vercel.sh/${student?.email}.png`} />
+                                            <AvatarFallback>{student?.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="truncate">{sub.student?.name}</span>
+                                        <span className="truncate">{student?.name}</span>
                                     </div>
-                                    <div className="truncate">{sub.assignment?.title}</div>
+                                    <div className="truncate">{assignment?.title}</div>
                                     <div className="text-right">
                                         <Badge variant={sub.wpm > 60 ? "default" : "secondary"}>{sub.wpm}</Badge>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </ScrollArea>
                 </div>

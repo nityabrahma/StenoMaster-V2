@@ -13,7 +13,8 @@ interface DataStoreState {
   createAssignment: (assignment: NewAssignment) => Promise<Assignment>;
   updateAssignment: (id: string, data: Partial<NewAssignment>) => Promise<void>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
-  fetchScores: () => Promise<void>;
+  fetchScores: (limit?: number) => Promise<void>;
+  fetchScoresByStudentId: (studentId: string) => Promise<void>;
   createScore: (score: NewScore) => Promise<Score>;
 }
 
@@ -64,13 +65,26 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
             assignments: state.assignments.filter(a => a.id !== assignmentId),
         }));
     },
-    fetchScores: async () => {
+    fetchScores: async (limit?: number) => {
         try {
-            const scores = await api<Score[]>('/api/scores');
-            set({ scores: scores || [] });
+            const url = limit ? `/api/scores?limit=${limit}` : '/api/scores';
+            const scores = await api<Score[]>(url);
+            set(state => ({
+                scores: [...scores, ...state.scores.filter(s => !scores.find(fetched => fetched.id === s.id))]
+            }));
         } catch (error) {
             console.error("Failed to fetch scores:", error);
-            set({ scores: [] });
+        }
+    },
+    fetchScoresByStudentId: async (studentId: string) => {
+        try {
+            const scores = await api<Score[]>(`/api/scores?studentId=${studentId}`);
+            // Merge new scores with existing ones, replacing duplicates
+            set(state => ({
+                scores: [...scores, ...state.scores.filter(s => !scores.find(fetched => fetched.id === s.id))]
+            }));
+        } catch (error) {
+            console.error(`Failed to fetch scores for student ${studentId}:`, error);
         }
     },
     createScore: async (scoreData) => {

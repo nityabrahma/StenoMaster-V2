@@ -15,7 +15,7 @@ import { useStudents } from '@/hooks/use-students';
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
     const router = useAppRouter();
-    const { fetchAssignments, fetchScores } = useDataStore();
+    const { fetchAssignments } = useDataStore();
     const { fetchClasses } = useClasses();
     const { fetchStudents } = useStudents();
     const [dataLoaded, setDataLoaded] = useState(false);
@@ -34,13 +34,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     fetchAssignments(),
                     fetchClasses(),
                     fetchStudents(),
-                    fetchScores(),
+                    // Scores are now fetched on a per-page basis
                 ]);
                 setDataLoaded(true);
             }
         };
         loadData();
-    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores]);
+    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents]);
 
     if (loading || !isAuthenticated || !dataLoaded) {
         // The global loading provider will show an overlay

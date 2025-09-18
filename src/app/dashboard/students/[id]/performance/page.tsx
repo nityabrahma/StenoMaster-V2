@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { useStudents } from '@/hooks/use-students';
 import { useDataStore } from '@/hooks/use-data-store';
@@ -16,17 +16,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { BookOpen, CheckCircle } from 'lucide-react';
+import { BookOpen, CheckCircle, Target, Zap } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Score, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StudentPerformancePage() {
   const params = useParams();
   const { user } = useAuth();
   const { students } = useStudents();
-  const { assignments, scores } = useDataStore();
+  const { assignments, scores: allScores, fetchScoresByStudentId } = useDataStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedScore, setSelectedScore] = useState<Score | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
@@ -34,17 +36,29 @@ export default function StudentPerformancePage() {
   const studentId = Array.isArray(params.id) ? params.id[0] : params.id;
   const student = students.find((s) => s.id === studentId);
 
+  useEffect(() => {
+    if (studentId) {
+      setIsLoading(true);
+      fetchScoresByStudentId(studentId).finally(() => setIsLoading(false));
+    }
+  }, [studentId, fetchScoresByStudentId]);
+
   if (!student) {
-    notFound();
+    if (!isLoading) return notFound();
+    return null; // or a loading skeleton for the whole page
   }
 
   if (!user || (user.role === 'student' && user.id !== student.id)) {
     return <p>Access Denied.</p>;
   }
 
-  const studentScores = scores
+  const studentScores = allScores
     .filter((s) => s.studentId === student.id)
     .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+  
+  const avgWpm = studentScores.length > 0 ? Math.round(studentScores.reduce((acc, s) => acc + s.wpm, 0) / studentScores.length) : 0;
+  const avgAccuracy = studentScores.length > 0 ? (studentScores.reduce((acc, s) => acc + s.accuracy, 0) / studentScores.length).toFixed(1) : '0.0';
+
 
   const getAssignmentForScore = (score: Score): Assignment => {
     if (score.assignmentId.startsWith('practice-')) {
@@ -109,7 +123,37 @@ export default function StudentPerformancePage() {
               </div>
             </div>
           </CardHeader>
+           <CardContent className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Average WPM</CardTitle>
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{avgWpm}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Average Accuracy</CardTitle>
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{avgAccuracy}%</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{studentScores.length}</div>
+                </CardContent>
+              </Card>
+           </CardContent>
         </Card>
+
         <Card className="flex-1 min-h-0">
             <CardHeader>
                 <CardTitle>Submission History</CardTitle>
@@ -124,7 +168,13 @@ export default function StudentPerformancePage() {
                 <div className="text-right">Accuracy</div>
                 <div className="text-right">Mistakes</div>
             </div>
-            {studentScores.length === 0 ? (
+            {isLoading ? (
+                <div className="space-y-2 pt-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            ) : studentScores.length === 0 ? (
                 <div className="text-center p-8 text-muted-foreground">
                     This student has not submitted any assignments or practice tests yet.
                 </div>
