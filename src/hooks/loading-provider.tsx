@@ -24,7 +24,7 @@ const LoadingOverlay = () => {
   return (
     <div
       style={{
-        backdropFilter: 'blur(3px)',
+        backdropFilter: 'blur(1px)',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
       }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"

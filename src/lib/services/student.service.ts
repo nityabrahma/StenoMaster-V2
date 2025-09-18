@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database/mongoose';
 import UserModel from '@/lib/database/models/user.model';
 import type { Student } from '@/lib/types';
 import { getClassesByStudentId } from './class.service';
+import { deleteScoresByStudent } from './score.service';
 
 // Map the MongoDB user document to the Student type used in the frontend
 async function mapUserToStudent(user: any): Promise<Student> {
@@ -65,11 +66,16 @@ export async function deleteStudent(id: string): Promise<void> {
     try {
         await connectToDatabase();
         const result = await UserModel.deleteOne({ userId: id, userType: 'student' });
+        
         if (result.deletedCount === 0) {
             throw new Error('Student not found for deletion');
         }
+        
+        // After deleting the student, delete all their scores.
+        await deleteScoresByStudent(id);
+
     } catch (error) {
         console.error('Error deleting student:', error);
-        throw new Error('Could not delete student');
+        throw new Error('Could not delete student and associated data.');
     }
 }

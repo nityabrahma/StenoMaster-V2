@@ -65,7 +65,7 @@ export async function getScoresByTeacher(teacherId: string, limit?: number): Pro
     });
 
     const chunkedScores = await Promise.all(scorePromises);
-    const allScores = chunkedScores.flat();
+    let allScores = chunkedScores.flat();
 
     // Now sort and limit the combined result.
     allScores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
@@ -100,4 +100,18 @@ export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
     const docRef = await scoresCollection.add(scorePayload);
     const newDoc = await docRef.get();
     return mapDocToScore(newDoc);
+}
+
+export async function deleteScoresByStudent(studentId: string): Promise<void> {
+    const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
+    if (snapshot.empty) {
+        return; // No scores to delete
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
 }
