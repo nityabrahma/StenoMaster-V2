@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Class, Student } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 
 interface ManageStudentsModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,7 +58,8 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
             });
             return;
         }
-
+        
+        setIsCreating(true);
         try {
             const { user: newStudentData } = await signup({ name, email, password, role: 'student', teacherId: teacher.id as string });
             const newStudentId = newStudentData.userId;
@@ -81,6 +84,8 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
                 description: error.message,
                 variant: 'destructive',
             });
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -98,7 +103,10 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
                 <Label htmlFor="s-password">Password</Label>
                 <Input id="s-password" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full">Create and Enroll Student</Button>
+            <Button type="submit" className="w-full" disabled={isCreating}>
+              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create and Enroll Student
+            </Button>
         </form>
     );
 }
@@ -112,6 +120,7 @@ export default function ManageStudentsModal({
     const { students, updateStudent } = useStudents();
     const { classes, updateClass } = useClasses();
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Find students who are not in any class yet
     const availableStudents = students.filter(s => !s.classIds || s.classIds.length === 0);
@@ -128,6 +137,7 @@ export default function ManageStudentsModal({
             return;
         }
 
+        setIsSubmitting(true);
         try {
             await updateClass(classToManage.id, {
                 studentIds: [...classToManage.studentIds, ...selectedStudents],
@@ -156,6 +166,8 @@ export default function ManageStudentsModal({
                 description: error.message || 'Could not enroll students.',
                 variant: 'destructive',
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
     
@@ -195,7 +207,10 @@ export default function ManageStudentsModal({
                         )}
                     </div>
                 </ScrollArea>
-                <Button onClick={handleAddExisting} className="w-full mt-4" disabled={selectedStudents.length === 0}>Add Selected Students</Button>
+                <Button onClick={handleAddExisting} className="w-full mt-4" disabled={selectedStudents.length === 0 || isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Add Selected Students
+                </Button>
             </TabsContent>
             <TabsContent value="create-new">
                 <CreateAndEnrollStudent 

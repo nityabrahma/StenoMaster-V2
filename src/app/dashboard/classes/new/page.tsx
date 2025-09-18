@@ -20,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
 import { useAppRouter } from '@/hooks/use-app-router';
+import { Loader2 } from 'lucide-react';
 
 
 export default function NewClassPage() {
@@ -32,6 +33,7 @@ export default function NewClassPage() {
   
   const [className, setClassName] = useState('');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudents(prev => 
@@ -46,6 +48,7 @@ export default function NewClassPage() {
         return;
     }
     
+    setIsSubmitting(true);
     try {
         const newClass = await createClass({
             name: className,
@@ -69,6 +72,8 @@ export default function NewClassPage() {
             description: error.message || "Could not create class.",
             variant: "destructive"
         })
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -117,7 +122,10 @@ export default function NewClassPage() {
             </div>
              <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-                <Button type="submit">Create Class</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Class
+                </Button>
               </div>
           </form>
         </CardContent>

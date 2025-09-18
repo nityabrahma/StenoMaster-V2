@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useClasses } from '@/hooks/use-classes';
 import type { Class } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 interface CreateClassModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export default function CreateClassModal({
   const { toast } = useToast();
   const { createClass } = useClasses();
   const [className, setClassName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +44,8 @@ export default function CreateClassModal({
       });
       return;
     }
-
+    
+    setIsSubmitting(true);
     try {
         const newClass = await createClass({
             name: className,
@@ -66,6 +69,8 @@ export default function CreateClassModal({
             description: error.message || 'Could not create class.',
             variant: 'destructive'
         });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -95,7 +100,10 @@ export default function CreateClassModal({
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Create Class</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Class
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

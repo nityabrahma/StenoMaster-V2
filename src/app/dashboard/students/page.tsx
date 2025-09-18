@@ -32,7 +32,7 @@ import {
   } from '@/components/ui/alert-dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
-import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -60,6 +60,7 @@ function CreateStudentDialog() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,6 +82,7 @@ function CreateStudentDialog() {
             return;
         }
 
+        setIsCreating(true);
         try {
             await signup({ name, email, password, role: 'student', teacherId: teacher.id as string });
             await fetchStudents(); // Re-fetch students list
@@ -98,6 +100,8 @@ function CreateStudentDialog() {
                 description: error.message,
                 variant: 'destructive',
             });
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -138,7 +142,10 @@ function CreateStudentDialog() {
                 </div>
             </div>
             <DialogFooter>
-                <Button type="submit">Create Account</Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Account
+                </Button>
             </DialogFooter>
           </form>
         </DialogContent>

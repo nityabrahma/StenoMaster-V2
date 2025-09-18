@@ -69,6 +69,7 @@ export default function NewAssignmentPageContent() {
   const { createAssignment } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const teacherClasses = classes.filter((c) => c.teacherId === user?.id);
@@ -129,6 +130,7 @@ export default function NewAssignmentPageContent() {
   };
 
   const onSubmit = async (data: AssignmentFormValues) => {
+    setIsSubmitting(true);
     try {
         await createAssignment({
             ...data,
@@ -145,6 +147,8 @@ export default function NewAssignmentPageContent() {
             description: error.message || "Could not create the assignment.",
             variant: 'destructive',
         });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -330,7 +334,10 @@ export default function NewAssignmentPageContent() {
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-                  <Button type="submit">Create Assignment</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Assignment
+                  </Button>
                 </div>
               </form>
             </Form>
