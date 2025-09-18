@@ -37,14 +37,14 @@ function mapDocToScore(doc: QueryDocumentSnapshot | DocumentData): Score {
 }
 
 export async function getScoresByStudent(studentId: string): Promise<Score[]> {
-    const snapshot = await scoresCollection.where('studentId', '==', studentId).orderBy('completedAt', 'desc').get();
+    const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
     if (snapshot.empty) {
         return [];
     }
     return snapshot.docs.map(mapDocToScore);
 }
 
-export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
+export async function getScoresByTeacher(teacherId: string, limit?: number): Promise<Score[]> {
     const students = await getStudentsByTeacher(teacherId);
     if (students.length === 0) {
         return [];
@@ -52,23 +52,31 @@ export async function getScoresByTeacher(teacherId: string): Promise<Score[]> {
 
     const studentIds = students.map(s => s.id);
     
-    // Firestore 'in' query is limited to 30 values. We must chunk the requests.
-    const allScores: Score[] = [];
-    const chunkSize = 30; 
-    for (let i = 0; i < studentIds.length; i += chunkSize) {
-        const chunk = studentIds.slice(i, i + chunkSize);
-        const snapshot = await scoresCollection.where('studentId', 'in', chunk).get();
-        if (!snapshot.empty) {
-            const chunkScores = snapshot.docs.map(mapDocToScore);
-            allScores.push(...chunkScores);
-        }
+    let query = scoresCollection.where('studentId', 'in', studentIds);
+    
+    // Note: We are not sorting by date here to avoid needing a composite index.
+    // Sorting should be done on the client if needed.
+
+    if (limit) {
+        query = query.limit(limit);
+    }
+    
+    const snapshot = await query.get();
+    
+    if (snapshot.empty) {
+        return [];
     }
 
-    // Sort all fetched scores by date
-    allScores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+    const scores = snapshot.docs.map(mapDocToScore);
+    
+    // If a limit was applied, it's efficient to sort on the server after fetching.
+    if (limit) {
+        return scores.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+    }
 
-    return allScores;
+    return scores;
 }
+
 
 export async function createScore(data: Omit<Score, 'id'>): Promise<Score> {
     // Overwrite any previous score for the same assignment by the same student.
