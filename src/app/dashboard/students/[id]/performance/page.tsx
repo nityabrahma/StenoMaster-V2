@@ -16,17 +16,33 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { BookOpen, CheckCircle, Target, Zap } from 'lucide-react';
+import { BookOpen, CheckCircle, Target, Trash2, Zap } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Score, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useAppRouter } from '@/hooks/use-app-router';
 
 export default function StudentPerformancePage() {
   const params = useParams();
+  const router = useAppRouter();
   const { user } = useAuth();
-  const { students } = useStudents();
+  const { students, removeStudent } = useStudents();
+  const { toast } = useToast();
   const { assignments, scores: allScores, fetchScoresByStudentId } = useDataStore();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,6 +58,24 @@ export default function StudentPerformancePage() {
       fetchScoresByStudentId(studentId).finally(() => setIsLoading(false));
     }
   }, [studentId, fetchScoresByStudentId]);
+
+  const handleDeleteStudent = async () => {
+    if (!student) return;
+    try {
+        await removeStudent(student.id);
+        toast({
+            title: 'Student Removed',
+            description: `${student.name} has been permanently deleted.`,
+        });
+        router.push('/dashboard/students');
+    } catch (error: any) {
+        toast({
+            title: 'Deletion Failed',
+            description: error.message || 'Could not remove the student.',
+            variant: 'destructive',
+        });
+    }
+  }
 
   if (!student) {
     if (!isLoading) return notFound();
@@ -70,6 +104,7 @@ export default function StudentPerformancePage() {
         text: practiceText?.text || 'Text not found.',
         classId: '',
         deadline: '',
+        isActive: true,
       };
     }
     const assignment = assignments.find((a) => a.id === score.assignmentId);
@@ -80,6 +115,7 @@ export default function StudentPerformancePage() {
         text: 'Assignment text not available.',
         classId: '',
         deadline: '',
+        isActive: false,
       }
     );
   };
@@ -110,48 +146,75 @@ export default function StudentPerformancePage() {
         />
       )}
       <div className="container mx-auto p-4 md:p-8 h-full flex flex-col gap-4">
-        <Card className="flex-shrink-0">
-          <CardHeader>
+        <Card className="flex-shrink-0 relative">
+          <CardContent className="p-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                <AvatarFallback>{studentInitials}</AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle className="font-headline text-3xl">{student.name}</CardTitle>
-                <CardDescription>{student.email}</CardDescription>
-              </div>
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                    <AvatarFallback>{studentInitials}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <CardTitle className="font-headline text-3xl">{student.name}</CardTitle>
+                    <CardDescription>{student.email}</CardDescription>
+                </div>
             </div>
-          </CardHeader>
-           <CardContent className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average WPM</CardTitle>
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{avgWpm}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Accuracy</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{avgAccuracy}%</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{studentScores.length}</div>
-                </CardContent>
-              </Card>
-           </CardContent>
+            
+            <div className="flex items-center gap-2">
+                <Card className='p-2 bg-background/50'>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                        <CardTitle className="text-xs font-medium">Avg. WPM</CardTitle>
+                        <Zap className="h-3 w-3 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className='p-2 pb-0'>
+                        <div className="text-lg font-bold">{avgWpm}</div>
+                    </CardContent>
+                </Card>
+                 <Card className='p-2 bg-background/50'>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                        <CardTitle className="text-xs font-medium">Avg. Acc</CardTitle>
+                        <Target className="h-3 w-3 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className='p-2 pb-0'>
+                        <div className="text-lg font-bold">{avgAccuracy}%</div>
+                    </CardContent>
+                </Card>
+                 <Card className='p-2 bg-background/50'>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-2 pt-0">
+                        <CardTitle className="text-xs font-medium">Submissions</CardTitle>
+                        <CheckCircle className="h-3 w-3 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className='p-2 pb-0'>
+                        <div className="text-lg font-bold">{studentScores.length}</div>
+                    </CardContent>
+                </Card>
+            </div>
+          </CardContent>
+          {user?.role === 'teacher' && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete {student.name}'s account and all associated data.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        className="bg-destructive hover:bg-destructive/90"
+                        onClick={handleDeleteStudent}
+                    >
+                        Yes, delete student
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          )}
         </Card>
 
         <Card className="flex-1 min-h-0">
