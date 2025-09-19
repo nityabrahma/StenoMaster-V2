@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useClasses } from '@/hooks/use-classes';
-import { useStudents } from '@/hooks/use-students';
 import { useAuth } from '@/hooks/use-auth';
 import type { Student } from '@/lib/types';
 import { Label } from './ui/label';
@@ -39,14 +38,13 @@ export default function AssignStudentModal({
 }: AssignStudentModalProps) {
   const { user } = useAuth();
   const { classes, updateClass } = useClasses();
-  const { updateStudent } = useStudents();
   const [selectedClassId, setSelectedClassId] = useState('');
 
   if (!user || user.role !== 'teacher') return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
   // Filter out classes the student is already enrolled in
-  const availableClasses = teacherClasses.filter(c => !student.classIds.includes(c.id));
+  const availableClasses = teacherClasses.filter(c => !c.studentIds.includes(student.id as string));
 
   const handleAssign = async () => {
     if (!selectedClassId) return;
@@ -56,12 +54,7 @@ export default function AssignStudentModal({
     
     // Add student to the new class in the backend
     await updateClass(classToUpdate.id, {
-        studentIds: [...classToUpdate.studentIds, student.id]
-    });
-
-    // Update the student's classIds array in the local state
-    await updateStudent(student.id as string, {
-        classIds: [...student.classIds, selectedClassId]
+        studentIds: [...classToUpdate.studentIds, student.id as string]
     });
 
     onAssignSuccess();

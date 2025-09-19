@@ -240,7 +240,7 @@ export default function StudentsPage() {
             <ScrollArea className="h-full">
                 <div className="divide-y divide-border">
                 {teacherStudents.map(student => {
-                    const studentClasses = classes.filter(c => student.classIds.includes(c.id));
+                    const studentClasses = classes.filter(c => c.studentIds.includes(student.id as string));
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1
                         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
