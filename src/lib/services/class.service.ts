@@ -52,7 +52,9 @@ export async function getClassesByTeacher(teacherId: string): Promise<Class[]> {
 
 export async function createClass(data: Omit<Class, 'id' | 'createdAt'>): Promise<Class> {
     const payload = {
-        ...data,
+        name: data.name,
+        teacherId: data.teacherId,
+        students: data.students || [],
         createdAt: new Date(),
     }
     const docRef = await classesCollection.add(payload);
