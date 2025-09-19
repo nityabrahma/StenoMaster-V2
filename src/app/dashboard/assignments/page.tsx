@@ -99,7 +99,7 @@ function TeacherAssignments() {
                                 <div className="truncate text-center">{assignmentClass?.name}</div>
                                 <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
                                 <div className="text-center">
-                                    <Badge variant="outline">{assignmentScores.length} / {assignmentClass?.studentIds.length}</Badge>
+                                    <Badge variant="outline">{assignmentScores.length} / {assignmentClass?.students.length}</Badge>
                                 </div>
                                 <div className="flex justify-center">
                                     <DropdownMenu>

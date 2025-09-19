@@ -65,7 +65,7 @@ function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToMa
             const newStudentId = newStudentData.userId;
 
             await updateClass(classToManage.id, {
-                studentIds: [...classToManage.studentIds, newStudentId],
+                students: [...classToManage.students, newStudentId],
             });
 
             await fetchStudents();
@@ -123,7 +123,7 @@ export default function ManageStudentsModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Find students who are not in any class yet
-    const enrolledStudentIds = new Set(classes.flatMap(c => c.studentIds));
+    const enrolledStudentIds = new Set(classes.flatMap(c => c.students));
     const availableStudents = students.filter(s => !enrolledStudentIds.has(s.id as string));
     
     const handleStudentSelect = (studentId: string) => {
@@ -141,7 +141,7 @@ export default function ManageStudentsModal({
         setIsSubmitting(true);
         try {
             await updateClass(classToManage.id, {
-                studentIds: [...classToManage.studentIds, ...selectedStudents],
+                students: [...classToManage.students, ...selectedStudents],
             });
             
             toast({

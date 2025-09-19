@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import type { Class } from '@/lib/types';
 
-type NewClass = Omit<Class, 'id' | 'teacherId' | 'createdAt'>;
+type NewClass = Omit<Class, 'id' | 'createdAt'>;
 
 interface ClassesState {
   classes: Class[];

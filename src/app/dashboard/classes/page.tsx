@@ -96,7 +96,7 @@ export default function ClassesPage() {
                             <div className="font-medium truncate text-center">{cls.name}</div>
                             <div className="min-w-0 flex justify-center">
                                 <div className="flex -space-x-2 overflow-hidden">
-                                    {cls.studentIds.slice(0, 5).map(studentId => {
+                                    {cls.students.slice(0, 5).map(studentId => {
                                         const student = students.find(s => s.id === studentId);
                                         if (!student) return null;
                                         const nameParts = student.name.split(' ');
@@ -110,16 +110,16 @@ export default function ClassesPage() {
                                             </Avatar>
                                         )
                                     })}
-                                    {cls.studentIds.length > 5 && (
+                                    {cls.students.length > 5 && (
                                         <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                                            <AvatarFallback>+{cls.studentIds.length - 5}</AvatarFallback>
+                                            <AvatarFallback>+{cls.students.length - 5}</AvatarFallback>
                                         </Avatar>
                                     )}
-                                    {cls.studentIds.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
+                                    {cls.students.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
                                 </div>
                             </div>
                             <div className="text-center">
-                                <Badge variant="outline">{cls.studentIds.length} students</Badge>
+                                <Badge variant="outline">{cls.students.length} students</Badge>
                             </div>
                             <div className="flex justify-center">
                                 <DropdownMenu>

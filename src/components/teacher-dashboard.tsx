@@ -86,7 +86,7 @@ export default function TeacherDashboard() {
                                 <div key={cls.id} className="flex justify-between items-center py-3">
                                     <div>
                                         <p className="font-semibold">{cls.name}</p>
-                                        <p className="text-sm text-muted-foreground">{cls.studentIds.length} students</p>
+                                        <p className="text-sm text-muted-foreground">{cls.students.length} students</p>
                                     </div>
                                     <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/classes')}>Manage</Button>
                                 </div>

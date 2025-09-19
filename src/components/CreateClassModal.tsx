@@ -49,7 +49,7 @@ export default function CreateClassModal({
     try {
         const newClass = await createClass({
             name: className,
-            studentIds: [],
+            students: [],
         });
 
         toast({

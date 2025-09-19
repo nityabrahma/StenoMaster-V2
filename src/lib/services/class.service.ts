@@ -26,7 +26,7 @@ function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
       id: doc.id,
       name: data.name || 'Unnamed Class',
       teacherId: data.teacherId || '',
-      studentIds: data.studentIds || data.students || [],
+      students: data.students || data.studentIds || [],
       createdAt: createdAt,
     };
 }
@@ -68,7 +68,7 @@ export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>):
 }
 
 export async function getClassesByStudentId(studentId: string): Promise<Class[]> {
-    const snapshot = await classesCollection.where('studentIds', 'array-contains', studentId).get();
+    const snapshot = await classesCollection.where('students', 'array-contains', studentId).get();
     if (snapshot.empty) {
         return [];
     }

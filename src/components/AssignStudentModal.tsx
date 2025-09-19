@@ -45,7 +45,7 @@ export default function AssignStudentModal({
   if (!user || user.role !== 'teacher') return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
-  const currentClass = teacherClasses.find(c => c.studentIds.includes(student.id as string));
+  const currentClass = teacherClasses.find(c => c.students.includes(student.id as string));
 
   // Filter out the class the student is already in
   const availableClasses = teacherClasses.filter(c => c.id !== currentClass?.id);
@@ -63,13 +63,13 @@ export default function AssignStudentModal({
 
         // 1. Remove student from their current class, if they have one.
         if (currentClass) {
-            const updatedStudentIds = currentClass.studentIds.filter(id => id !== student.id);
-            updatePromises.push(updateClass(currentClass.id, { studentIds: updatedStudentIds }));
+            const updatedStudentIds = currentClass.students.filter(id => id !== student.id);
+            updatePromises.push(updateClass(currentClass.id, { students: updatedStudentIds }));
         }
         
         // 2. Add student to the new class.
         updatePromises.push(updateClass(newClass.id, {
-            studentIds: [...newClass.studentIds, student.id as string]
+            students: [...newClass.students, student.id as string]
         }));
         
         await Promise.all(updatePromises);

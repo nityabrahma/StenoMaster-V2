@@ -23,7 +23,7 @@ export type Class = {
   id: string;
   name: string;
   teacherId: string;
-  studentIds: string[];
+  students: string[];
   createdAt: string; // ISO Date string
 };
 
