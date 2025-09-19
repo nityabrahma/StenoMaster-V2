@@ -1,8 +1,6 @@
-
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,18 +8,20 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
-import { useAuth } from '@/hooks/use-auth';
 import type { Class, Student } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, UserPlus, Users, X, ArrowRight } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import AssignStudentModal from './AssignStudentModal';
+import CreateAndEnrollStudentModal from './CreateAndEnrollStudentModal';
+import AddExistingStudentModal from './AddExistingStudentModal';
 
 interface ManageStudentsModalProps {
   isOpen: boolean;
@@ -29,187 +29,167 @@ interface ManageStudentsModalProps {
   classToManage: Class;
 }
 
-function CreateAndEnrollStudent({ classToManage, onStudentCreated }: { classToManage: Class, onStudentCreated: (student: Student) => void }) {
-    const { user: teacher, signup } = useAuth();
-    const { toast } = useToast();
-    const { fetchStudents } = useStudents();
-    const { updateClass } = useClasses();
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name || !email || !password) {
-            toast({
-                title: 'Error',
-                description: 'Please fill out all fields.',
-                variant: 'destructive',
-            });
-            return;
-        }
-
-        if (!teacher) {
-             toast({
-                title: 'Error',
-                description: 'You must be logged in as a teacher.',
-                variant: 'destructive',
-            });
-            return;
-        }
-        
-        setIsCreating(true);
-        try {
-            const { user: newStudentData } = await signup({ name, email, password, role: 'student', teacherId: teacher.id as string });
-            const newStudentId = newStudentData.userId;
-
-            await updateClass(classToManage.id, {
-                students: [...classToManage.students, newStudentId],
-            });
-
-            await fetchStudents();
-            
-            toast({
-                title: 'Student Created and Enrolled!',
-                description: `${name} has been added to ${classToManage.name}.`,
-            });
-            setName('');
-            setEmail('');
-            setPassword('');
-            onStudentCreated(newStudentData);
-        } catch (error: any) {
-            toast({
-                title: 'Error',
-                description: error.message,
-                variant: 'destructive',
-            });
-        } finally {
-            setIsCreating(false);
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            <div className="space-y-2">
-                <Label htmlFor="s-name">Full Name</Label>
-                <Input id="s-name" placeholder="e.g., John Doe" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="s-email">Email</Label>
-                <Input id="s-email" type="email" placeholder="e.g., j.doe@school.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="s-password">Password</Label>
-                <Input id="s-password" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <Button type="submit" className="w-full" disabled={isCreating}>
-              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create and Enroll Student
-            </Button>
-        </form>
-    );
-}
-
 export default function ManageStudentsModal({
   isOpen,
   onClose,
   classToManage,
 }: ManageStudentsModalProps) {
-    const { toast } = useToast();
-    const { students } = useStudents();
-    const { classes, updateClass } = useClasses();
-    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // Find students who are not in any class yet
-    const enrolledStudentIds = new Set(classes.flatMap(c => c.students));
-    const availableStudents = students.filter(s => !enrolledStudentIds.has(s.id as string));
-    
-    const handleStudentSelect = (studentId: string) => {
-        setSelectedStudents(prev => 
-        prev.includes(studentId) ? prev.filter(id => id !== studentId) : [...prev, studentId]
-        );
-    };
+  const { toast } = useToast();
+  const { students } = useStudents();
+  const { updateClass } = useClasses();
 
-    const handleAddExisting = async () => {
-        if (selectedStudents.length === 0) {
-            toast({ title: "No students selected.", variant: "destructive" });
-            return;
-        }
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentToTransfer, setStudentToTransfer] = useState<Student | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-        setIsSubmitting(true);
-        try {
-            await updateClass(classToManage.id, {
-                students: [...classToManage.students, ...selectedStudents],
-            });
-            
-            toast({
-                title: "Students Enrolled!",
-                description: `${selectedStudents.length} student(s) added to ${classToManage.name}.`,
-            });
-            setSelectedStudents([]);
-            onClose();
-        } catch(error: any) {
-            toast({
-                title: 'Enrollment Failed',
-                description: error.message || 'Could not enroll students.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    
+  const enrolledStudents = useMemo(() => {
+    return students
+      .filter((s) => classToManage.students.includes(s.id as string))
+      .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [students, classToManage, searchTerm]);
+
+  const handleRemoveStudent = async (studentId: string) => {
+    setIsSubmitting(true);
+    try {
+      const updatedStudentIds = classToManage.students.filter((id) => id !== studentId);
+      await updateClass(classToManage.id, { students: updatedStudentIds });
+      toast({
+        title: 'Student Removed',
+        description: 'The student has been un-enrolled from this class.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Removal Failed',
+        description: error.message || 'Could not remove the student.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Manage Students for {classToManage.name}</DialogTitle>
-          <DialogDescription>
-            Add existing students or create new ones to enroll in this class.
-          </DialogDescription>
-        </DialogHeader>
-        <Tabs defaultValue="add-existing">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="add-existing">Add Existing</TabsTrigger>
-                <TabsTrigger value="create-new">Create New</TabsTrigger>
-            </TabsList>
-            <TabsContent value="add-existing">
-                <ScrollArea className="h-60 mt-4">
-                    <div className="space-y-2 pr-4">
-                        {availableStudents.length > 0 ? availableStudents.map(student => (
-                            <div key={student.id as string} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`student-${student.id}`}
-                                    checked={selectedStudents.includes(student.id as string)}
-                                    onCheckedChange={() => handleStudentSelect(student.id as string)}
-                                />
-                                <label
-                                    htmlFor={`student-${student.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    {student.name} ({student.email})
-                                </label>
-                            </div>
-                        )) : (
-                            <p className="text-sm text-muted-foreground text-center pt-8">No un-enrolled students available.</p>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl w-full">
+          <DialogHeader>
+            <DialogTitle>Manage Students in {classToManage.name}</DialogTitle>
+            <DialogDescription>
+              Add, remove, or transfer students in this class.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search enrolled students..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+              <Users className="mr-2 h-4 w-4" /> Add Existing
+            </Button>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" /> Create New
+            </Button>
+          </div>
+
+          <ScrollArea className="h-80 mt-4 pr-4">
+            {enrolledStudents.length > 0 ? (
+              <div className="space-y-2">
+                {enrolledStudents.map((student) => {
+                  const nameParts = student.name.split(' ');
+                  const initials = nameParts.length > 1
+                    ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                    : student.name.substring(0, 2);
+
+                  return (
+                    <div
+                      key={student.id as string}
+                      className="flex items-center p-2 rounded-md transition-colors"
+                    >
+                      <Avatar className="h-9 w-9 relative">
+                        <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-xs bg-slate-800/50'>{initials}</p>
+                        <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
+                      </Avatar>
+                      <div className="ml-3 flex-grow">
+                        <p className="text-sm font-medium">{student.name}</p>
+                        <p className="text-xs text-muted-foreground">{student.email}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setStudentToTransfer(student)}
+                        disabled={isSubmitting}
+                      >
+                        <ArrowRight className="mr-1 h-4 w-4" /> Transfer
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveStudent(student.id as string)}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="mr-1 h-4 w-4" />
                         )}
+                        Remove
+                      </Button>
                     </div>
-                </ScrollArea>
-                <Button onClick={handleAddExisting} className="w-full mt-4" disabled={selectedStudents.length === 0 || isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Selected Students
-                </Button>
-            </TabsContent>
-            <TabsContent value="create-new">
-                <CreateAndEnrollStudent 
-                    classToManage={classToManage} 
-                    onStudentCreated={() => onClose()}
-                />
-            </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">
+                <p>No students enrolled in this class.</p>
+              </div>
+            )}
+          </ScrollArea>
+          <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {studentToTransfer && (
+        <AssignStudentModal
+          isOpen={!!studentToTransfer}
+          onClose={() => setStudentToTransfer(null)}
+          student={studentToTransfer}
+          onAssignSuccess={(studentName, newClassName) => {
+            toast({
+              title: 'Student Transferred!',
+              description: `${studentName} has been enrolled in ${newClassName}.`,
+            });
+            setStudentToTransfer(null);
+          }}
+        />
+      )}
+
+      {isCreateModalOpen && (
+        <CreateAndEnrollStudentModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            classToManage={classToManage}
+        />
+      )}
+
+      {isAddModalOpen && (
+        <AddExistingStudentModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            classToManage={classToManage}
+        />
+      )}
+    </>
   );
 }
