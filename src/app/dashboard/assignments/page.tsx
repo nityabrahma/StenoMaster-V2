@@ -1,4 +1,3 @@
-
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -11,14 +10,24 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { MoreHorizontal, PlusCircle, CheckCircle } from 'lucide-react';
+import { PlusCircle, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAppRouter } from '@/hooks/use-app-router';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
@@ -47,7 +56,7 @@ function TeacherAssignments() {
         await deleteAssignment(assignmentId);
         toast({
             title: 'Assignment Deleted',
-            description: `"${assignmentTitle}" has been removed. Student scores are retained.`,
+            description: `"${assignmentTitle}" and all its submissions have been removed.`,
         });
     } catch (error: any) {
         toast({
@@ -76,12 +85,11 @@ function TeacherAssignments() {
         </Card>
         <Card className="flex-1 min-h-0">
             <CardContent className="h-full p-6 flex flex-col">
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                    <div className="text-center">Title</div>
+                <div className="grid grid-cols-[3fr_2fr_2fr_1fr] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                    <div>Title</div>
                     <div className="text-center">Class</div>
                     <div className="text-center">Due Date</div>
-                    <div className="text-center">Submissions</div>
-                    <div className="w-8"><span className="sr-only">Actions</span></div>
+                    <div className="text-center">Actions</div>
                 </div>
                  {teacherAssignments.length === 0 ? (
                     <div className="text-center p-8 text-muted-foreground">
@@ -89,43 +97,66 @@ function TeacherAssignments() {
                     </div>
                 ) : (
                 <ScrollArea className="h-full">
-                    <div className="divide-y divide-border">
-                        {teacherAssignments.map(assignment => {
-                        const assignmentScores = scores.filter(s => s.assignmentId === assignment.id);
-                        const assignmentClass = classes.find(c => c.id === assignment.classId);
-                        return (
-                            <div key={assignment.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
-                                <div className="font-medium truncate text-center">{assignment.title}</div>
-                                <div className="truncate text-center">{assignmentClass?.name}</div>
-                                <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
-                                <div className="text-center">
-                                    <Badge variant="outline">{assignmentScores.length} / {assignmentClass?.students.length}</Badge>
+                    <TooltipProvider>
+                        <div className="divide-y divide-border">
+                            {teacherAssignments.map(assignment => {
+                            const assignmentClass = classes.find(c => c.id === assignment.classId);
+                            return (
+                                <div key={assignment.id} className="grid grid-cols-[3fr_2fr_2fr_1fr] gap-4 px-4 py-3 items-center">
+                                    <div className="font-medium truncate">{assignment.title}</div>
+                                    <div className="truncate text-center">{assignmentClass?.name || 'N/A'}</div>
+                                    <div className="truncate text-center">{format(new Date(assignment.deadline), 'PP')}</div>
+                                    <div className="flex justify-center items-center gap-1">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/assignments/${assignment.id}/edit`)}>
+                                                    <Pencil className="h-4 w-4" />
+                                                    <span className="sr-only">Edit Assignment</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Edit Assignment</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <AlertDialog>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                            <Trash2 className="h-4 w-4" />
+                                                            <span className="sr-only">Delete Assignment</span>
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Delete Assignment</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the assignment "{assignment.title}" and all associated student submissions.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    className="bg-destructive hover:bg-destructive/90"
+                                                    onClick={() => handleDelete(assignment.id, assignment.title)}
+                                                >
+                                                    Yes, delete assignment
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </div>
-                                <div className="flex justify-center">
-                                    <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Toggle menu</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem disabled>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem disabled>View Submissions</DropdownMenuItem>
-                                        <DropdownMenuItem 
-                                            className="text-destructive"
-                                            onClick={() => handleDelete(assignment.id, assignment.title)}
-                                        >
-                                            Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </div>
-                        );
-                        })}
-                    </div>
+                            );
+                            })}
+                        </div>
+                    </TooltipProvider>
                 </ScrollArea>
                 )}
             </CardContent>

@@ -1,4 +1,3 @@
-
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Score } from '@/lib/types';
@@ -106,6 +105,20 @@ export async function deleteScoresByStudent(studentId: string): Promise<void> {
     const snapshot = await scoresCollection.where('studentId', '==', studentId).get();
     if (snapshot.empty) {
         return; // No scores to delete
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+}
+
+export async function deleteScoresByAssignment(assignmentId: string): Promise<void> {
+    const snapshot = await scoresCollection.where('assignmentId', '==', assignmentId).get();
+    if (snapshot.empty) {
+        return;
     }
 
     const batch = db.batch();

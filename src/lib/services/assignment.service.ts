@@ -1,7 +1,7 @@
-
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Assignment } from '@/lib/types';
+import { deleteScoresByAssignment } from './score.service';
 
 const assignmentsCollection = db.collection('assignments');
 
@@ -91,5 +91,10 @@ export async function deleteAssignment(id: string): Promise<void> {
     if (!doc.exists) {
         throw new Error('Assignment not found');
     }
+    
+    // Delete associated scores first
+    await deleteScoresByAssignment(id);
+
+    // Then delete the assignment
     await docRef.delete();
 }
