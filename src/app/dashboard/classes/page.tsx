@@ -77,10 +77,9 @@ export default function ClassesPage() {
         </Card>
         <Card className="flex-1 min-h-0">
             <CardContent className="h-full p-6 flex flex-col">
-                <div className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                    <div className="text-center">Class Name</div>
+                <div className="grid grid-cols-[3fr_2fr_1fr] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                    <div>Class Name</div>
                     <div className="text-center">Students</div>
-                    <div className="text-center">Enrolled</div>
                     <div className="text-center">Actions</div>
                 </div>
                 {teacherClasses.length === 0 ? (
@@ -92,9 +91,9 @@ export default function ClassesPage() {
                     <TooltipProvider>
                         <div className="divide-y divide-border">
                             {teacherClasses.map(cls => (
-                            <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
-                                <div className="font-medium truncate text-center">{cls.name}</div>
-                                <div className="min-w-0 flex justify-center">
+                            <div key={cls.id} className="grid grid-cols-[3fr_2fr_1fr] gap-4 px-4 py-3 items-center">
+                                <div className="font-medium truncate">{cls.name}</div>
+                                <div className="min-w-0 flex items-center justify-center gap-2">
                                     <div className="flex -space-x-2 overflow-hidden">
                                         {cls.students.slice(0, 5).map(studentId => {
                                             const student = students.find(s => s.id === studentId);
@@ -115,11 +114,12 @@ export default function ClassesPage() {
                                                 <AvatarFallback>+{cls.students.length - 5}</AvatarFallback>
                                             </Avatar>
                                         )}
-                                        {cls.students.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
                                     </div>
-                                </div>
-                                <div className="text-center">
-                                    <Badge variant="outline">{cls.students.length} students</Badge>
+                                    {cls.students.length > 0 ? (
+                                        <Badge variant="outline">{cls.students.length} student{cls.students.length > 1 ? 's' : ''}</Badge>
+                                    ) : (
+                                       <span className="text-xs text-muted-foreground self-center">No students</span>
+                                    )}
                                 </div>
                                 <div className="flex justify-center items-center gap-1">
                                     <Tooltip>
