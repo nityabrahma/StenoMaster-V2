@@ -54,7 +54,7 @@ export default function AssignStudentModal({
     const classToUpdate = classes.find(c => c.id === selectedClassId);
     if (!classToUpdate) return;
     
-    // Add student to the new class
+    // Add student to the new class in the backend
     await updateClass(classToUpdate.id, {
         studentIds: [...classToUpdate.studentIds, student.id]
     });

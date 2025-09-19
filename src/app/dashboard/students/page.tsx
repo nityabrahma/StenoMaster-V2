@@ -32,7 +32,7 @@ import {
   } from '@/components/ui/alert-dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
-import { MoreHorizontal, PlusCircle, Trash2, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Loader2, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -160,10 +160,16 @@ export default function StudentsPage() {
   const router = useAppRouter();
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
-  const teacherStudents = students.filter(s => s.teacherId === user.id);
+  const teacherStudents = students.filter(s => {
+    if (s.teacherId !== user.id) return false;
+    if (searchTerm === '') return true;
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    return s.name.toLowerCase().includes(lowerCaseSearch) || s.email.toLowerCase().includes(lowerCaseSearch);
+  });
 
   const handleDeleteStudent = async (studentId: string) => {
     try {
@@ -208,6 +214,15 @@ export default function StudentsPage() {
             </div>
             <CreateStudentDialog />
           </div>
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search students by name or email..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </CardHeader>
       </Card>
       <Card className="flex-1 min-h-0">
@@ -219,7 +234,7 @@ export default function StudentsPage() {
             </div>
             {teacherStudents.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
-                    No students have been created yet.
+                    {searchTerm ? 'No students match your search.' : 'No students have been created yet.'}
                 </div>
             ) : (
             <ScrollArea className="h-full">
