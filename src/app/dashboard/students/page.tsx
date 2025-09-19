@@ -187,10 +187,10 @@ export default function StudentsPage() {
     }
   };
 
-  const handleAssignSuccess = () => {
+  const handleAssignSuccess = (studentName: string, newClassName: string) => {
     toast({
-        title: 'Student Assigned!',
-        description: 'The student has been enrolled in the selected class.',
+        title: 'Student Transferred!',
+        description: `${studentName} has been enrolled in ${newClassName}.`,
     });
   }
 
@@ -241,7 +241,6 @@ export default function StudentsPage() {
                 <div className="divide-y divide-border">
                 {teacherStudents.map(student => {
                     const studentClasses = classes.filter(c => c.studentIds.includes(student.id as string));
-                    const isEnrolled = studentClasses.length > 0;
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1
                         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
@@ -280,7 +279,7 @@ export default function StudentsPage() {
                             <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
                                 View Performance
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setStudentToAssign(student)} disabled={isEnrolled}>
+                            <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
                                 Assign to Class
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
