@@ -51,6 +51,7 @@ import { useAppRouter } from '@/hooks/use-app-router';
 import AssignStudentModal from '@/components/AssignStudentModal';
 import type { Student } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function CreateStudentDialog() {
     const { user: teacher, signup } = useAuth();
@@ -161,11 +162,21 @@ export default function StudentsPage() {
   const { toast } = useToast();
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState('');
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
+  const teacherClasses = classes.filter(c => c.teacherId === user.id);
+
   const teacherStudents = students.filter(s => {
     if (s.teacherId !== user.id) return false;
+    
+    // Class filter
+    if (selectedClassId && !classes.find(c => c.id === selectedClassId)?.students.includes(s.id as string)) {
+        return false;
+    }
+
+    // Search term filter
     if (searchTerm === '') return true;
     const lowerCaseSearch = searchTerm.toLowerCase();
     return s.name.toLowerCase().includes(lowerCaseSearch) || s.email.toLowerCase().includes(lowerCaseSearch);
@@ -214,14 +225,27 @@ export default function StudentsPage() {
             </div>
             <CreateStudentDialog />
           </div>
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search students by name or email..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex gap-2 mt-4">
+            <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Search students by name or email..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by class..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">All Classes</SelectItem>
+                    {teacherClasses.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
           </div>
         </CardHeader>
       </Card>
@@ -234,7 +258,7 @@ export default function StudentsPage() {
             </div>
             {teacherStudents.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
-                    {searchTerm ? 'No students match your search.' : 'No students have been created yet.'}
+                    {searchTerm || selectedClassId ? 'No students match your filters.' : 'No students have been created yet.'}
                 </div>
             ) : (
             <ScrollArea className="h-full">
