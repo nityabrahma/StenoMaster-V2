@@ -149,9 +149,9 @@ export default function StudentPerformancePage() {
         <Card className="flex-shrink-0">
           <CardContent className="p-4 flex justify-between items-start">
             <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                    <AvatarFallback>{studentInitials}</AvatarFallback>
+                <Avatar className="h-16 w-16 relative">
+                    <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-2xl bg-slate-800/50'>{studentInitials}</p>
+                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
                 </Avatar>
                 <div>
                     <CardTitle className="font-headline text-3xl">{student.name}</CardTitle>

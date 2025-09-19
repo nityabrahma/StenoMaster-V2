@@ -282,9 +282,9 @@ export default function StudentsPage() {
                     <div key={student.id.toString()} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
                         <div className="min-w-0">
                             <div className="flex items-center gap-3">
-                                <Avatar>
-                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                                <AvatarFallback>{studentInitials}</AvatarFallback>
+                                <Avatar className="relative">
+                                    <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-xl bg-slate-800/50'>{studentInitials}</p>
+                                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
                                 </Avatar>
                                 <div className="min-w-0">
                                 <p className="font-medium truncate">{student.name}</p>

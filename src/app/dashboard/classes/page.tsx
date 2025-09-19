@@ -104,9 +104,9 @@ export default function ClassesPage() {
                                             ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
                                             : student.name.substring(0, 2);
                                         return (
-                                            <Avatar key={student.id.toString()} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
+                                            <Avatar key={student.id.toString()} className="inline-block h-8 w-8 rounded-full ring-2 ring-background relative">
+                                                <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-sm bg-slate-800/50'>{studentInitials}</p>
                                                 <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                                                <AvatarFallback>{studentInitials}</AvatarFallback>
                                             </Avatar>
                                         )
                                     })}
