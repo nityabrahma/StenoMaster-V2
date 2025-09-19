@@ -117,13 +117,14 @@ export default function ManageStudentsModal({
   classToManage,
 }: ManageStudentsModalProps) {
     const { toast } = useToast();
-    const { students, updateStudent } = useStudents();
+    const { students } = useStudents();
     const { classes, updateClass } = useClasses();
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Find students who are not in any class yet
-    const availableStudents = students.filter(s => !s.classIds || s.classIds.length === 0);
+    const enrolledStudentIds = new Set(classes.flatMap(c => c.studentIds));
+    const availableStudents = students.filter(s => !enrolledStudentIds.has(s.id as string));
     
     const handleStudentSelect = (studentId: string) => {
         setSelectedStudents(prev => 
@@ -142,17 +143,6 @@ export default function ManageStudentsModal({
             await updateClass(classToManage.id, {
                 studentIds: [...classToManage.studentIds, ...selectedStudents],
             });
-
-            // Update each student to add the new classId
-            const studentUpdatePromises = selectedStudents.map(studentId => {
-                const student = students.find(s => s.id === studentId);
-                if (student) {
-                    return updateStudent(student.id, { classIds: [...student.classIds, classToManage.id]});
-                }
-                return Promise.resolve();
-            });
-
-            await Promise.all(studentUpdatePromises);
             
             toast({
                 title: "Students Enrolled!",
@@ -189,11 +179,11 @@ export default function ManageStudentsModal({
                 <ScrollArea className="h-60 mt-4">
                     <div className="space-y-2 pr-4">
                         {availableStudents.length > 0 ? availableStudents.map(student => (
-                            <div key={student.id} className="flex items-center space-x-2">
+                            <div key={student.id as string} className="flex items-center space-x-2">
                                 <Checkbox
                                     id={`student-${student.id}`}
-                                    checked={selectedStudents.includes(student.id)}
-                                    onCheckedChange={() => handleStudentSelect(student.id)}
+                                    checked={selectedStudents.includes(student.id as string)}
+                                    onCheckedChange={() => handleStudentSelect(student.id as string)}
                                 />
                                 <label
                                     htmlFor={`student-${student.id}`}

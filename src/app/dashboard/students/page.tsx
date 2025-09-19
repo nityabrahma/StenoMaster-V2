@@ -241,6 +241,7 @@ export default function StudentsPage() {
                 <div className="divide-y divide-border">
                 {teacherStudents.map(student => {
                     const studentClasses = classes.filter(c => c.studentIds.includes(student.id as string));
+                    const isEnrolled = studentClasses.length > 0;
                     const nameParts = student.name.split(' ');
                     const studentInitials = nameParts.length > 1
                         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
@@ -279,7 +280,7 @@ export default function StudentsPage() {
                             <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
                                 View Performance
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
+                            <DropdownMenuItem onClick={() => setStudentToAssign(student)} disabled={isEnrolled}>
                                 Assign to Class
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
