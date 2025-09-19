@@ -89,7 +89,7 @@ export default function AssignStudentModal({
         <DialogHeader>
           <DialogTitle>Assign {student.name} to a Class</DialogTitle>
           <DialogDescription>
-            Select a new class to enroll or transfer this student.
+            {currentClass ? 'Select a new class to transfer this student.' : 'Select a class to enroll this student.'}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2">
@@ -109,7 +109,7 @@ export default function AssignStudentModal({
                             {c.name}
                         </SelectItem>
                     )) : (
-                        <p className="p-2 text-sm text-muted-foreground">No other classes available.</p>
+                        <p className="p-2 text-sm text-muted-foreground">No other classes available for transfer.</p>
                     )}
                 </SelectContent>
             </Select>

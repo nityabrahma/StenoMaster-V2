@@ -171,8 +171,8 @@ export default function StudentsPage() {
   const teacherStudents = students.filter(s => {
     if (s.teacherId !== user.id) return false;
     
-    // Class filter
-    if (selectedClassId && !classes.find(c => c.id === selectedClassId)?.students.includes(s.id as string)) {
+    const studentEnrolledInClass = classes.some(c => c.id === selectedClassId && c.students.includes(s.id as string));
+    if (selectedClassId && !studentEnrolledInClass) {
         return false;
     }
 
@@ -205,6 +205,14 @@ export default function StudentsPage() {
     });
   }
 
+  const handleFilterChange = (value: string) => {
+    if (value === 'all-classes') {
+        setSelectedClassId('');
+    } else {
+        setSelectedClassId(value);
+    }
+  }
+
   return (
     <>
     {studentToAssign && (
@@ -235,12 +243,12 @@ export default function StudentsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+            <Select value={selectedClassId} onValueChange={handleFilterChange}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Filter by class..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All Classes</SelectItem>
+                    <SelectItem value="all-classes">All Classes</SelectItem>
                     {teacherClasses.map(c => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
@@ -304,7 +312,7 @@ export default function StudentsPage() {
                                 View Performance
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
-                                Assign to Class
+                                Assign/Transfer
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <AlertDialog>
