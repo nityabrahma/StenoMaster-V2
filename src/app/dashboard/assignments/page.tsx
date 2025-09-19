@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { PlusCircle, CheckCircle, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, CheckCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -45,6 +45,7 @@ function TeacherAssignments() {
   const { assignments, scores, deleteAssignment } = useDataStore();
   const { classes } = useClasses();
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   if(!user) return null;
 
@@ -52,6 +53,7 @@ function TeacherAssignments() {
   const teacherAssignments = assignments.filter(a => teacherClasses.some(tc => tc.id === a.classId));
 
   const handleDelete = async (assignmentId: string, assignmentTitle: string) => {
+    setIsDeleting(assignmentId);
     try {
         await deleteAssignment(assignmentId);
         toast({
@@ -64,6 +66,8 @@ function TeacherAssignments() {
             description: error.message || 'Could not delete assignment.',
             variant: 'destructive',
         })
+    } finally {
+        setIsDeleting(null);
     }
   };
   
@@ -101,6 +105,7 @@ function TeacherAssignments() {
                         <div className="divide-y divide-border">
                             {teacherAssignments.map(assignment => {
                             const assignmentClass = classes.find(c => c.id === assignment.classId);
+                            const isCurrentlyDeleting = isDeleting === assignment.id;
                             return (
                                 <div key={assignment.id} className="grid grid-cols-[3fr_2fr_2fr_1fr] gap-4 px-4 py-3 items-center">
                                     <div className="font-medium truncate">{assignment.title}</div>
@@ -145,7 +150,9 @@ function TeacherAssignments() {
                                                 <AlertDialogAction
                                                     className="bg-destructive hover:bg-destructive/90"
                                                     onClick={() => handleDelete(assignment.id, assignment.title)}
+                                                    disabled={isCurrentlyDeleting}
                                                 >
+                                                    {isCurrentlyDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                                     Yes, delete assignment
                                                 </AlertDialogAction>
                                                 </AlertDialogFooter>

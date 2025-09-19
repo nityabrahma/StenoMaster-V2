@@ -1,4 +1,3 @@
-
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import { useClasses } from '@/hooks/use-classes';
@@ -12,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Users, PlusCircle, Trash2 } from 'lucide-react';
+import { Pencil, Users, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -48,12 +47,14 @@ export default function ClassesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [managingStudentsClass, setManagingStudentsClass] = useState<Class | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
   
   const handleDeleteClass = async (classId: string, className: string) => {
+    setIsDeleting(classId);
     try {
         await deleteClass(classId);
         toast({
@@ -66,6 +67,8 @@ export default function ClassesPage() {
             description: error.message || 'Could not delete class.',
             variant: 'destructive',
         })
+    } finally {
+        setIsDeleting(null);
     }
   };
 
@@ -119,7 +122,9 @@ export default function ClassesPage() {
                 <ScrollArea className="h-full">
                     <TooltipProvider>
                         <div className="divide-y divide-border">
-                            {teacherClasses.map(cls => (
+                            {teacherClasses.map(cls => {
+                            const isCurrentlyDeleting = isDeleting === cls.id;
+                            return (
                             <div key={cls.id} className="grid grid-cols-[3fr_2fr_1fr] gap-4 px-4 py-3 items-center">
                                 <div className="font-medium truncate">{cls.name}</div>
                                 <div className="min-w-0 flex items-center justify-center gap-2">
@@ -199,7 +204,9 @@ export default function ClassesPage() {
                                             <AlertDialogAction
                                                 className="bg-destructive hover:bg-destructive/90"
                                                 onClick={() => handleDeleteClass(cls.id, cls.name)}
+                                                disabled={isCurrentlyDeleting}
                                             >
+                                                {isCurrentlyDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                 Yes, delete class
                                             </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -207,7 +214,7 @@ export default function ClassesPage() {
                                     </AlertDialog>
                                 </div>
                             </div>
-                            ))}
+                            )})}
                         </div>
                     </TooltipProvider>
                 </ScrollArea>

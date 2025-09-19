@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { BookOpen, CheckCircle, Target, Trash2, Zap } from 'lucide-react';
+import { BookOpen, CheckCircle, Target, Trash2, Zap, Loader2 } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Score, Assignment } from '@/lib/types';
 import { typingTexts } from '@/lib/typing-data';
@@ -45,6 +44,7 @@ export default function StudentPerformancePage() {
   const { toast } = useToast();
   const { assignments, scores: allScores, fetchScoresByStudentId } = useDataStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [selectedScore, setSelectedScore] = useState<Score | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
@@ -61,6 +61,7 @@ export default function StudentPerformancePage() {
 
   const handleDeleteStudent = async () => {
     if (!student) return;
+    setIsDeleting(true);
     try {
         await removeStudent(student.id);
         toast({
@@ -74,6 +75,7 @@ export default function StudentPerformancePage() {
             description: error.message || 'Could not remove the student.',
             variant: 'destructive',
         });
+        setIsDeleting(false);
     }
   }
 
@@ -208,7 +210,9 @@ export default function StudentPerformancePage() {
                             <AlertDialogAction
                                 className="bg-destructive hover:bg-destructive/90"
                                 onClick={handleDeleteStudent}
+                                disabled={isDeleting}
                             >
+                                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                 Yes, delete student
                             </AlertDialogAction>
                             </AlertDialogFooter>
@@ -283,5 +287,3 @@ export default function StudentPerformancePage() {
     </>
   );
 }
-
-    

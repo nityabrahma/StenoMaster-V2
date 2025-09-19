@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useClasses } from '@/hooks/use-classes';
 import type { Class } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 interface EditClassModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ export default function EditClassModal({
   const { toast } = useToast();
   const { updateClass } = useClasses();
   const [className, setClassName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (classToEdit) {
@@ -49,6 +50,7 @@ export default function EditClassModal({
       return;
     }
 
+    setIsSubmitting(true);
     try {
         await updateClass(classToEdit.id, { name: className });
         toast({
@@ -62,6 +64,8 @@ export default function EditClassModal({
             description: error.message || 'Could not update class name.',
             variant: 'destructive'
         });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -89,8 +93,11 @@ export default function EditClassModal({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

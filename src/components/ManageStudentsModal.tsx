@@ -39,7 +39,7 @@ export default function ManageStudentsModal({
   const { updateClass } = useClasses();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [removingStudentId, setRemovingStudentId] = useState<string | null>(null);
   const [studentToTransfer, setStudentToTransfer] = useState<Student | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -51,7 +51,7 @@ export default function ManageStudentsModal({
   }, [students, classToManage, searchTerm]);
 
   const handleRemoveStudent = async (studentId: string) => {
-    setIsSubmitting(true);
+    setRemovingStudentId(studentId);
     try {
       const updatedStudentIds = classToManage.students.filter((id) => id !== studentId);
       await updateClass(classToManage.id, { students: updatedStudentIds });
@@ -66,7 +66,7 @@ export default function ManageStudentsModal({
         variant: 'destructive',
       });
     } finally {
-      setIsSubmitting(false);
+      setRemovingStudentId(null);
     }
   };
 
@@ -106,6 +106,7 @@ export default function ManageStudentsModal({
                   const initials = nameParts.length > 1
                     ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
                     : student.name.substring(0, 2);
+                  const isRemoving = removingStudentId === student.id.toString();
 
                   return (
                     <div
@@ -124,7 +125,7 @@ export default function ManageStudentsModal({
                         variant="ghost"
                         size="sm"
                         onClick={() => setStudentToTransfer(student)}
-                        disabled={isSubmitting}
+                        disabled={!!removingStudentId}
                       >
                         <ArrowRight className="mr-1 h-4 w-4" /> Transfer
                       </Button>
@@ -133,9 +134,9 @@ export default function ManageStudentsModal({
                         size="sm"
                         className="text-destructive hover:text-destructive"
                         onClick={() => handleRemoveStudent(student.id as string)}
-                        disabled={isSubmitting}
+                        disabled={!!removingStudentId}
                       >
-                        {isSubmitting ? (
+                        {isRemoving ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <X className="mr-1 h-4 w-4" />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -23,6 +22,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Student } from '@/lib/types';
 import { Label } from './ui/label';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AssignStudentModalProps {
   isOpen: boolean;
@@ -41,6 +41,7 @@ export default function AssignStudentModal({
   const { classes, updateClass } = useClasses();
   const [selectedClassId, setSelectedClassId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   if (!user || user.role !== 'teacher') return null;
 
@@ -77,7 +78,11 @@ export default function AssignStudentModal({
         onAssignSuccess(student.name, newClass.name);
         onClose();
     } catch (error: any) {
-        console.error("Failed to transfer student:", error);
+        toast({
+            title: "Transfer Failed",
+            description: error.message || 'Could not transfer student.',
+            variant: 'destructive',
+        });
     } finally {
         setIsSubmitting(false);
     }

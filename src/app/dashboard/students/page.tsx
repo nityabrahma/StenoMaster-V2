@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -163,6 +161,7 @@ export default function StudentsPage() {
   const [studentToAssign, setStudentToAssign] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
@@ -182,12 +181,13 @@ export default function StudentsPage() {
     return s.name.toLowerCase().includes(lowerCaseSearch) || s.email.toLowerCase().includes(lowerCaseSearch);
   });
 
-  const handleDeleteStudent = async (studentId: string) => {
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    setIsDeleting(studentId);
     try {
         await removeStudent(studentId);
         toast({
-        title: 'Student Removed',
-        description: 'The student account has been deleted.',
+            title: 'Student Removed',
+            description: `The student account for ${studentName} has been deleted.`,
         });
     } catch(error: any) {
         toast({
@@ -195,6 +195,8 @@ export default function StudentsPage() {
             description: error.message || 'Could not remove student.',
             variant: 'destructive',
         });
+    } finally {
+        setIsDeleting(null);
     }
   };
 
@@ -277,6 +279,7 @@ export default function StudentsPage() {
                     const studentInitials = nameParts.length > 1
                         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
                         : student.name.substring(0, 2);
+                    const isCurrentlyDeleting = isDeleting === student.id.toString();
 
                     return (
                     <div key={student.id.toString()} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
@@ -334,8 +337,10 @@ export default function StudentsPage() {
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                         className="bg-destructive hover:bg-destructive/90"
-                                        onClick={() => handleDeleteStudent(student.id as string)}
+                                        onClick={() => handleDeleteStudent(student.id as string, student.name)}
+                                        disabled={isCurrentlyDeleting}
                                     >
+                                        {isCurrentlyDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Yes, delete student
                                     </AlertDialogAction>
                                     </AlertDialogFooter>
