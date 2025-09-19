@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Users, PlusCircle } from 'lucide-react';
+import { Pencil, Users, PlusCircle, Trash2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -25,11 +25,24 @@ import CreateClassModal from '@/components/CreateClassModal';
 import EditClassModal from '@/components/EditClassModal';
 import ManageStudentsModal from '@/components/ManageStudentsModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ClassesPage() {
   const { user } = useAuth();
-  const { classes } = useClasses();
+  const { classes, deleteClass } = useClasses();
   const { students } = useStudents();
+  const { toast } = useToast();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
@@ -38,6 +51,22 @@ export default function ClassesPage() {
   if (!user || user.role !== 'teacher') return <p>Access Denied</p>;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
+  
+  const handleDeleteClass = async (classId: string, className: string) => {
+    try {
+        await deleteClass(classId);
+        toast({
+            title: 'Class Deleted',
+            description: `"${className}" and all its assignments have been removed.`,
+        });
+    } catch (error: any) {
+        toast({
+            title: 'Deletion Failed',
+            description: error.message || 'Could not delete class.',
+            variant: 'destructive',
+        })
+    }
+  };
 
   return (
     <>
@@ -143,6 +172,38 @@ export default function ClassesPage() {
                                             <p>Manage Students</p>
                                         </TooltipContent>
                                     </Tooltip>
+                                     <AlertDialog>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                        <Trash2 className="h-4 w-4" />
+                                                        <span className="sr-only">Delete Class</span>
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Delete Class</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the class "{cls.name}" and all associated assignments.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                className="bg-destructive hover:bg-destructive/90"
+                                                onClick={() => handleDeleteClass(cls.id, cls.name)}
+                                            >
+                                                Yes, delete class
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             </div>
                             ))}

@@ -2,8 +2,11 @@
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import type { Class } from '@/lib/types';
+import { deleteAssignment } from './assignment.service';
 
 const classesCollection = db.collection('classes');
+const assignmentsCollection = db.collection('assignments');
+
 
 function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
     const data = doc.data();
@@ -81,5 +84,18 @@ export async function deleteClass(classId: string): Promise<void> {
     if (!doc.exists) {
         throw new Error('Class not found');
     }
+
+    // Find all assignments associated with this class
+    const assignmentsSnapshot = await assignmentsCollection.where('classId', '==', classId).get();
+    
+    if (!assignmentsSnapshot.empty) {
+        // Delete each associated assignment
+        const deletePromises = assignmentsSnapshot.docs.map(assignmentDoc => 
+            deleteAssignment(assignmentDoc.id)
+        );
+        await Promise.all(deletePromises);
+    }
+    
+    // Finally, delete the class itself
     await docRef.delete();
 }
