@@ -232,7 +232,7 @@ export default function StudentsPage() {
                         : student.name.substring(0, 2);
 
                     return (
-                    <div key={student.id} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
+                    <div key={student.id.toString()} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
                         <div className="min-w-0">
                             <div className="flex items-center gap-3">
                                 <Avatar>
