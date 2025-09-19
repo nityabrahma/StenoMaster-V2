@@ -12,14 +12,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { Pencil, Users, PlusCircle } from 'lucide-react';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
@@ -82,7 +81,7 @@ export default function ClassesPage() {
                     <div className="text-center">Class Name</div>
                     <div className="text-center">Students</div>
                     <div className="text-center">Enrolled</div>
-                    <div className="w-8"><span className="sr-only">Actions</span></div>
+                    <div className="text-center">Actions</div>
                 </div>
                 {teacherClasses.length === 0 ? (
                     <div className="text-center p-8 text-muted-foreground">
@@ -90,55 +89,66 @@ export default function ClassesPage() {
                     </div>
                 ) : (
                 <ScrollArea className="h-full">
-                    <div className="divide-y divide-border">
-                        {teacherClasses.map(cls => (
-                        <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
-                            <div className="font-medium truncate text-center">{cls.name}</div>
-                            <div className="min-w-0 flex justify-center">
-                                <div className="flex -space-x-2 overflow-hidden">
-                                    {cls.students.slice(0, 5).map(studentId => {
-                                        const student = students.find(s => s.id === studentId);
-                                        if (!student) return null;
-                                        const nameParts = student.name.split(' ');
-                                        const studentInitials = nameParts.length > 1
-                                            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-                                            : student.name.substring(0, 2);
-                                        return (
-                                            <Avatar key={student.id.toString()} className="inline-block h-8 w-8 rounded-full ring-2 ring-background relative">
-                                                <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-sm bg-slate-800/50'>{studentInitials}</p>
-                                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                    <TooltipProvider>
+                        <div className="divide-y divide-border">
+                            {teacherClasses.map(cls => (
+                            <div key={cls.id} className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-4 py-3 items-center">
+                                <div className="font-medium truncate text-center">{cls.name}</div>
+                                <div className="min-w-0 flex justify-center">
+                                    <div className="flex -space-x-2 overflow-hidden">
+                                        {cls.students.slice(0, 5).map(studentId => {
+                                            const student = students.find(s => s.id === studentId);
+                                            if (!student) return null;
+                                            const nameParts = student.name.split(' ');
+                                            const studentInitials = nameParts.length > 1
+                                                ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                                                : student.name.substring(0, 2);
+                                            return (
+                                                <Avatar key={student.id.toString()} className="inline-block h-8 w-8 rounded-full ring-2 ring-background relative">
+                                                    <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-sm bg-slate-800/50'>{studentInitials}</p>
+                                                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                                                </Avatar>
+                                            )
+                                        })}
+                                        {cls.students.length > 5 && (
+                                            <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                                                <AvatarFallback>+{cls.students.length - 5}</AvatarFallback>
                                             </Avatar>
-                                        )
-                                    })}
-                                    {cls.students.length > 5 && (
-                                        <Avatar className="relative flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                                            <AvatarFallback>+{cls.students.length - 5}</AvatarFallback>
-                                        </Avatar>
-                                    )}
-                                    {cls.students.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
+                                        )}
+                                        {cls.students.length === 0 && <span className="text-xs text-muted-foreground self-center">No students</span>}
+                                    </div>
+                                </div>
+                                <div className="text-center">
+                                    <Badge variant="outline">{cls.students.length} students</Badge>
+                                </div>
+                                <div className="flex justify-center items-center gap-1">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={() => setEditingClass(cls)}>
+                                                <Pencil className="h-4 w-4" />
+                                                <span className="sr-only">Edit Class</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Edit Class</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={() => setManagingStudentsClass(cls)}>
+                                                <Users className="h-4 w-4" />
+                                                <span className="sr-only">Manage Students</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Manage Students</p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
                             </div>
-                            <div className="text-center">
-                                <Badge variant="outline">{cls.students.length} students</Badge>
-                            </div>
-                            <div className="flex justify-center">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                            <span className="sr-only">Toggle menu</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => setEditingClass(cls)}>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setManagingStudentsClass(cls)}>Manage Students</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
+                            ))}
                         </div>
-                        ))}
-                    </div>
+                    </TooltipProvider>
                 </ScrollArea>
                 )}
           </CardContent>
