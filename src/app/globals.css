@@ -27,7 +27,7 @@
     --accent: 217 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 51%; /* Updated from a darker red */
     --destructive-foreground: 210 40% 98%;
     
     --border: 217 32.6% 20%; 
@@ -68,7 +68,7 @@
     --accent: 217 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 51%; /* Updated from a darker red */
     --destructive-foreground: 210 40% 98%;
     
     --border: 217 32.6% 20%;

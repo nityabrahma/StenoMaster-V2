@@ -30,8 +30,8 @@ import {
   } from '@/components/ui/alert-dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
-import { PlusCircle, Trash2, Loader2, Search, ArrowRight, BookOpen } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlusCircle, Trash2, Loader2, Search, ArrowRightLeft } from 'lucide-react';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
     Tooltip,
@@ -50,7 +50,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function CreateStudentDialog() {
-    const { user: teacher, signup } from useAuth();
+    const { user: teacher, signup } = useAuth();
     const { toast } = useToast();
     const { fetchStudents } = useStudents();
     const [name, setName] = useState('');
@@ -307,7 +307,7 @@ export default function StudentsPage() {
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" onClick={() => setStudentToAssign(student)}>
-                                            <ArrowRight className="h-4 w-4" />
+                                            <ArrowRightLeft className="h-4 w-4" />
                                             <span className="sr-only">Assign or Transfer Student</span>
                                         </Button>
                                     </TooltipTrigger>
