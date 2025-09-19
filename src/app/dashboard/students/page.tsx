@@ -30,17 +30,15 @@ import {
   } from '@/components/ui/alert-dialog';
   import { Input } from '@/components/ui/input';
   import { Label } from '@/components/ui/label';
-import { MoreHorizontal, PlusCircle, Trash2, Loader2, Search } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Search, ArrowRight, BookOpen } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useStudents } from '@/hooks/use-students';
@@ -52,7 +50,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function CreateStudentDialog() {
-    const { user: teacher, signup } = useAuth();
+    const { user: teacher, signup } from useAuth();
     const { toast } = useToast();
     const { fetchStudents } = useStudents();
     const [name, setName] = useState('');
@@ -261,10 +259,10 @@ export default function StudentsPage() {
       </Card>
       <Card className="flex-1 min-h-0">
         <CardContent className="h-full p-6 flex flex-col">
-            <div className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
-                <div className="text-center">Student</div>
+            <div className="grid grid-cols-[3fr_2fr_1fr] gap-4 px-4 pb-2 border-b font-semibold text-muted-foreground">
+                <div className="pl-12">Student</div>
                 <div className="text-center">Classes</div>
-                <div className="w-8"><span className="sr-only">Actions</span></div>
+                <div className="text-center">Actions</div>
             </div>
             {teacherStudents.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
@@ -272,87 +270,92 @@ export default function StudentsPage() {
                 </div>
             ) : (
             <ScrollArea className="h-full">
-                <div className="divide-y divide-border">
-                {teacherStudents.map(student => {
-                    const studentClasses = classes.filter(c => c.students.includes(student.id as string));
-                    const nameParts = student.name.split(' ');
-                    const studentInitials = nameParts.length > 1
-                        ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-                        : student.name.substring(0, 2);
-                    const isCurrentlyDeleting = isDeleting === student.id.toString();
+                <TooltipProvider>
+                    <div className="divide-y divide-border">
+                    {teacherStudents.map(student => {
+                        const studentClasses = classes.filter(c => c.students.includes(student.id as string));
+                        const nameParts = student.name.split(' ');
+                        const studentInitials = nameParts.length > 1
+                            ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+                            : student.name.substring(0, 2);
+                        const isCurrentlyDeleting = isDeleting === student.id.toString();
 
-                    return (
-                    <div key={student.id.toString()} className="grid grid-cols-[2fr_2fr_auto] gap-4 px-4 py-3 items-center">
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="relative">
-                                    <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-xl bg-slate-800/50'>{studentInitials}</p>
-                                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
-                                </Avatar>
-                                <div className="min-w-0">
-                                <p className="font-medium truncate">{student.name}</p>
-                                <p className="text-sm text-muted-foreground truncate">{student.email}</p>
+                        return (
+                        <div key={student.id.toString()} className="grid grid-cols-[3fr_2fr_1fr] gap-4 px-4 py-3 items-center">
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="relative">
+                                        <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-xl bg-slate-800/50'>{studentInitials}</p>
+                                        <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
+                                    </Avatar>
+                                    <div 
+                                        className="min-w-0 cursor-pointer group"
+                                        onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}
+                                    >
+                                        <p className="font-medium truncate group-hover:text-primary transition-colors">{student.name}</p>
+                                        <p className="text-sm text-muted-foreground truncate">{student.email}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="min-w-0 text-center">
-                            <div className="flex flex-wrap gap-1 justify-center">
-                                {studentClasses.map(c => <Badge key={c.id} variant="secondary" className="truncate">{c.name}</Badge>)}
-                                {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
+                            <div className="min-w-0 text-center">
+                                <div className="flex flex-wrap gap-1 justify-center">
+                                    {studentClasses.map(c => <Badge key={c.id} variant="secondary" className="truncate">{c.name}</Badge>)}
+                                    {studentClasses.length === 0 && <span className="text-xs text-muted-foreground">Not enrolled</span>}
+                                </div>
+                            </div>
+                            <div className="flex justify-center items-center gap-1">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => setStudentToAssign(student)}>
+                                            <ArrowRight className="h-4 w-4" />
+                                            <span className="sr-only">Assign or Transfer Student</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Assign/Transfer</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <AlertDialog>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Delete Student</span>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Delete Student</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the student's
+                                            account and remove all their data.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="bg-destructive hover:bg-destructive/90"
+                                            onClick={() => handleDeleteStudent(student.id as string, student.name)}
+                                            disabled={isCurrentlyDeleting}
+                                        >
+                                            {isCurrentlyDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Yes, delete student
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </div>
                         </div>
-                        <div className="flex justify-center">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/dashboard/students/${student.id}/performance`)}>
-                                View Performance
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setStudentToAssign(student)}>
-                                Assign/Transfer
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete Student
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the student's
-                                        account and remove all their data.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        className="bg-destructive hover:bg-destructive/90"
-                                        onClick={() => handleDeleteStudent(student.id as string, student.name)}
-                                        disabled={isCurrentlyDeleting}
-                                    >
-                                        {isCurrentlyDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Yes, delete student
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        </div>
+                        );
+                    })}
                     </div>
-                    );
-                })}
-                </div>
+                </TooltipProvider>
             </ScrollArea>
             )}
         </CardContent>
