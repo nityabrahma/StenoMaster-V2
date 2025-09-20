@@ -50,27 +50,26 @@ export default function TypingTest({
 
     const value = e.target.value;
     
-    // Strict mode: check for 2 consecutive errors within a word
-    if (strict && value.length > userInput.length && value.length > 1) {
+    // Strict mode: check for skipped words
+    if (strict && value.length > userInput.length && value.length > 0) {
         const originalWords = text.split(' ');
         const typedWords = value.split(' ');
-        
         const currentWordIndex = typedWords.length - 1;
+        
         const currentTypedWord = typedWords[currentWordIndex];
         const currentOriginalWord = originalWords[currentWordIndex];
 
-        // Only apply the check if we are still typing the word (length is less than original)
-        if (currentOriginalWord && currentTypedWord.length <= currentOriginalWord.length) {
-            const lastTypedCharIndex = currentTypedWord.length - 1;
-            const secondLastTypedCharIndex = currentTypedWord.length - 2;
-
-            if (secondLastTypedCharIndex >= 0) {
-                 const isLastCharIncorrect = currentTypedWord[lastTypedCharIndex] !== currentOriginalWord[lastTypedCharIndex];
-                 const isSecondLastCharIncorrect = currentTypedWord[secondLastTypedCharIndex] !== currentOriginalWord[secondLastTypedCharIndex];
-
-                if (isLastCharIncorrect && isSecondLastCharIncorrect) {
-                    // Prevent typing the new character
-                    return; 
+        if (currentOriginalWord) {
+            // Check only when starting a new word
+            if (currentTypedWord.length === 1) {
+                // First letter doesn't match, do nothing yet, wait for second letter
+            } else if (currentTypedWord.length === 2) {
+                const firstCharMatch = currentTypedWord[0] === currentOriginalWord[0];
+                const secondCharMatch = currentTypedWord[1] === currentOriginalWord[1];
+                
+                // If first char was wrong, and second is also wrong, then block.
+                if (!firstCharMatch && !secondCharMatch) {
+                    return; // Block input
                 }
             }
         }
