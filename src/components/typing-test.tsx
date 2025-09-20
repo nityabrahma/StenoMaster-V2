@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Mistake } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ export default function TypingTest({
     strict = false,
 }: TypingTestProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isShaking, setIsShaking] = useState(false);
 
   useEffect(() => {
     if (isStarted && !isFinished) {
@@ -45,12 +46,16 @@ export default function TypingTest({
     onUserInputChange('');
   }, [text, onUserInputChange]);
 
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isStarted || isFinished) return;
 
     const value = e.target.value;
     
-    // Strict mode: check for skipped words
     if (strict && value.length > userInput.length && value.length > 0) {
         const originalWords = text.split(' ');
         const typedWords = value.split(' ');
@@ -60,16 +65,15 @@ export default function TypingTest({
         const currentOriginalWord = originalWords[currentWordIndex];
 
         if (currentOriginalWord) {
-            // Check only when starting a new word
             if (currentTypedWord.length === 1) {
                 // First letter doesn't match, do nothing yet, wait for second letter
             } else if (currentTypedWord.length === 2) {
                 const firstCharMatch = currentTypedWord[0] === currentOriginalWord[0];
                 const secondCharMatch = currentTypedWord[1] === currentOriginalWord[1];
                 
-                // If first char was wrong, and second is also wrong, then block.
                 if (!firstCharMatch && !secondCharMatch) {
-                    return; // Block input
+                    triggerShake();
+                    return; 
                 }
             }
         }
@@ -101,7 +105,7 @@ const renderedText = useMemo(() => {
 
         if (isCursorPosition && isStarted && !isFinished) {
             return (
-                <span key={index} className="relative">
+                <span key={index} className={cn("relative", isShaking && 'animate-shake')}>
                     <span className={cn("animate-pulse border-b-2 border-primary absolute left-0 top-0 bottom-0", className)}>
                         {char}
                     </span>
@@ -112,7 +116,7 @@ const renderedText = useMemo(() => {
 
         return <span key={index} className={cn('rounded-sm', className)}>{char}</span>;
     });
-}, [text, userInput, isStarted, isFinished]);
+}, [text, userInput, isStarted, isFinished, isShaking]);
 
 
   return (
