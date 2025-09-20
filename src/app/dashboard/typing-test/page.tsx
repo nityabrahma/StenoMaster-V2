@@ -235,6 +235,7 @@ export default function TypingTestPage() {
                         isStarted={isStarted}
                         isFinished={isFinished}
                         onComplete={() => handleComplete(userInput)}
+                        strict={true}
                     />
                 </CardContent>
             </Card>

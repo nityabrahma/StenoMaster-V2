@@ -19,6 +19,7 @@ type TypingTestProps = {
   isStarted: boolean;
   isFinished: boolean;
   onComplete: () => void;
+  strict?: boolean; // New prop for strict mode
 };
 
 
@@ -29,6 +30,7 @@ export default function TypingTest({
     isStarted, 
     isFinished,
     onComplete,
+    strict = false, // Default to false
 }: TypingTestProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +49,21 @@ export default function TypingTest({
     if (!isStarted || isFinished) return;
 
     const value = e.target.value;
+    
+    // Strict mode: check for 2 consecutive errors
+    if (strict && value.length > userInput.length && value.length > 1) {
+      const lastTypedCharIndex = value.length - 1;
+      const secondLastTypedCharIndex = value.length - 2;
+
+      const isLastCharIncorrect = value[lastTypedCharIndex] !== text[lastTypedCharIndex];
+      const isSecondLastCharIncorrect = value[secondLastTypedCharIndex] !== text[secondLastTypedCharIndex];
+
+      if (isLastCharIncorrect && isSecondLastCharIncorrect) {
+        // Prevent typing the new character by not calling onUserInputChange
+        return; 
+      }
+    }
+    
     onUserInputChange(value);
 
     if (value.length >= text.length) {
