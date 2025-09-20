@@ -56,37 +56,39 @@ export default function TypingTest({
   };
   
   const renderedText = useMemo(() => {
-    const originalWords = text.split(/(\s+)/); // Split by space but keep them
-    const typedWords = userInput.split(/(\s+)/);
+    const originalChars = text.split('');
+    const typedChars = userInput.split('');
 
-    return originalWords.map((word, index) => {
-      if (index >= typedWords.length) {
-        // This is for un-typed text, including the cursor
-        const isCursorPosition = index === typedWords.length;
+    return originalChars.map((char, index) => {
+        let className = 'text-muted-foreground';
+        let charToRender = char;
+        
+        if(index < typedChars.length) {
+            if(typedChars[index] === char) {
+                className = 'text-green-400';
+            } else {
+                className = 'text-red-400 bg-red-500/20';
+                if(char === ' ') {
+                   charToRender = '_';
+                }
+            }
+        }
+
+        const isCursorPosition = index === typedChars.length;
         if (isCursorPosition && isStarted && !isFinished) {
             return (
                 <span key={index} className="relative">
-                    <span className="animate-pulse border-b-2 border-primary absolute left-0 top-0 bottom-0"></span>
-                    <span className="text-muted-foreground opacity-0">{word}</span>
+                    <span className={cn("animate-pulse border-b-2 border-primary absolute left-0 top-0 bottom-0", className)}>
+                        {charToRender}
+                    </span>
+                    <span className="opacity-0">{charToRender}</span>
                 </span>
             );
         }
-        return <span key={index} className='text-muted-foreground'>{word}</span>
-      }
 
-      if (/\s+/.test(word)) { // It's a whitespace
-        return <span key={index}>{word}</span>;
-      }
-
-      let className = 'text-destructive bg-red-500/20'; // Incorrect by default
-      if (word === typedWords[index]) {
-        className = 'text-green-400';
-      }
-      
-      return <span key={index} className={cn('rounded-sm', className)}>{word}</span>
+        return <span key={index} className={cn('rounded-sm', className)}>{charToRender}</span>;
     });
-
-  }, [text, userInput, isStarted, isFinished]);
+}, [text, userInput, isStarted, isFinished]);
 
   return (
     <Card className="relative" onClick={() => inputRef.current?.focus()}>
@@ -107,3 +109,4 @@ export default function TypingTest({
     </Card>
   );
 }
+
