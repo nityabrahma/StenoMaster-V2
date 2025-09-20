@@ -162,10 +162,27 @@ export default function TypingTestPage() {
                             <CardTitle className="font-headline text-3xl">Typing Practice</CardTitle>
                             <CardDescription>Hone your skills with our curated typing tests. Focus on speed and accuracy.</CardDescription>
                         </div>
-                        <Button variant="outline" onClick={() => setIsListModalOpen(true)}>
-                            <History className="mr-2 h-4 w-4" />
-                            View Results
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={handleNextTest} variant="outline">
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Change Paragraph
+                            </Button>
+                             {!isStarted ? (
+                                <Button onClick={handleStart}>
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Start
+                                </Button>
+                            ) : (
+                                <Button onClick={() => handleComplete(userInput)} disabled={isFinished}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {isFinished ? 'Submitted' : 'Submit'}
+                                </Button>
+                            )}
+                            <Button variant="outline" onClick={() => setIsListModalOpen(true)}>
+                                <History className="mr-2 h-4 w-4" />
+                                View Results
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -216,28 +233,6 @@ export default function TypingTestPage() {
                         isFinished={isFinished}
                         onComplete={() => handleComplete(userInput)}
                     />
-
-                    <div className="flex justify-between items-center mt-4">
-                        <div className="flex gap-2">
-                             <Button onClick={handleNextTest} variant="outline">
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Change Paragraph
-                            </Button>
-                        </div>
-                        <div className="flex gap-2">
-                            {!isStarted ? (
-                                <Button onClick={handleStart}>
-                                    <Play className="mr-2 h-4 w-4" />
-                                    Start
-                                </Button>
-                            ) : (
-                                <Button onClick={() => handleComplete(userInput)} disabled={isFinished}>
-                                    <Send className="mr-2 h-4 w-4" />
-                                    {isFinished ? 'Submitted' : 'Submit'}
-                                </Button>
-                            )}
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
 
