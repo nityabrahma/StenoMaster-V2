@@ -6,7 +6,7 @@ import TypingTest from '@/components/typing-test';
 import { sampleTexts } from '@/lib/sample-text';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { History, Play, Send, RefreshCw, Zap, Target, AlertCircle, Timer } from 'lucide-react';
+import { History, Play, Send, RefreshCw, Zap, Target, AlertCircle, Timer, Loader2 } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useAuth } from '@/hooks/use-auth';
@@ -25,6 +25,7 @@ export default function TypingTestPage() {
     const [selectedScore, setSelectedScore] = useState<Score | null>(null);
     const [isStarted, setIsStarted] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -56,32 +57,27 @@ export default function TypingTestPage() {
             timerIntervalRef.current = null;
         }
     }, []);
-
-    const resetTest = useCallback((newTextIndex?: number) => {
+    
+    const handleNextTest = useCallback(() => {
         stopTimer();
         setIsStarted(false);
         setIsFinished(false);
         setStartTime(null);
         setElapsedTime(0);
         setUserInput('');
-        if (newTextIndex !== undefined) {
-            setCurrentTextIndex(newTextIndex);
-        }
-    }, [stopTimer]);
+        const nextIndex = (currentTextIndex + 1) % sampleTexts.length;
+        setCurrentTextIndex(nextIndex);
+    }, [stopTimer, currentTextIndex]);
 
     const handleStart = () => {
         setIsStarted(true);
         startTimer();
     };
-    
-    const handleNextTest = () => {
-        const nextIndex = (currentTextIndex + 1) % sampleTexts.length;
-        resetTest(nextIndex);
-    }
 
     const handleComplete = useCallback(async (finalUserInput: string) => {
-        if (!user || isFinished) return;
+        if (!user || isFinished || isSubmitting) return;
 
+        setIsSubmitting(true);
         stopTimer();
         setIsFinished(true);
 
@@ -119,14 +115,17 @@ export default function TypingTestPage() {
                 title: "Practice Complete!",
                 description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
             });
+            handleNextTest();
         } catch (error: any) {
             toast({
                 title: "Practice Submission Failed",
                 description: error.message || "Could not save your practice score.",
                 variant: "destructive",
             });
+        } finally {
+            setIsSubmitting(false);
         }
-    }, [user, isFinished, startTime, stopTimer, currentTestText, createScore, currentTestId, toast]);
+    }, [user, isFinished, isSubmitting, startTime, stopTimer, currentTestText, createScore, currentTestId, toast, handleNextTest]);
     
     useEffect(() => {
         // Cleanup timer on unmount
@@ -173,9 +172,13 @@ export default function TypingTestPage() {
                                     Start
                                 </Button>
                             ) : (
-                                <Button onClick={() => handleComplete(userInput)} disabled={isFinished}>
-                                    <Send className="mr-2 h-4 w-4" />
-                                    {isFinished ? 'Submitted' : 'Submit'}
+                                <Button onClick={() => handleComplete(userInput)} disabled={isFinished || isSubmitting}>
+                                    {isSubmitting ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Send className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isSubmitting ? 'Submitting...' : 'Submit'}
                                 </Button>
                             )}
                             <Button variant="outline" onClick={() => setIsListModalOpen(true)}>
