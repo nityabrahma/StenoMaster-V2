@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import TypingTest from '@/components/typing-test';
-import { typingTexts } from '@/lib/typing-data';
+import { sampleTexts } from '@/lib/sample-text';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, History } from 'lucide-react';
@@ -23,14 +23,15 @@ export default function TypingTestPage() {
     const [isListModalOpen, setIsListModalOpen] = useState(false);
     const [selectedScore, setSelectedScore] = useState<Score | null>(null);
 
-    const currentTest = typingTexts[currentTextIndex];
+    const currentTestText = sampleTexts[currentTextIndex];
+    const currentTestId = (currentTextIndex + 1).toString();
 
     const handleComplete = async (result: SubmissionResult) => {
         if (!user) return;
         
         try {
             await createScore({
-                assignmentId: `practice-${currentTest.id}`,
+                assignmentId: `practice-${currentTestId}`,
                 completedAt: new Date().toISOString(),
                 ...result,
             });
@@ -49,7 +50,7 @@ export default function TypingTestPage() {
     };
 
     const nextTest = () => {
-        setCurrentTextIndex((prevIndex) => (prevIndex + 1) % typingTexts.length);
+        setCurrentTextIndex((prevIndex) => (prevIndex + 1) % sampleTexts.length);
     };
     
     const practiceTestScores = scores.filter(s => s.assignmentId.startsWith('practice-') && s.studentId === user?.id);
@@ -61,13 +62,14 @@ export default function TypingTestPage() {
     
     const getAssignmentForScore = (score: Score): Assignment => {
         const textId = score.assignmentId.replace('practice-', '');
-        const practiceText = typingTexts.find(t => t.id === textId);
+        const practiceText = sampleTexts[parseInt(textId, 10) - 1] || "Text not found.";
         return {
             id: score.assignmentId,
             title: `Practice Text #${textId}`,
-            text: practiceText?.text || "Text not found.",
+            text: practiceText,
             classId: '',
             deadline: '',
+            isActive: true
         };
     }
 
@@ -87,7 +89,7 @@ export default function TypingTestPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <TypingTest text={currentTest.text} onComplete={handleComplete} />
+                    <TypingTest text={currentTestText} onComplete={handleComplete} />
                     <div className="flex justify-end">
                         <Button onClick={nextTest}>
                             Next Test <ArrowRight className="ml-2 h-4 w-4" />

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +19,7 @@ import { format } from 'date-fns';
 import { BookOpen, CheckCircle, Target, Trash2, Zap, Loader2 } from 'lucide-react';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Score, Assignment } from '@/lib/types';
-import { typingTexts } from '@/lib/typing-data';
+import { sampleTexts } from '@/lib/sample-text';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,7 @@ export default function StudentPerformancePage() {
             description: error.message || 'Could not remove the student.',
             variant: 'destructive',
         });
+    } finally {
         setIsDeleting(false);
     }
   }
@@ -99,11 +101,11 @@ export default function StudentPerformancePage() {
   const getAssignmentForScore = (score: Score): Assignment => {
     if (score.assignmentId.startsWith('practice-')) {
       const textId = score.assignmentId.replace('practice-', '');
-      const practiceText = typingTexts.find((t) => t.id === textId);
+      const practiceText = sampleTexts[parseInt(textId, 10) - 1];
       return {
         id: score.assignmentId,
-        title: `Practice: ${practiceText?.text.substring(0, 20)}...` || 'Practice Text',
-        text: practiceText?.text || 'Text not found.',
+        title: `Practice: ${practiceText?.substring(0, 20)}...` || 'Practice Text',
+        text: practiceText || 'Text not found.',
         classId: '',
         deadline: '',
         isActive: true,
