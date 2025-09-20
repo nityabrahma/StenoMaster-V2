@@ -30,7 +30,7 @@ export default function TypingTest({
     isStarted, 
     isFinished,
     onComplete,
-    strict = false, // Default to false
+    strict = false,
 }: TypingTestProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -50,18 +50,30 @@ export default function TypingTest({
 
     const value = e.target.value;
     
-    // Strict mode: check for 2 consecutive errors
+    // Strict mode: check for 2 consecutive errors within a word
     if (strict && value.length > userInput.length && value.length > 1) {
-      const lastTypedCharIndex = value.length - 1;
-      const secondLastTypedCharIndex = value.length - 2;
+        const originalWords = text.split(' ');
+        const typedWords = value.split(' ');
+        
+        const currentWordIndex = typedWords.length - 1;
+        const currentTypedWord = typedWords[currentWordIndex];
+        const currentOriginalWord = originalWords[currentWordIndex];
 
-      const isLastCharIncorrect = value[lastTypedCharIndex] !== text[lastTypedCharIndex];
-      const isSecondLastCharIncorrect = value[secondLastTypedCharIndex] !== text[secondLastTypedCharIndex];
+        // Only apply the check if we are still typing the word (length is less than original)
+        if (currentOriginalWord && currentTypedWord.length <= currentOriginalWord.length) {
+            const lastTypedCharIndex = currentTypedWord.length - 1;
+            const secondLastTypedCharIndex = currentTypedWord.length - 2;
 
-      if (isLastCharIncorrect && isSecondLastCharIncorrect) {
-        // Prevent typing the new character by not calling onUserInputChange
-        return; 
-      }
+            if (secondLastTypedCharIndex >= 0) {
+                 const isLastCharIncorrect = currentTypedWord[lastTypedCharIndex] !== currentOriginalWord[lastTypedCharIndex];
+                 const isSecondLastCharIncorrect = currentTypedWord[secondLastTypedCharIndex] !== currentOriginalWord[secondLastTypedCharIndex];
+
+                if (isLastCharIncorrect && isSecondLastCharIncorrect) {
+                    // Prevent typing the new character
+                    return; 
+                }
+            }
+        }
     }
     
     onUserInputChange(value);
