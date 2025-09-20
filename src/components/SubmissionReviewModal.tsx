@@ -25,30 +25,39 @@ interface SubmissionReviewModalProps {
 }
 
 
-const renderTextWithDiff = (originalText: string, userInput: string, mistakes: Score['mistakes']) => {
-    const mistakePositions = new Set(mistakes.map(m => m.position));
-    
-    return originalText.split('').map((char, index) => {
-        let className = 'text-muted-foreground';
+const renderTextWithDiff = (originalText: string, userInput: string) => {
+    const originalWords = originalText.split(' ');
+    const typedWords = userInput.split(' ');
+    const diff: React.ReactNode[] = [];
+    let originalIndex = 0;
+    let typedIndex = 0;
 
-        if (index < userInput.length) {
-            if (mistakePositions.has(index)) {
-                 className = 'text-red-400 bg-red-500/20 rounded-sm';
-            } else {
-                className = 'text-green-400';
-            }
+    while(originalIndex < originalWords.length || typedIndex < typedWords.length) {
+        const originalWord = originalWords[originalIndex];
+        const typedWord = typedWords[typedIndex];
+
+        if (originalIndex < originalWords.length && originalWord === typedWord) {
+            // Correct word
+            diff.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord} </span>);
+            originalIndex++;
+            typedIndex++;
+        } else if (originalIndex < originalWords.length && typedIndex < typedWords.length) {
+            // Potential incorrect word
+            diff.push(<span key={`incorrect-${originalIndex}`} className="text-red-400 bg-red-500/20 rounded-sm">{typedWord} </span>);
+            originalIndex++;
+            typedIndex++;
+        } else if (typedIndex < typedWords.length) {
+            // Extra word
+            diff.push(<span key={`extra-${typedIndex}`} className="text-yellow-400 bg-yellow-500/20 rounded-sm">{typedWord} </span>);
+            typedIndex++;
+        } else if (originalIndex < originalWords.length) {
+            // Missed word
+            diff.push(<span key={`missed-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord} </span>);
+            originalIndex++;
         }
-        
-        // Handle whitespace explicitly for visibility
-        if (char === ' ') {
-            return <span key={`char-${index}`} className={cn(className, 'whitespace-pre-wrap')}> </span>;
-        }
-        if (char === '\n') {
-            return <br key={`char-${index}`} />;
-        }
-        
-        return <span key={`char-${index}`} className={className}>{char}</span>
-    })
+    }
+    
+    return diff;
 };
 
 
@@ -61,7 +70,7 @@ export default function SubmissionReviewModal({
   
   if (!score || !assignment) return null;
   
-  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, score.userInput, score.mistakes), [assignment.text, score.userInput, score.mistakes]);
+  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, score.userInput), [assignment.text, score.userInput]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
