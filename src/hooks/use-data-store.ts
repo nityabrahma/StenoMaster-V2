@@ -9,7 +9,7 @@ type NewScore = Omit<Score, 'id' | 'studentId'>;
 interface DataStoreState {
   assignments: Assignment[];
   scores: Score[];
-  fetchAssignments: () => Promise<void>;
+  fetchAssignments: (userRole: 'teacher' | 'student') => Promise<void>;
   createAssignment: (assignment: NewAssignment) => Promise<Assignment>;
   updateAssignment: (id: string, data: Partial<NewAssignment>) => Promise<void>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
@@ -31,9 +31,10 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
 export const useDataStore = create<DataStoreState>((set, get) => ({
     assignments: [],
     scores: [],
-    fetchAssignments: async () => {
+    fetchAssignments: async (userRole) => {
         try {
-            const assignments = await api<Assignment[]>('/api/assignments');
+            const url = userRole === 'teacher' ? '/api/assignments' : '/api/assignments/student';
+            const assignments = await api<Assignment[]>(url);
             set({ assignments: assignments || [] });
         } catch (error) {
             console.error("Failed to fetch assignments:", error);

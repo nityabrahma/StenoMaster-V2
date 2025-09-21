@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (validation.user.role !== 'teacher') {
-         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+         return NextResponse.json({ message: 'Forbidden: This endpoint is for teachers only. Use /api/assignments/student for student assignments.' }, { status: 403 });
     }
 
     try {

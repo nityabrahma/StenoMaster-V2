@@ -176,7 +176,6 @@ function TeacherAssignments() {
 function StudentAssignments() {
   const { user } = useAuth();
   const router = useAppRouter();
-  const { students } = useStudents();
   const { assignments, scores } = useDataStore();
   
   const [selectedScore, setSelectedScore] = useState<Score | null>(null);
@@ -184,11 +183,11 @@ function StudentAssignments() {
 
   if(!user) return null;
 
-  const student = students.find(s => s.id === user.id);
-  const myAssignments = assignments.filter(a => student?.classIds.includes(a.classId));
+  // Assignments are now pre-filtered by the data store
+  const myAssignments = assignments;
   const myScores = scores.filter(s => s.studentId === user.id);
   
-  const pendingAssignments = myAssignments.filter(a => !myScores.some(s => s.assignmentId === a.id));
+  const pendingAssignments = myAssignments.filter(a => a.isActive && !myScores.some(s => s.assignmentId === a.id));
   
   const handleCardClick = (assignment: Assignment, score?: Score) => {
     if (score && assignment) {

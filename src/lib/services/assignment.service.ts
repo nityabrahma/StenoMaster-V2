@@ -51,6 +51,25 @@ export async function getAssignmentsByTeacher(teacherId: string): Promise<Assign
     return snapshot.docs.map(mapDocToAssignment);
 }
 
+export async function getAssignmentsByClassIds(classIds: string[]): Promise<Assignment[]> {
+    // Firestore 'in' query has a limit of 30 items. We must chunk the queries.
+    const chunks: string[][] = [];
+    for (let i = 0; i < classIds.length; i += 30) {
+        chunks.push(classIds.slice(i, i + 30));
+    }
+
+    const assignmentPromises = chunks.map(async (chunk) => {
+        const snapshot = await assignmentsCollection.where('classId', 'in', chunk).get();
+        return snapshot.docs.map(mapDocToAssignment);
+    });
+
+    const chunkedAssignments = await Promise.all(assignmentPromises);
+    const allAssignments = chunkedAssignments.flat();
+    
+    // Filter for active assignments on the server
+    return allAssignments.filter(a => a.isActive);
+}
+
 
 export async function getAssignmentById(id: string): Promise<Assignment | undefined> {
     const doc = await assignmentsCollection.doc(id).get();

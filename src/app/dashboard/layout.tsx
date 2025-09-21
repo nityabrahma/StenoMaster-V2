@@ -33,12 +33,19 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         const loadData = async () => {
             if (user && !dataLoaded) {
                 setIsLoading(true);
-                await Promise.all([
-                    fetchAssignments(),
-                    fetchClasses(),
-                    fetchStudents(),
+                const dataPromises = [
+                    fetchAssignments(user.role),
                     fetchScores(5) // Fetch only the last 5 scores for recent activity feeds
-                ]);
+                ];
+
+                if (user.role === 'teacher') {
+                    dataPromises.push(fetchClasses(), fetchStudents());
+                } else {
+                    dataPromises.push(fetchClasses()); // Students still need their class info
+                }
+
+                await Promise.all(dataPromises);
+
                 setDataLoaded(true);
                 setIsLoading(false);
             }
