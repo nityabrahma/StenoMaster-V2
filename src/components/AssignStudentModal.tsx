@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -19,16 +18,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useClasses } from '@/hooks/use-classes';
-import { useStudents } from '@/hooks/use-students';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import type { Student } from '@/lib/types';
 import { Label } from './ui/label';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AssignStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: Student;
-  onAssignSuccess: () => void;
+  onAssignSuccess: (studentName: string, newClassName: string) => void;
 }
 
 export default function AssignStudentModal({
@@ -39,32 +39,53 @@ export default function AssignStudentModal({
 }: AssignStudentModalProps) {
   const { user } = useAuth();
   const { classes, updateClass } = useClasses();
-  const { updateStudent } = useStudents();
   const [selectedClassId, setSelectedClassId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   if (!user || user.role !== 'teacher') return null;
 
   const teacherClasses = classes.filter(c => c.teacherId === user.id);
-  const availableClasses = teacherClasses.filter(c => !c.studentIds.includes(student.id));
+  const currentClass = teacherClasses.find(c => c.students.includes(student.id as string));
+
+  // Filter out the class the student is already in
+  const availableClasses = teacherClasses.filter(c => c.id !== currentClass?.id);
 
   const handleAssign = async () => {
     if (!selectedClassId) return;
 
-    const classToUpdate = classes.find(c => c.id === selectedClassId);
-    if (!classToUpdate) return;
-    
-    // Add student to the new class
-    await updateClass(classToUpdate.id, {
-        studentIds: [...classToUpdate.studentIds, student.id]
-    });
+    setIsSubmitting(true);
 
-    // Update the student's classIds array
-    await updateStudent(student.id, {
-        classIds: [...student.classIds, selectedClassId]
-    });
+    try {
+        const newClass = classes.find(c => c.id === selectedClassId);
+        if (!newClass) throw new Error("Selected class not found.");
 
-    onAssignSuccess();
-    onClose();
+        const updatePromises = [];
+
+        // 1. Remove student from their current class, if they have one.
+        if (currentClass) {
+            const updatedStudentIds = currentClass.students.filter(id => id !== student.id);
+            updatePromises.push(updateClass(currentClass.id, { students: updatedStudentIds }));
+        }
+        
+        // 2. Add student to the new class.
+        updatePromises.push(updateClass(newClass.id, {
+            students: [...newClass.students, student.id as string]
+        }));
+        
+        await Promise.all(updatePromises);
+
+        onAssignSuccess(student.name, newClass.name);
+        onClose();
+    } catch (error: any) {
+        toast({
+            title: "Transfer Failed",
+            description: error.message || 'Could not transfer student.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,10 +94,15 @@ export default function AssignStudentModal({
         <DialogHeader>
           <DialogTitle>Assign {student.name} to a Class</DialogTitle>
           <DialogDescription>
-            Select a class to enroll this student in.
+            {currentClass ? 'Select a new class to transfer this student.' : 'Select a class to enroll this student.'}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-2">
+            {currentClass && (
+                <p className="text-sm text-muted-foreground">
+                    Currently in: <span className="font-semibold text-foreground">{currentClass.name}</span>
+                </p>
+            )}
             <Label htmlFor="class-select">Available Classes</Label>
             <Select onValueChange={setSelectedClassId} value={selectedClassId}>
                 <SelectTrigger id="class-select">
@@ -88,14 +114,17 @@ export default function AssignStudentModal({
                             {c.name}
                         </SelectItem>
                     )) : (
-                        <p className="p-2 text-sm text-muted-foreground">No available classes.</p>
+                        <p className="p-2 text-sm text-muted-foreground">No other classes available for transfer.</p>
                     )}
                 </SelectContent>
             </Select>
         </div>
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleAssign} disabled={!selectedClassId}>Assign Student</Button>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button onClick={handleAssign} disabled={!selectedClassId || isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {currentClass ? 'Transfer Student' : 'Assign Student'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

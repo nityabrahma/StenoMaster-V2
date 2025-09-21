@@ -1,73 +1,159 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import TypingTest from '@/components/typing-test';
-import { typingTexts } from '@/lib/typing-data';
+import { sampleTexts } from '@/lib/sample-text';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, History } from 'lucide-react';
+import { History, Play, Send, RefreshCw, Zap, Target, AlertCircle, Timer, Loader2 } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
-import { useAssignments } from '@/hooks/use-assignments';
-import { useAuth } from '@/hooks/auth-provider';
+import { useDataStore } from '@/hooks/use-data-store';
+import { useAuth } from '@/hooks/use-auth';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
-import type { Assignment, Submission } from '@/lib/types';
+import type { Assignment, Score } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export default function TypingTestPage() {
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
     const { toast } = useToast();
     const { user } = useAuth();
-    const { createSubmission, submissions } = useAssignments();
+    const { createScore, scores } = useDataStore();
 
+    // Test State
     const [isListModalOpen, setIsListModalOpen] = useState(false);
-    const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+    const [selectedScore, setSelectedScore] = useState<Score | null>(null);
+    const [isStarted, setIsStarted] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isInputBlocked, setIsInputBlocked] = useState(false);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [userInput, setUserInput] = useState('');
+    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const currentTest = typingTexts[currentTextIndex];
+    const currentTestText = sampleTexts[currentTextIndex];
+    const currentTestId = (currentTextIndex + 1).toString();
+    
+    // Derived Stats
+    const correctChars = userInput.split('').reduce((acc, char, index) => {
+        return acc + (char === currentTestText[index] ? 1 : 0);
+    }, 0);
+    const mistakeCount = userInput.length > 0 ? userInput.length - correctChars : 0;
+    const wpm = elapsedTime > 0 ? Math.round(((userInput.length / 5) / elapsedTime) * 60) : 0;
+    const accuracy = userInput.length > 0 ? (correctChars / userInput.length) * 100 : 100;
 
-    const handleComplete = async (result: SubmissionResult) => {
-        if (!user) return;
+    const startTimer = useCallback(() => {
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        const start = Date.now() - elapsedTime * 1000;
+        setStartTime(start);
+        timerIntervalRef.current = setInterval(() => {
+            setElapsedTime((Date.now() - start) / 1000);
+        }, 100);
+    }, [elapsedTime]);
+
+    const stopTimer = useCallback(() => {
+        if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+        }
+    }, []);
+    
+    const resetTest = useCallback((nextIndex?: number) => {
+        stopTimer();
+        setIsStarted(false);
+        setIsFinished(false);
+        setStartTime(null);
+        setElapsedTime(0);
+        setUserInput('');
+        setIsInputBlocked(false);
+        if(nextIndex !== undefined) {
+            setCurrentTextIndex(nextIndex);
+        } else {
+            setCurrentTextIndex((current) => (current + 1) % sampleTexts.length);
+        }
+    }, [stopTimer]);
+
+    const handleStart = () => {
+        setIsStarted(true);
+        startTimer();
+    };
+
+    const handleComplete = useCallback(async (finalUserInput: string) => {
+        if (!user || isFinished || isSubmitting) return;
+
+        setIsSubmitting(true);
+        stopTimer();
+        setIsFinished(true);
+
+        const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
+        const wordsTyped = finalUserInput.length / 5;
+        const finalWpm = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
         
+        const finalMistakes: { expected: string; actual: string; position: number }[] = [];
+        finalUserInput.split('').forEach((char, index) => {
+            if (index < currentTestText.length && char !== currentTestText[index]) {
+                finalMistakes.push({
+                    expected: currentTestText[index],
+                    actual: char,
+                    position: index
+                });
+            }
+        });
+        const finalAccuracy = finalUserInput.length > 0 ? ((finalUserInput.length - finalMistakes.length) / finalUserInput.length) * 100 : 0;
+
+        const result: Omit<Score, 'id' | 'studentId' | 'assignmentId' | 'completedAt'> = {
+            wpm: finalWpm,
+            accuracy: finalAccuracy,
+            mistakes: finalMistakes,
+            timeElapsed: finalElapsedTime,
+            userInput: finalUserInput
+        };
+
         try {
-            await createSubmission({
-                assignmentId: `practice-${currentTest.id}`,
-                submittedAt: new Date().toISOString(),
+            await createScore({
+                assignmentId: `practice-${currentTestId}`,
+                completedAt: new Date().toISOString(),
                 ...result,
             });
-            
             toast({
                 title: "Practice Complete!",
-                description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
+                description: `Your score: ${finalWpm} WPM at ${finalAccuracy.toFixed(1)}% accuracy.`,
             });
+            resetTest();
         } catch (error: any) {
             toast({
                 title: "Practice Submission Failed",
                 description: error.message || "Could not save your practice score.",
                 variant: "destructive",
             });
+        } finally {
+            setIsSubmitting(false);
         }
-    };
-
-    const nextTest = () => {
-        setCurrentTextIndex((prevIndex) => (prevIndex + 1) % typingTexts.length);
-    };
+    }, [user, isFinished, isSubmitting, startTime, stopTimer, currentTestText, createScore, currentTestId, toast, resetTest]);
     
-    const practiceTestSubmissions = submissions.filter(s => s.assignmentId.startsWith('practice-') && s.studentId === user?.id);
+    useEffect(() => {
+        return () => stopTimer();
+    }, [stopTimer]);
 
-    const handleSelectSubmission = (submission: Submission) => {
-        setSelectedSubmission(submission);
+    const practiceTestScores = scores.filter(s => s.assignmentId.startsWith('practice-') && s.studentId === user?.id);
+
+    const handleSelectScore = (score: Score) => {
+        setSelectedScore(score);
         setIsListModalOpen(false);
     }
     
-    const getAssignmentForSubmission = (submission: Submission): Assignment => {
-        const textId = submission.assignmentId.replace('practice-', '');
-        const practiceText = typingTexts.find(t => t.id === textId);
+    const getAssignmentForScore = (score: Score): Assignment => {
+        const textId = score.assignmentId.replace('practice-', '');
+        const practiceText = sampleTexts[parseInt(textId, 10) - 1] || "Text not found.";
         return {
-            id: submission.assignmentId,
+            id: score.assignmentId,
             title: `Practice Text #${textId}`,
-            text: practiceText?.text || "Text not found.",
+            text: practiceText,
             classId: '',
             deadline: '',
+            isActive: true
         };
     }
 
@@ -80,35 +166,105 @@ export default function TypingTestPage() {
                             <CardTitle className="font-headline text-3xl">Typing Practice</CardTitle>
                             <CardDescription>Hone your skills with our curated typing tests. Focus on speed and accuracy.</CardDescription>
                         </div>
-                        <Button variant="outline" onClick={() => setIsListModalOpen(true)}>
-                            <History className="mr-2 h-4 w-4" />
-                            View Results
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={() => resetTest()} variant="outline">
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Change Paragraph
+                            </Button>
+                             {!isStarted ? (
+                                <Button onClick={handleStart}>
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Start
+                                </Button>
+                            ) : (
+                                <Button onClick={() => handleComplete(userInput)} disabled={isFinished || isSubmitting}>
+                                    {isSubmitting ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Send className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                                </Button>
+                            )}
+                            <Button variant="outline" onClick={() => setIsListModalOpen(true)}>
+                                <History className="mr-2 h-4 w-4" />
+                                View Results
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <TypingTest text={currentTest.text} onComplete={handleComplete} />
-                    <div className="flex justify-end">
-                        <Button onClick={nextTest}>
-                            Next Test <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                    {isInputBlocked && (
+                        <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive-foreground rounded-md text-sm flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-destructive" />
+                            <span>Correct your mistake to continue. You seem to have skipped a word.</span>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <Card className='bg-card/50'>
+                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">WPM</CardTitle>
+                                <Zap className="h-4 w-4 text-muted-foreground ml-2"/>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{wpm}</div>
+                            </CardContent>
+                        </Card>
+                         <Card className='bg-card/50'>
+                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
+                                <Target className="h-4 w-4 text-muted-foreground ml-2"/>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{accuracy.toFixed(1)}%</div>
+                            </CardContent>
+                        </Card>
+                         <Card className='bg-card/50'>
+                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
+                                <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{mistakeCount}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className='bg-card/50'>
+                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Timer</CardTitle>
+                                <Timer className="h-4 w-4 text-muted-foreground ml-2"/>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{Math.floor(elapsedTime)}s</div>
+                            </CardContent>
+                        </Card>
                     </div>
+
+                    <TypingTest 
+                        text={currentTestText} 
+                        userInput={userInput}
+                        onUserInputChange={setUserInput}
+                        isStarted={isStarted}
+                        isFinished={isFinished}
+                        onComplete={() => handleComplete(userInput)}
+                        strict={true}
+                        setIsInputBlocked={setIsInputBlocked}
+                    />
                 </CardContent>
             </Card>
 
             <PracticeTestsModal
                 isOpen={isListModalOpen}
                 onClose={() => setIsListModalOpen(false)}
-                submissions={practiceTestSubmissions}
-                onSelectSubmission={handleSelectSubmission}
+                scores={practiceTestScores}
+                onSelectScore={handleSelectScore}
             />
 
-            {selectedSubmission && (
+            {selectedScore && (
                 <SubmissionReviewModal
-                    isOpen={!!selectedSubmission}
-                    onClose={() => setSelectedSubmission(null)}
-                    submission={selectedSubmission}
-                    assignment={getAssignmentForSubmission(selectedSubmission)}
+                    isOpen={!!selectedScore}
+                    onClose={() => setSelectedScore(null)}
+                    score={selectedScore}
+                    assignment={getAssignmentForScore(selectedScore)}
                 />
             )}
         </div>

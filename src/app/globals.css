@@ -27,7 +27,7 @@
     --accent: 217 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 51%; /* Updated from a darker red */
     --destructive-foreground: 210 40% 98%;
     
     --border: 217 32.6% 20%; 
@@ -68,7 +68,7 @@
     --accent: 217 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 51%; /* Updated from a darker red */
     --destructive-foreground: 210 40% 98%;
     
     --border: 217 32.6% 20%;
@@ -147,5 +147,14 @@
     50% {
       opacity: 1;
     }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+  }
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
   }
 }

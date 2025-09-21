@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import {
   Card,

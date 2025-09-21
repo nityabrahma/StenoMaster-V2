@@ -1,32 +1,103 @@
 
-import { db } from '@/lib/data-store';
+import type { DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase-admin';
 import type { Class } from '@/lib/types';
+import { deleteAssignment } from './assignment.service';
 
-export async function getAllClasses(): Promise<Class[]> {
-    return new Promise(resolve => resolve(db.read<Class>('classes')));
+const classesCollection = db.collection('classes');
+const assignmentsCollection = db.collection('assignments');
+
+
+function mapDocToClass(doc: QueryDocumentSnapshot | DocumentData): Class {
+    const data = doc.data();
+    
+    let createdAt: string;
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') { 
+        createdAt = data.createdAt.toDate().toISOString();
+    } else if (data.createdAt && typeof data.createdAt === 'string') {
+        const d = new Date(data.createdAt);
+        if(!isNaN(d.getTime())) {
+            createdAt = d.toISOString();
+        } else {
+            createdAt = new Date().toISOString();
+        }
+    } else {
+        createdAt = new Date().toISOString();
+    }
+
+    return {
+      id: doc.id,
+      name: data.name || 'Unnamed Class',
+      teacherId: data.teacherId || '',
+      students: data.students || data.studentIds || [],
+      createdAt: createdAt,
+    };
 }
 
-export async function createClass(data: Omit<Class, 'id'>): Promise<Class> {
-    const classes = await getAllClasses();
-    const newClass: Class = {
-        ...data,
-        id: `class-${Date.now()}`,
-    };
-    db.write('classes', [...classes, newClass]);
-    return new Promise(resolve => resolve(newClass));
+export async function getAllClasses(): Promise<Class[]> {
+    const snapshot = await classesCollection.get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToClass);
+}
+
+export async function getClassesByTeacher(teacherId: string): Promise<Class[]> {
+    const snapshot = await classesCollection.where('teacherId', '==', teacherId).get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToClass);
+}
+
+export async function createClass(data: Omit<Class, 'id' | 'createdAt'>): Promise<Class> {
+    const payload = {
+        name: data.name,
+        teacherId: data.teacherId,
+        students: data.students || [],
+        createdAt: new Date(),
+    }
+    const docRef = await classesCollection.add(payload);
+    const newDoc = await docRef.get();
+    return mapDocToClass(newDoc);
 }
 
 export async function updateClass(id: string, data: Partial<Omit<Class, 'id'>>): Promise<Class> {
-    const classes = await getAllClasses();
-    const classIndex = classes.findIndex(c => c.id === id);
+    const docRef = classesCollection.doc(id);
+    await docRef.update(data);
+    const updatedDoc = await docRef.get();
+    if (!updatedDoc.exists) {
+        throw new Error('Class not found after update');
+    }
+    return mapDocToClass(updatedDoc);
+}
 
-    if (classIndex === -1) {
+export async function getClassesByStudentId(studentId: string): Promise<Class[]> {
+    const snapshot = await classesCollection.where('students', 'array-contains', studentId).get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(mapDocToClass);
+}
+
+export async function deleteClass(classId: string): Promise<void> {
+    const docRef = classesCollection.doc(classId);
+    const doc = await docRef.get();
+    if (!doc.exists) {
         throw new Error('Class not found');
     }
 
-    const updatedClass = { ...classes[classIndex], ...data } as Class;
-    classes[classIndex] = updatedClass;
-    db.write('classes', classes);
-
-    return new Promise(resolve => resolve(updatedClass));
+    // Find all assignments associated with this class
+    const assignmentsSnapshot = await assignmentsCollection.where('classId', '==', classId).get();
+    
+    if (!assignmentsSnapshot.empty) {
+        // Delete each associated assignment
+        const deletePromises = assignmentsSnapshot.docs.map(assignmentDoc => 
+            deleteAssignment(assignmentDoc.id)
+        );
+        await Promise.all(deletePromises);
+    }
+    
+    // Finally, delete the class itself
+    await docRef.delete();
 }

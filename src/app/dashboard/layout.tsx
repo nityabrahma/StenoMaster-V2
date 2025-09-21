@@ -4,23 +4,24 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import UserButton from '@/components/UserButton';
-import { useAssignments } from '@/hooks/use-assignments';
-import { useClasses } from '@/hooks/use-classes';
-import { useStudents } from '@/hooks/use-students';
 import Logo from '@/components/logo';
 import { useAppRouter } from '@/hooks/use-app-router';
+import { useDataStore } from '@/hooks/use-data-store';
+import { useClasses } from '@/hooks/use-classes';
+import { useStudents } from '@/hooks/use-students';
+import { useLoading } from '@/hooks/loading-provider';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
     const router = useAppRouter();
-
-    const { fetchAssignments } = useAssignments();
+    const { fetchAssignments, fetchScores } = useDataStore();
     const { fetchClasses } = useClasses();
     const { fetchStudents } = useStudents();
-    
+    const { setIsLoading } = useLoading();
     const [dataLoaded, setDataLoaded] = useState(false);
+
 
     useEffect(() => {
         if (!loading && !isAuthenticated) {
@@ -30,26 +31,29 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     
     useEffect(() => {
         const loadData = async () => {
-            if (isAuthenticated && !dataLoaded) {
-                await Promise.all([
-                    fetchAssignments(),
-                    fetchClasses(),
-                    fetchStudents()
-                ]);
+            if (user && !dataLoaded) {
+                setIsLoading(true);
+                const dataPromises = [
+                    fetchAssignments(user.role),
+                    fetchScores(5) // Fetch only the last 5 scores for recent activity feeds
+                ];
+
+                if (user.role === 'teacher') {
+                    dataPromises.push(fetchClasses(), fetchStudents());
+                } else {
+                    dataPromises.push(fetchClasses()); // Students still need their class info
+                }
+
+                await Promise.all(dataPromises);
+
                 setDataLoaded(true);
+                setIsLoading(false);
             }
         };
-        if(!loading) {
-            loadData();
-        }
-    }, [isAuthenticated, loading, dataLoaded, fetchAssignments, fetchClasses, fetchStudents]);
+        loadData();
+    }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores, setIsLoading]);
 
-
-    if (loading || !isAuthenticated || !dataLoaded) {
-        // The global loading provider will show an overlay
-        return null;
-    }
-
+    // Don't return null. Let the page render so the loading overlay can work correctly.
     return (
         <SidebarProvider>
             <div className="h-screen w-full flex flex-col bg-transparent">
@@ -74,7 +78,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
                     <AppSidebar />
                     <main className="flex-1 overflow-auto size-full">
-                        {children}
+                        {dataLoaded ? children : null}
                     </main>
                 </div>
             </div>
@@ -83,6 +87,5 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    // AuthProvider is already in the root layout, so we don't need it here.
     return <DashboardLayout>{children}</DashboardLayout>
 }

@@ -3,13 +3,14 @@
 import { create } from 'zustand';
 import type { Class } from '@/lib/types';
 
-type NewClass = Omit<Class, 'id' | 'teacherId'>;
+type NewClass = Omit<Class, 'id' | 'createdAt'>;
 
 interface ClassesState {
   classes: Class[];
   fetchClasses: () => Promise<void>;
   createClass: (newClassData: NewClass) => Promise<Class>;
   updateClass: (classId: string, updatedData: Partial<Class>) => Promise<void>;
+  deleteClass: (classId: string) => Promise<void>;
 }
 
 async function api<T>(url: string, options?: RequestInit): Promise<T> {
@@ -18,7 +19,8 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
         const errorData = await res.json();
         throw new Error(errorData.message || `API Error: ${res.status}`);
     }
-    return res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
 
 
@@ -27,7 +29,7 @@ export const useClasses = create<ClassesState>((set) => ({
     fetchClasses: async () => {
         try {
             const classes = await api<Class[]>('/api/classes');
-            set({ classes });
+            set({ classes: classes || [] });
         } catch (error) {
             console.error("Failed to fetch classes:", error);
             set({ classes: [] });
@@ -52,4 +54,10 @@ export const useClasses = create<ClassesState>((set) => ({
             classes: state.classes.map(c => c.id === classId ? updatedClass : c)
         }));
     },
+    deleteClass: async (classId: string) => {
+        await api(`/api/classes/${classId}`, { method: 'DELETE' });
+        set(state => ({
+            classes: state.classes.filter(c => c.id !== classId)
+        }));
+    }
 }));

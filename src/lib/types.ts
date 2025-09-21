@@ -1,10 +1,13 @@
 
 
+import type { Types } from 'mongoose';
+
 export type User = {
-  id: string;
+  id: string | Types.ObjectId;
   name: string;
   email: string;
   role: 'teacher' | 'student';
+  teacherId?: string; // Add teacherId to the base user
 };
 
 export type Student = User & {
@@ -20,7 +23,8 @@ export type Class = {
   id: string;
   name: string;
   teacherId: string;
-  studentIds: string[];
+  students: string[];
+  createdAt: string; // ISO Date string
 };
 
 export type Assignment = {
@@ -30,18 +34,27 @@ export type Assignment = {
   deadline: string; // ISO date string
   text: string;
   imageUrl?: string;
+  isActive: boolean;
 };
 
-export type Submission = {
+export interface Mistake {
+  expected: string;
+  actual: string;
+  position: number;
+}
+
+export interface Score {
   id: string;
-  assignmentId: string;
   studentId: string;
-  submittedAt: string; // ISO date string
-  wpm: number;
+  assignmentId: string;
+  userInput: string;
   accuracy: number;
-  mistakes: number;
-  userInput: string; // The full text entered by the user
-};
+  wpm: number;
+  timeElapsed: number;
+  completedAt: string; // ISO Date string
+  mistakes: Mistake[];
+}
+
 
 export type LoginCredentials = {
     email: string;
@@ -52,12 +65,14 @@ export type LoginCredentials = {
 export type CheckUserResponse = {
   exists: boolean;
   role?: 'student' | 'teacher';
+  name?: string;
   message?: string;
 }
 
 export type SignupCredentials = {
   name: string;
   email: string;
-  password?: string;
+  password: string;
   role: 'student' | 'teacher';
+  teacherId?: string; // Optional teacherId for student signup
 }

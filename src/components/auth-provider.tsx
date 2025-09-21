@@ -10,70 +10,57 @@ import {
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
-import { signIn, signUp, decodeToken, isTokenExpired } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
 
-const TOKEN_STORAGE_KEY = 'steno-auth-token';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const { isLoading, setIsLoading } = useLoading();
   const [firstLoadDone, setFirstLoadDone] = useState(false);
   const router = useRouter(); // Using the standard Next.js router
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isLoading, setIsLoading } = useLoading();
 
   const logout = useCallback(() => {
     setIsLoading(true);
     setUser(null);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    // Also clear zustand stores
+    // Also clear zustand stores and other local storage
     localStorage.removeItem('assignments-storage');
     localStorage.removeItem('classes-storage');
     localStorage.removeItem('students-storage');
     
-    // The redirect is now handled by the useEffect below
-    // which reacts to the change in `isAuthenticated`
-    setIsLoading(false);
-  }, [setIsLoading]);
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      // The redirect is handled by the useEffect which reacts to isAuthenticated
+      setIsLoading(false);
+      router.push('/');
+    });
+  }, [setIsLoading, router]);
 
   useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-      if (storedToken) {
-        if (isTokenExpired(storedToken)) {
-            console.log("Token expired, logging out.");
-            logout();
-        } else {
-            const decodedUser = decodeToken(storedToken);
-            if (decodedUser) {
-                setUser(decodedUser as User);
+    const validate = async () => {
+        try {
+            const res = await fetch('/api/auth/validate');
+            if (res.ok) {
+                const { user: validatedUser } = await res.json();
+                setUser(validatedUser);
             } else {
-                logout(); // Token is invalid
+                setUser(null);
+            }
+        } catch (error) {
+            console.error('Validation failed:', error);
+            setUser(null);
+        } finally {
+            if (!firstLoadDone) {
+                setFirstLoadDone(true);
             }
         }
-      }
-    } catch (error) {
-      console.error('Failed to process token from localStorage', error);
-      logout();
-    } finally {
-      setFirstLoadDone(true);
-      // The loading state is managed by the router and initial load logic
     }
-  }, [logout]);
+    validate();
+  }, [pathname]); // Re-validate on path change
+
   
   const isAuthenticated = !!user;
-
-  // This effect runs whenever the path changes, signaling a navigation has completed.
-  useEffect(() => {
-    if (isLoading) {
-      setIsLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, searchParams]);
-
 
   // This effect handles the very first load of the application
   useEffect(() => {
@@ -94,21 +81,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (credentials: LoginCredentials) => {
         setIsLoading(true);
         try {
-            const token = await signIn(credentials);
-            const decodedUser = decodeToken(token);
-             if (decodedUser) {
-                setUser(decodedUser as User);
-                localStorage.setItem(TOKEN_STORAGE_KEY, token);
-
-                const redirectPath = searchParams.get('redirect');
-                if (redirectPath) {
-                    router.push(redirectPath);
-                } else {
-                    router.push('/dashboard');
-                }
-            } else {
-                throw new Error("Failed to decode token");
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(credentials),
+            });
+    
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.message || 'Login failed');
             }
+            
+            setUser(data.user);
+            router.push('/dashboard');
         } catch (error: any) {
             console.error("Authentication failed", error);
             toast({
@@ -116,22 +101,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive'
             });
-            setIsLoading(false); // Ensure loading is stopped on error
-            throw error;
-        } 
+        } finally {
+            setIsLoading(false);
+        }
     },
-    [router, toast, searchParams, setIsLoading]
+    [router, toast, setIsLoading]
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<User> => {
+    async (credentials: SignupCredentials): Promise<any> => {
         setIsLoading(true);
         try {
-            const newUser = await signUp(credentials);
-            return newUser;
+            const res = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  fullName: credentials.name,
+                  email: credentials.email,
+                  password: credentials.password,
+                  userType: credentials.role
+              }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || 'Signup failed');
+            }
+            return data;
         } catch (error: any) {
             console.error("Signup failed", error);
-            throw error;
+            throw error; // Re-throw to be caught in the component
         } finally {
             setIsLoading(false);
         }

@@ -30,10 +30,10 @@ export default function UserButton() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-           <Avatar className="h-10 w-10">
-              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-              <AvatarFallback>{userInitials}</AvatarFallback>
-            </Avatar>
+          <Avatar className="h-10 w-10 relative">
+            <p className='absolute top-0 left-0 bottom-0 right-0 flex items-center justify-center text-xl bg-slate-800/50'>{userInitials}</p>
+            <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

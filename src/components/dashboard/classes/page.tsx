@@ -1,6 +1,6 @@
 
 'use client';
-import { useAuth } from '@/hooks/auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import type { Class } from '@/lib/types';
@@ -105,7 +105,7 @@ export default function ClassesPage() {
                                             : student.name.substring(0, 2);
                                         return (
                                             <Avatar key={student.id} className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                                <AvatarImage src={`https://avatar.vercel.sh/${student.id}.png`} alt={student.name} />
+                                                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
                                                 <AvatarFallback>{studentInitials}</AvatarFallback>
                                             </Avatar>
                                         )

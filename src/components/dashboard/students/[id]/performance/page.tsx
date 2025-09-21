@@ -100,12 +100,12 @@ export default function StudentPerformancePage() {
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={`https://avatar.vercel.sh/${student.id}.png`} alt={student.name} />
+                <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
                 <AvatarFallback>{studentInitials}</AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle className="font-headline text-3xl">{student.name}</CardTitle>
-                <CardDescription>StenoMaster ID: {student.id}</CardDescription>
+                <CardDescription>{student.email}</CardDescription>
               </div>
             </div>
           </CardHeader>

@@ -1,108 +1,126 @@
+
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { useAppRouter } from '@/hooks/use-app-router';
+import {
+  useMemo,
+  useCallback,
+  useState,
+  useEffect
+} from 'react';
+import { usePathname } from 'next/navigation';
+import { AuthContext } from '@/hooks/use-auth';
 import type { User, LoginCredentials, SignupCredentials } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useLoading } from '@/hooks/loading-provider';
+import { useAppRouter } from './use-app-router';
 
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<User>;
-  logout: () => void;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const router = useAppRouter();
-  const { toast } = useToast();
   const { isLoading, setIsLoading } = useLoading();
+  const [firstLoadDone, setFirstLoadDone] = useState(false);
+  const router = useAppRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
 
-  const validateAndSetUser = useCallback(async () => {
+  const logout = useCallback(() => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/auth/validate');
-      if (res.ok) {
-        const { user: validatedUser } = await res.json();
-        setUser(validatedUser);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      setUser(null);
-      console.error("Validation failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setIsLoading]);
+    setUser(null);
+    
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      // No need to setIsLoading(false) because the page will redirect and re-mount.
+      router.push('/');
+    });
+  }, [setIsLoading, router]);
 
   useEffect(() => {
-    validateAndSetUser();
-  }, [validateAndSetUser]);
+    const validate = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth/validate');
+            if (res.ok) {
+                const { user: validatedUser } = await res.json();
+                setUser(validatedUser);
+            } else {
+                setUser(null);
+                if (pathname.startsWith('/dashboard')) {
+                    router.push('/');
+                }
+            }
+        } catch (error) {
+            console.error('Validation failed:', error);
+            setUser(null);
+            if (pathname.startsWith('/dashboard')) {
+                router.push('/');
+            }
+        } finally {
+            setFirstLoadDone(true);
+            // Let the data loading in DashboardLayout handle turning this off
+            if (!pathname.startsWith('/dashboard')) {
+                setIsLoading(false);
+            }
+        }
+    }
+    validate();
+  }, []); // Run only once on initial mount
+
+  const isAuthenticated = !!user;
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      setIsLoading(true);
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credentials),
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Login failed');
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(credentials),
+            });
+    
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.message || 'Login failed');
+            }
+            
+            setUser(data.user);
+            router.push('/dashboard');
+            // The loading will be turned off by the dashboard layout's data fetching.
+        } catch (error: any) {
+            console.error("Authentication failed", error);
+            toast({
+                title: 'Login Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive'
+            });
+            setIsLoading(false); // Stop loading on error
         }
-        
-        await validateAndSetUser(); // Re-validate to get user info from the new cookie
-        router.push('/dashboard');
-        
-      } catch (error: any) {
-        toast({
-          title: 'Login Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
     },
-    [setIsLoading, toast, router, validateAndSetUser]
+    [router, toast, setIsLoading]
   );
   
   const signup = useCallback(
-    async (credentials: SignupCredentials): Promise<User> => {
+    async (credentials: SignupCredentials): Promise<any> => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  fullName: credentials.name,
+                  email: credentials.email,
+                  password: credentials.password,
+                  userType: credentials.role,
+                  teacherId: credentials.teacherId,
+              }),
             });
 
+            const data = await res.json();
+
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Signup failed');
+                throw new Error(data.message || 'Signup failed');
             }
-            const newUser = await res.json();
-            return newUser;
+            return data.data; // Return the nested data object on success
         } catch (error: any) {
             console.error("Signup failed", error);
-            throw error; // Let the calling component handle the toast
+            throw error; // Re-throw to be caught in the component
         } finally {
             setIsLoading(false);
         }
@@ -110,35 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [setIsLoading]
   );
 
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error("Logout request failed:", error);
-    } finally {
-      setUser(null);
-      // Clear all client-side state
-      // Note: Zustand persist middleware will clear storage on its own.
-      // This is more of a manual clear if needed.
-      window.localStorage.removeItem('assignments-storage');
-      window.localStorage.removeItem('classes-storage');
-      window.localStorage.removeItem('students-storage');
-      router.push('/');
-      setIsLoading(false);
-    }
-  }, [setIsLoading, router]);
-
   const value = useMemo(
-    () => ({
-      user,
-      loading: isLoading,
-      isAuthenticated: !!user,
-      login,
-      logout,
-      signup,
-    }),
-    [user, isLoading, login, logout, signup]
+    () => ({ user, loading: !firstLoadDone, login, logout, isAuthenticated, firstLoadDone, signup }),
+    [user, firstLoadDone, login, logout, isAuthenticated, signup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

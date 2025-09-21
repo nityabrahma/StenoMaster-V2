@@ -1,45 +1,81 @@
 
-import { db } from '@/lib/data-store';
+import { connectToDatabase } from '@/lib/database/mongoose';
+import UserModel from '@/lib/database/models/user.model';
 import type { Student } from '@/lib/types';
+import { getClassesByStudentId } from './class.service';
+import { deleteScoresByStudent } from './score.service';
+
+// Map the MongoDB user document to the Student type used in the frontend
+async function mapUserToStudent(user: any): Promise<Student> {
+    const classes = await getClassesByStudentId(user.userId);
+    const classIds = classes.map(c => c.id);
+
+    return {
+        id: user.userId.toString(),
+        name: user.fullName,
+        email: user.email,
+        role: 'student',
+        teacherId: user.teacherId,
+        classIds: classIds || [], 
+    };
+}
 
 export async function getAllStudents(): Promise<Student[]> {
-    const allUsers = db.read<any>('users');
-    const students = allUsers.filter(u => u.role === 'student');
-    return new Promise(resolve => resolve(students));
+    try {
+        await connectToDatabase();
+        const users = await UserModel.find({ userType: 'student' }).lean();
+        
+        const studentPromises = users.map(user => mapUserToStudent(user));
+        return Promise.all(studentPromises);
+
+    } catch (error) {
+        console.error('Error fetching all students:', error);
+        return [];
+    }
+}
+
+export async function getStudentsByTeacher(teacherId: string): Promise<Student[]> {
+     try {
+        await connectToDatabase();
+        const users = await UserModel.find({ userType: 'student', teacherId: teacherId }).lean();
+        
+        const studentPromises = users.map(user => mapUserToStudent(user));
+        return Promise.all(studentPromises);
+
+    } catch (error) {
+        console.error('Error fetching students by teacher:', error);
+        return [];
+    }
 }
 
 export async function updateStudent(id: string, data: Partial<Omit<Student, 'id'>>): Promise<Student> {
-    const users = db.read<any>('users');
-    const studentIndex = users.findIndex(s => s.id === id && s.role === 'student');
-
-    if (studentIndex === -1) {
-        throw new Error('Student not found');
+    try {
+        await connectToDatabase();
+        const updatedUser = await UserModel.findOneAndUpdate({ userId: id }, data, { new: true }).lean();
+        if (!updatedUser) {
+            throw new Error('Student not found for update');
+        }
+        return mapUserToStudent(updatedUser);
+    } catch (error) {
+        console.error('Error updating student:', error);
+        throw new Error('Could not update student');
     }
-
-    const updatedStudent = { ...users[studentIndex], ...data };
-    users[studentIndex] = updatedStudent;
-    db.write('users', users);
-
-    return new Promise(resolve => resolve(updatedStudent));
 }
 
 export async function deleteStudent(id: string): Promise<void> {
-    let users = db.read<any>('users');
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== id);
+    try {
+        await connectToDatabase();
+        const result = await UserModel.deleteOne({ userId: id, userType: 'student' });
+        
+        if (result.deletedCount === 0) {
+            throw new Error('Student not found for deletion');
+        }
+        
+        // After deleting the student, delete all their scores.
+        await deleteScoresByStudent(id);
 
-    if (users.length === initialLength) {
-        throw new Error('Student not found');
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        throw new Error('Could not delete student and associated data.');
     }
-    db.write('users', users);
-
-    // Also remove student from any classes they were in
-    const classes = db.read<any>('classes');
-    const updatedClasses = classes.map(c => ({
-        ...c,
-        studentIds: c.studentIds.filter((studentId: string) => studentId !== id)
-    }));
-    db.write('classes', updatedClasses);
-    
-    return new Promise(resolve => resolve());
 }

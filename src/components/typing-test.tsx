@@ -1,240 +1,147 @@
 
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, Target, AlertCircle } from 'lucide-react';
+import type { Mistake } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export type SubmissionResult = {
   wpm: number;
   accuracy: number;
-  mistakes: number;
+  mistakes: Mistake[];
+  timeElapsed: number;
   userInput: string;
 };
 
 type TypingTestProps = {
   text: string;
-  onComplete: (result: SubmissionResult) => void;
+  userInput: string;
+  onUserInputChange: (value: string) => void;
+  isStarted: boolean;
+  isFinished: boolean;
+  onComplete: () => void;
+  strict?: boolean;
+  setIsInputBlocked?: (isBlocked: boolean) => void;
 };
 
-// This advanced status array function will handle insertions/deletions gracefully.
-function getStatusArray(
-  original: string,
-  typed: string = '',
-  lookahead = 4
-): ("correct" | "wrong" | "pending")[] {
-  const oChars = original.split("");
-  const tChars = typed.split("");
 
-  let oIndex = 0;
-  let tIndex = 0;
+export default function TypingTest({ 
+    text, 
+    userInput, 
+    onUserInputChange, 
+    isStarted, 
+    isFinished,
+    onComplete,
+    strict = false,
+    setIsInputBlocked,
+}: TypingTestProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isShaking, setIsShaking] = useState(false);
 
-  const statusArray: ("correct" | "wrong" | "pending")[] = new Array(
-    oChars.length
-  ).fill("pending");
+  useEffect(() => {
+    if (isStarted && !isFinished) {
+      inputRef.current?.focus();
+    }
+  }, [isStarted, isFinished]);
+  
+  useEffect(() => {
+    // Reset user input when the text changes, but only if it's a practice test
+    if (strict) {
+        onUserInputChange('');
+    }
+  }, [text, onUserInputChange, strict]);
 
-  while (oIndex < oChars.length && tIndex < tChars.length) {
-      if (oChars[oIndex] === tChars[tIndex]) {
-        statusArray[oIndex] = "correct";
-        oIndex++;
-        tIndex++;
-      } else {
-        let found = false;
-        // Check for an insertion in typed text (extra characters)
-        for (let la = 1; la <= lookahead; la++) {
-          if (tIndex + la < tChars.length && tChars[tIndex + la] === oChars[oIndex]) {
-            // Mistake found, but we will advance tIndex to resync
-            statusArray[oIndex] = "wrong";
-            tIndex += la;
-            found = true;
-            break; 
-          }
-        }
-
-        if(found) continue;
-
-        // Check for a deletion in typed text (missing characters)
-        for (let la = 1; la <= lookahead; la++) {
-            if (oIndex + la < oChars.length && oChars[oIndex + la] === tChars[tIndex]) {
-                for (let k = 0; k < la; k++) {
-                    statusArray[oIndex + k] = "wrong";
-                }
-                oIndex += la;
-                found = true;
-                break;
-            }
-        }
-        
-        if(found) continue;
-
-        // If no resync possible within lookahead, mark as wrong and advance both
-        statusArray[oIndex] = "wrong";
-        oIndex++;
-        tIndex++;
-      }
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
   }
 
-  return statusArray;
-}
-
-
-export default function TypingTest({ text, onComplete }: TypingTestProps) {
-  const [userInput, setUserInput] = useState('');
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const statusArray = getStatusArray(text, userInput);
-  const correctChars = statusArray.filter(s => s === 'correct').length;
-  const mistakes = statusArray.slice(0, userInput.length).filter(s => s === 'wrong').length;
-  
-  const resetTest = useCallback(() => {
-    setUserInput('');
-    setStartTime(null);
-    setElapsedTime(0);
-    setIsFinished(false);
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (startTime && !isFinished) {
-      interval = setInterval(() => {
-        setElapsedTime((Date.now() - startTime) / 1000);
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [startTime, isFinished]);
-  
-  useEffect(() => {
-    resetTest();
-  }, [text, resetTest]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isFinished) return;
+    if (!isStarted || isFinished) return;
 
     let value = e.target.value;
-
-    // Auto-replace multiple spaces with a single space
-    value = value.replace(/ {2,}/g, ' ');
-
-    if (!startTime && value.length > 0) {
-      setStartTime(Date.now());
-    }
-
-    if (value.endsWith(' ')) {
+    
+    if (strict) {
         const originalWords = text.split(' ');
-        const typedWords = value.trim().split(' ');
-        
-        if (typedWords.length < originalWords.length) {
-            // Move cursor to the start of the next word.
-            const nextWordStartIndex = text.indexOf(originalWords[typedWords.length] as string, userInput.length);
-            // This is a simplified conceptual step. In reality, we just update the input.
-            // The visual cursor movement is handled by the `renderText` logic.
+        const typedWords = value.split(' ');
+        const currentWordIndex = typedWords.length - 1;
+        const currentTypedWord = typedWords[currentWordIndex];
+        const currentOriginalWord = originalWords[currentWordIndex];
+
+        if (currentOriginalWord && currentTypedWord) {
+            // Check for word skip
+            if(currentTypedWord.length === 1 && currentTypedWord[0] !== currentOriginalWord[0]) {
+                // First letter is wrong, wait for second
+            } else if (currentTypedWord.length === 2) {
+                const firstCharMatch = currentTypedWord[0] === currentOriginalWord[0];
+                const secondCharMatch = currentTypedWord[1] === currentOriginalWord[1];
+                
+                if (!firstCharMatch && !secondCharMatch) {
+                    triggerShake();
+                    setIsInputBlocked?.(true);
+                    return; // Block input
+                }
+            }
         }
+        setIsInputBlocked?.(false);
     }
     
-    setUserInput(value);
+    onUserInputChange(value);
+
+    if (value.length >= text.length) {
+      onComplete();
+    }
   };
   
-  const finishTest = useCallback(() => {
-    if (isFinished || !startTime) return;
+const renderedText = useMemo(() => {
+    const originalChars = text.split('');
+    const typedChars = userInput.split('');
 
-    setIsFinished(true);
-    const finalElapsedTime = (Date.now() - startTime) / 1000;
-    setElapsedTime(finalElapsedTime);
-    
-    const finalStatusArray = getStatusArray(text, userInput);
-    const finalMistakes = finalStatusArray.filter(s => s === 'wrong').length;
-    
-    const wordsTyped = text.length / 5;
-    const wpm = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
-    const accuracy = ((text.length - finalMistakes) / text.length) * 100;
-    
-    onComplete({ wpm, accuracy, mistakes: finalMistakes, userInput });
-  }, [isFinished, startTime, userInput, text, onComplete]);
-  
-  useEffect(() => {
-    // Only finish if the typed text is at least as long as the original,
-    // or if the last character typed matches the last character of the text.
-    if (!isFinished && userInput.length > 0 && (userInput.length >= text.length || userInput.trim() === text.trim())) {
-      // A small delay to allow the last character's state to be processed.
-      setTimeout(() => finishTest(), 50);
-    }
-  }, [userInput, text, isFinished, finishTest]);
+    return originalChars.map((char, index) => {
+        let className = 'text-muted-foreground';
+        const isTyped = index < typedChars.length;
+        const isCursorPosition = index === typedChars.length;
 
-  const renderText = () => {
-    return text.split('').map((char, index) => {
-      let className = 'text-muted-foreground';
-      const status = statusArray[index];
-      
-      if (status === 'correct') {
-          className = 'text-foreground';
-      } else if (status === 'wrong') {
-          className = 'text-destructive';
-      }
-      
-      if (index === userInput.length) {
-        className += ' animate-pulse border-b-2 border-primary';
-      }
-      return <span key={index} className={className}>{char}</span>;
+        if (isTyped) {
+            if (typedChars[index] === char) {
+                className = 'text-green-400';
+            } else {
+                className = 'text-red-400 bg-red-500/20';
+            }
+        }
+
+        if (isCursorPosition && isStarted && !isFinished) {
+            return (
+                <span key={index} className={cn("relative", isShaking && 'animate-shake')}>
+                    <span className={cn("animate-pulse border-b-2 border-primary absolute left-0 top-0 bottom-0", className)}>
+                        {char}
+                    </span>
+                    <span className="opacity-0">{char}</span>
+                </span>
+            );
+        }
+
+        return <span key={index} className={cn('rounded-sm', className)}>{char}</span>;
     });
-  };
+}, [text, userInput, isStarted, isFinished, isShaking]);
 
-  const wordsTyped = userInput.length / 5;
-  const wpm = elapsedTime > 0 ? Math.round((wordsTyped / elapsedTime) * 60) : 0;
-  const accuracy = userInput.length > 0 ? Math.max(0, (correctChars / userInput.length) * 100) : 100;
 
   return (
-    <div className="space-y-4">
-      <Card className="relative" onClick={() => inputRef.current?.focus()}>
-        <CardContent className="p-6">
-          <p className="font-code text-lg leading-relaxed tracking-wider">
-            {renderText()}
-          </p>
-          <input
-            ref={inputRef}
-            type="text"
-            value={userInput}
-            onChange={handleInputChange}
-            className="absolute inset-0 opacity-0 cursor-text"
-            autoFocus
-            disabled={isFinished}
-          />
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4 md:gap-6">
-            <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-primary"/>
-                <span className="text-xl font-bold">{wpm}</span>
-                <span className="text-sm text-muted-foreground">WPM</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary"/>
-                <span className="text-xl font-bold">{accuracy.toFixed(1)}%</span>
-                <span className="text-sm text-muted-foreground">Accuracy</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive"/>
-                <span className="text-xl font-bold">{mistakes}</span>
-                <span className="text-sm text-muted-foreground">Mistakes</span>
-            </div>
+    <Card className="relative" onClick={() => inputRef.current?.focus()}>
+      <CardContent className="p-6">
+        <div className="font-code text-lg leading-relaxed tracking-wider">
+          {renderedText}
         </div>
-        <Button onClick={resetTest} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Restart
-        </Button>
-      </div>
-
-      {isFinished && (
-        <Card className="bg-accent p-6 text-center">
-          <h3 className="text-2xl font-bold font-headline">Test Complete!</h3>
-          <p className="text-muted-foreground mt-2">Your score has been submitted.</p>
-        </Card>
-      )}
-    </div>
+        <input
+          ref={inputRef}
+          type="text"
+          value={userInput}
+          onChange={handleInputChange}
+          className="absolute inset-0 opacity-0 cursor-text"
+          disabled={!isStarted || isFinished}
+          autoFocus={isStarted}
+        />
+      </CardContent>
+    </Card>
   );
 }

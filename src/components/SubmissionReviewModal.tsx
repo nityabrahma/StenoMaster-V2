@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Submission, Assignment } from '@/lib/types';
+import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -20,78 +20,62 @@ import { cn } from '@/lib/utils';
 interface SubmissionReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  submission: Submission;
+  score: Score;
   assignment: Assignment;
 }
 
-// This is a more robust diffing function that can handle insertions and deletions
-function getStatusArray(original: string, typed: string): ("correct" | "wrong" | "pending")[] {
-  const status: ("correct" | "wrong" | "pending")[] = new Array(original.length).fill("pending");
-  const typedChars = typed.split('');
-  let typedIndex = 0;
-
-  for (let i = 0; i < original.length; i++) {
-    if (typedIndex < typedChars.length) {
-      if (original[i] === typedChars[typedIndex]) {
-        status[i] = "correct";
-      } else {
-        status[i] = "wrong";
-      }
-      typedIndex++;
-    } else {
-      status[i] = "pending";
-    }
-  }
-
-  // A simplified version for this use case: we compare char by char up to the length of user input.
-  // A more complex implementation would use dynamic programming for a true diff.
-  return status;
-}
 
 const renderTextWithDiff = (originalText: string, userInput: string) => {
-    const statusArray = getStatusArray(originalText, userInput);
-    
-    return originalText.split('').map((char, index) => {
-        const status = statusArray[index];
-        let className = '';
+    const originalWords = originalText.split(' ');
+    const typedWords = userInput.split(' ');
+    const diff: React.ReactNode[] = [];
+    let originalIndex = 0;
+    let typedIndex = 0;
 
-        switch (status) {
-            case 'correct':
-                className = 'text-green-400';
-                break;
-            case 'wrong':
-                className = 'text-red-400 bg-red-500/20 rounded-sm';
-                break;
-            case 'pending':
-                className = 'text-muted-foreground';
-                break;
-            default:
-                break;
+    while(originalIndex < originalWords.length || typedIndex < typedWords.length) {
+        const originalWord = originalWords[originalIndex];
+        const typedWord = typedWords[typedIndex];
+
+        if (originalIndex < originalWords.length && originalWord === typedWord) {
+            // Correct word
+            diff.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord} </span>);
+            originalIndex++;
+            typedIndex++;
+        } else if (originalIndex < originalWords.length && typedIndex < typedWords.length) {
+            // Incorrect word
+            diff.push(
+              <span key={`incorrect-${originalIndex}`}>
+                <span className="text-red-400 bg-red-500/20 rounded-sm line-through">{typedWord}</span>
+                <span className="text-green-400">({originalWord}) </span>
+              </span>
+            );
+            originalIndex++;
+            typedIndex++;
+        } else if (typedIndex < typedWords.length) {
+            // Extra word
+            diff.push(<span key={`extra-${typedIndex}`} className="text-yellow-400 bg-yellow-500/20 rounded-sm">{typedWord} </span>);
+            typedIndex++;
+        } else if (originalIndex < originalWords.length) {
+            // Missed word
+            diff.push(<span key={`missed-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord} </span>);
+            originalIndex++;
         }
-        
-        // Handle whitespace explicitly for visibility
-        if (char === ' ') {
-            return <span key={`char-${index}`} className={cn(className, 'whitespace-pre-wrap')}> </span>;
-        }
-        if (char === '\n') {
-            return <br key={`char-${index}`} />;
-        }
-        
-        return <span key={`char-${index}`} className={className}>{char}</span>
-    })
+    }
+    
+    return diff;
 };
 
 
 export default function SubmissionReviewModal({
   isOpen,
   onClose,
-  submission,
+  score,
   assignment,
 }: SubmissionReviewModalProps) {
   
-  if (!submission || !assignment) return null;
+  if (!score || !assignment) return null;
   
-  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, submission.userInput), [assignment.text, submission.userInput]);
+  const coloredText = useMemo(() => renderTextWithDiff(assignment.text, score.userInput), [assignment.text, score.userInput]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -111,7 +95,7 @@ export default function SubmissionReviewModal({
                     <Zap className="h-6 w-6 text-primary"/>
                     <div>
                         <p className="text-sm text-muted-foreground">WPM</p>
-                        <p className="text-2xl font-bold">{submission.wpm}</p>
+                        <p className="text-2xl font-bold">{score.wpm}</p>
                     </div>
                 </CardContent>
             </Card>
@@ -120,7 +104,7 @@ export default function SubmissionReviewModal({
                     <Target className="h-6 w-6 text-primary"/>
                     <div>
                         <p className="text-sm text-muted-foreground">Accuracy</p>
-                        <p className="text-2xl font-bold">{submission.accuracy.toFixed(1)}%</p>
+                        <p className="text-2xl font-bold">{score.accuracy.toFixed(1)}%</p>
                     </div>
                 </CardContent>
             </Card>
@@ -129,7 +113,7 @@ export default function SubmissionReviewModal({
                     <AlertCircle className="h-6 w-6 text-destructive"/>
                     <div>
                         <p className="text-sm text-muted-foreground">Mistakes</p>
-                        <p className="text-2xl font-bold">{submission.mistakes}</p>
+                        <p className="text-2xl font-bold">{score.mistakes.length}</p>
                     </div>
                 </CardContent>
             </Card>
