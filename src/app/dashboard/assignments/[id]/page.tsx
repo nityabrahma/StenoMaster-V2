@@ -153,17 +153,6 @@ export default function AssignmentPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-        <div className="flex justify-between items-center mb-4">
-            <Button variant="ghost" onClick={() => router.back()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Assignments
-            </Button>
-            <div className="text-right">
-                <h1 className="text-2xl font-bold font-headline">{assignment.title}</h1>
-                <p className="text-muted-foreground">Due by: {format(new Date(assignment.deadline), 'MMMM d, yyyy')}</p>
-            </div>
-        </div>
-      
         <div className={cn("grid gap-8", hasImage ? "md:grid-cols-2" : "grid-cols-1")}>
             {hasImage && (
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden">
@@ -180,7 +169,7 @@ export default function AssignmentPage() {
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                             <CardTitle className="font-headline text-xl">Your Performance</CardTitle>
+                             <CardTitle className="font-headline text-xl">{assignment.title}</CardTitle>
                              <div className="flex gap-2">
                                 {!isFinished ? (
                                     <>
@@ -215,13 +204,13 @@ export default function AssignmentPage() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Continue Typing</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => router.back()}>Yes, Cancel</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => router.push('/dashboard/assignments')}>Yes, Cancel</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
                                     </>
                                 ) : (
-                                     <Button onClick={() => router.back()} size="sm">
+                                     <Button onClick={() => router.push('/dashboard/assignments')} size="sm">
                                         <ArrowLeft className="mr-2 h-4 w-4" />
                                         Back to Assignments
                                     </Button>
