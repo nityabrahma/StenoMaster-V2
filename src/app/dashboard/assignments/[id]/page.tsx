@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, Play, Send, Timer, Zap, Target, AlertCircle, XCircle } from 'lucide-react';
+import { Loader2, Play, Send, Timer, Zap, Target, AlertCircle, XCircle } from 'lucide-react';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useAppRouter } from '@/hooks/use-app-router';
 import { Textarea } from '@/components/ui/textarea';
@@ -77,7 +77,6 @@ export default function AssignmentPage() {
 
     setIsSubmitting(true);
     stopTimer();
-    setIsFinished(true);
 
     const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
     const wordsTyped = userInput.trim().split(/\s+/).length;
@@ -123,7 +122,8 @@ export default function AssignmentPage() {
             description: `Your score: ${finalWpmCalc} WPM at ${finalAccuracyCalc.toFixed(1)}% accuracy.`,
         });
 
-        // Stay on the page to show results, but change button
+        setIsFinished(true);
+        router.push('/dashboard/assignments');
     } catch (error: any) {
         toast({
             title: "Submission Failed",
@@ -171,50 +171,41 @@ export default function AssignmentPage() {
                         <div className="flex justify-between items-start">
                              <CardTitle className="font-headline text-xl">{assignment.title}</CardTitle>
                              <div className="flex gap-2">
-                                {!isFinished ? (
-                                    <>
-                                        {!isStarted ? (
-                                            <Button onClick={handleStart} size="sm">
-                                                <Play className="mr-2 h-4 w-4" />
-                                                Start
-                                            </Button>
-                                        ) : (
-                                            <Button onClick={handleSubmit} disabled={isSubmitting || !userInput} size="sm">
-                                                {isSubmitting ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Send className="mr-2 h-4 w-4" />
-                                                )}
-                                                {isSubmitting ? 'Submitting...' : 'Submit'}
-                                            </Button>
-                                        )}
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm" disabled={isSubmitting}>
-                                                    <XCircle className="mr-2 h-4 w-4" />
-                                                    Cancel
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This will cancel the assignment attempt. Your progress will not be saved.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Continue Typing</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => router.push('/dashboard/assignments')}>Yes, Cancel</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </>
+                                {!isStarted ? (
+                                    <Button onClick={handleStart} size="sm">
+                                        <Play className="mr-2 h-4 w-4" />
+                                        Start
+                                    </Button>
                                 ) : (
-                                     <Button onClick={() => router.push('/dashboard/assignments')} size="sm">
-                                        <ArrowLeft className="mr-2 h-4 w-4" />
-                                        Back to Assignments
+                                    <Button onClick={handleSubmit} disabled={isSubmitting || !userInput} size="sm">
+                                        {isSubmitting ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Send className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isSubmitting ? 'Submitting...' : 'Submit'}
                                     </Button>
                                 )}
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={isSubmitting}>
+                                            <XCircle className="mr-2 h-4 w-4" />
+                                            Cancel
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will cancel the assignment attempt. Your progress will not be saved.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Continue Typing</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => router.push('/dashboard/assignments')}>Yes, Cancel</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                              </div>
                         </div>
                     </CardHeader>
