@@ -42,8 +42,13 @@ const renderTextWithDiff = (originalText: string, userInput: string) => {
             originalIndex++;
             typedIndex++;
         } else if (originalIndex < originalWords.length && typedIndex < typedWords.length) {
-            // Potential incorrect word
-            diff.push(<span key={`incorrect-${originalIndex}`} className="text-red-400 bg-red-500/20 rounded-sm">{typedWord} </span>);
+            // Incorrect word
+            diff.push(
+              <span key={`incorrect-${originalIndex}`}>
+                <span className="text-red-400 bg-red-500/20 rounded-sm line-through">{typedWord}</span>
+                <span className="text-green-400">({originalWord}) </span>
+              </span>
+            );
             originalIndex++;
             typedIndex++;
         } else if (typedIndex < typedWords.length) {
