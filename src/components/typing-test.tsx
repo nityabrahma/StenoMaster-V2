@@ -1,3 +1,4 @@
+
 'use client';
 import { useRef, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,7 +20,8 @@ type TypingTestProps = {
   isStarted: boolean;
   isFinished: boolean;
   onComplete: () => void;
-  strict?: boolean; // New prop for strict mode
+  strict?: boolean;
+  setIsInputBlocked?: (isBlocked: boolean) => void;
 };
 
 
@@ -31,6 +33,7 @@ export default function TypingTest({
     isFinished,
     onComplete,
     strict = false,
+    setIsInputBlocked,
 }: TypingTestProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isShaking, setIsShaking] = useState(false);
@@ -42,9 +45,11 @@ export default function TypingTest({
   }, [isStarted, isFinished]);
   
   useEffect(() => {
-    // Reset user input when the text changes
-    onUserInputChange('');
-  }, [text, onUserInputChange]);
+    // Reset user input when the text changes, but only if it's a practice test
+    if (strict) {
+        onUserInputChange('');
+    }
+  }, [text, onUserInputChange, strict]);
 
   const triggerShake = () => {
     setIsShaking(true);
@@ -54,29 +59,31 @@ export default function TypingTest({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isStarted || isFinished) return;
 
-    const value = e.target.value;
+    let value = e.target.value;
     
-    if (strict && value.length > userInput.length && value.length > 0) {
+    if (strict) {
         const originalWords = text.split(' ');
         const typedWords = value.split(' ');
         const currentWordIndex = typedWords.length - 1;
-        
         const currentTypedWord = typedWords[currentWordIndex];
         const currentOriginalWord = originalWords[currentWordIndex];
 
-        if (currentOriginalWord) {
-            if (currentTypedWord.length === 1) {
-                // First letter doesn't match, do nothing yet, wait for second letter
+        if (currentOriginalWord && currentTypedWord) {
+            // Check for word skip
+            if(currentTypedWord.length === 1 && currentTypedWord[0] !== currentOriginalWord[0]) {
+                // First letter is wrong, wait for second
             } else if (currentTypedWord.length === 2) {
                 const firstCharMatch = currentTypedWord[0] === currentOriginalWord[0];
                 const secondCharMatch = currentTypedWord[1] === currentOriginalWord[1];
                 
                 if (!firstCharMatch && !secondCharMatch) {
                     triggerShake();
-                    return; 
+                    setIsInputBlocked?.(true);
+                    return; // Block input
                 }
             }
         }
+        setIsInputBlocked?.(false);
     }
     
     onUserInputChange(value);

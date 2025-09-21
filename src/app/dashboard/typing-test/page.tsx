@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
 import type { Assignment, Score } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export default function TypingTestPage() {
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
@@ -26,6 +27,7 @@ export default function TypingTestPage() {
     const [isStarted, setIsStarted] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isInputBlocked, setIsInputBlocked] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -38,7 +40,7 @@ export default function TypingTestPage() {
     const correctChars = userInput.split('').reduce((acc, char, index) => {
         return acc + (char === currentTestText[index] ? 1 : 0);
     }, 0);
-    const mistakeCount = userInput.length - correctChars;
+    const mistakeCount = userInput.length > 0 ? userInput.length - correctChars : 0;
     const wpm = elapsedTime > 0 ? Math.round(((userInput.length / 5) / elapsedTime) * 60) : 0;
     const accuracy = userInput.length > 0 ? (correctChars / userInput.length) * 100 : 100;
 
@@ -58,16 +60,20 @@ export default function TypingTestPage() {
         }
     }, []);
     
-    const handleNextTest = useCallback(() => {
+    const resetTest = useCallback((nextIndex?: number) => {
         stopTimer();
         setIsStarted(false);
         setIsFinished(false);
         setStartTime(null);
         setElapsedTime(0);
         setUserInput('');
-        const nextIndex = (currentTextIndex + 1) % sampleTexts.length;
-        setCurrentTextIndex(nextIndex);
-    }, [stopTimer, currentTextIndex]);
+        setIsInputBlocked(false);
+        if(nextIndex !== undefined) {
+            setCurrentTextIndex(nextIndex);
+        } else {
+            setCurrentTextIndex((current) => (current + 1) % sampleTexts.length);
+        }
+    }, [stopTimer]);
 
     const handleStart = () => {
         setIsStarted(true);
@@ -87,7 +93,7 @@ export default function TypingTestPage() {
         
         const finalMistakes: { expected: string; actual: string; position: number }[] = [];
         finalUserInput.split('').forEach((char, index) => {
-            if (char !== currentTestText[index]) {
+            if (index < currentTestText.length && char !== currentTestText[index]) {
                 finalMistakes.push({
                     expected: currentTestText[index],
                     actual: char,
@@ -95,9 +101,9 @@ export default function TypingTestPage() {
                 });
             }
         });
-        const finalAccuracy = ((finalUserInput.length - finalMistakes.length) / finalUserInput.length) * 100;
+        const finalAccuracy = finalUserInput.length > 0 ? ((finalUserInput.length - finalMistakes.length) / finalUserInput.length) * 100 : 0;
 
-        const result: SubmissionResult = {
+        const result: Omit<Score, 'id' | 'studentId' | 'assignmentId' | 'completedAt'> = {
             wpm: finalWpm,
             accuracy: finalAccuracy,
             mistakes: finalMistakes,
@@ -113,9 +119,9 @@ export default function TypingTestPage() {
             });
             toast({
                 title: "Practice Complete!",
-                description: `Your score: ${result.wpm} WPM at ${result.accuracy.toFixed(1)}% accuracy.`,
+                description: `Your score: ${finalWpm} WPM at ${finalAccuracy.toFixed(1)}% accuracy.`,
             });
-            handleNextTest();
+            resetTest();
         } catch (error: any) {
             toast({
                 title: "Practice Submission Failed",
@@ -125,10 +131,9 @@ export default function TypingTestPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [user, isFinished, isSubmitting, startTime, stopTimer, currentTestText, createScore, currentTestId, toast, handleNextTest]);
+    }, [user, isFinished, isSubmitting, startTime, stopTimer, currentTestText, createScore, currentTestId, toast, resetTest]);
     
     useEffect(() => {
-        // Cleanup timer on unmount
         return () => stopTimer();
     }, [stopTimer]);
 
@@ -162,7 +167,7 @@ export default function TypingTestPage() {
                             <CardDescription>Hone your skills with our curated typing tests. Focus on speed and accuracy.</CardDescription>
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={handleNextTest} variant="outline">
+                            <Button onClick={() => resetTest()} variant="outline">
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Change Paragraph
                             </Button>
@@ -189,8 +194,14 @@ export default function TypingTestPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {isInputBlocked && (
+                        <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive-foreground rounded-md text-sm flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-destructive" />
+                            <span>Correct your mistake to continue. You seem to have skipped a word.</span>
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <Card>
+                        <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">WPM</CardTitle>
                                 <Zap className="h-4 w-4 text-muted-foreground ml-2"/>
@@ -199,7 +210,7 @@ export default function TypingTestPage() {
                                 <div className="text-2xl font-bold">{wpm}</div>
                             </CardContent>
                         </Card>
-                         <Card>
+                         <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
                                 <Target className="h-4 w-4 text-muted-foreground ml-2"/>
@@ -208,7 +219,7 @@ export default function TypingTestPage() {
                                 <div className="text-2xl font-bold">{accuracy.toFixed(1)}%</div>
                             </CardContent>
                         </Card>
-                         <Card>
+                         <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
                                 <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
@@ -217,7 +228,7 @@ export default function TypingTestPage() {
                                 <div className="text-2xl font-bold">{mistakeCount}</div>
                             </CardContent>
                         </Card>
-                        <Card>
+                        <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Timer</CardTitle>
                                 <Timer className="h-4 w-4 text-muted-foreground ml-2"/>
@@ -236,6 +247,7 @@ export default function TypingTestPage() {
                         isFinished={isFinished}
                         onComplete={() => handleComplete(userInput)}
                         strict={true}
+                        setIsInputBlocked={setIsInputBlocked}
                     />
                 </CardContent>
             </Card>
