@@ -152,10 +152,10 @@ export default function AssignmentPage() {
   const hasImage = !!assignment.imageUrl;
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-        <div className={cn("grid gap-8", hasImage ? "md:grid-cols-2" : "grid-cols-1")}>
+    <div className="container mx-auto p-4 md:p-8 h-full">
+        <div className={cn("grid gap-8 h-full", hasImage ? "md:grid-cols-2" : "grid-cols-1")}>
             {hasImage && (
-                <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+                <div className="relative aspect-video w-full rounded-lg overflow-hidden my-auto">
                 <Image
                     src={assignment.imageUrl}
                     alt={assignment.title}
@@ -165,8 +165,8 @@ export default function AssignmentPage() {
                 </div>
             )}
             
-            <div className={cn("space-y-4", !hasImage && "col-span-1")}>
-                <Card>
+            <div className={cn("flex flex-col h-full", !hasImage && "col-span-1")}>
+                <Card className="flex-1 flex flex-col">
                     <CardHeader>
                         <div className="flex justify-between items-start">
                              <CardTitle className="font-headline text-xl">{assignment.title}</CardTitle>
@@ -218,7 +218,7 @@ export default function AssignmentPage() {
                              </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <Card className='bg-card/50'>
                                 <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
@@ -262,14 +262,16 @@ export default function AssignmentPage() {
                             {isStarted ? "Begin typing now. The timer has started." : "Click the 'Start' button to begin the timer and enable typing."}
                         </CardDescription>
 
-                        <Textarea
-                            placeholder="Start typing here..."
-                            className="min-h-[250px] font-code text-lg bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            disabled={!isStarted || isFinished}
-                            autoFocus
-                        />
+                        <Card className="flex-1 bg-transparent">
+                            <Textarea
+                                placeholder="Start typing here..."
+                                className="h-full w-full bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none font-code text-lg"
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                disabled={!isStarted || isFinished}
+                                autoFocus
+                            />
+                        </Card>
                     </CardContent>
                 </Card>
             </div>
@@ -277,5 +279,3 @@ export default function AssignmentPage() {
     </div>
   );
 }
-
-    
