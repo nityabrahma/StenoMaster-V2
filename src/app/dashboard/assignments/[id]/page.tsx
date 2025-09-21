@@ -218,57 +218,53 @@ export default function AssignmentPage() {
                              </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                       <Card className='bg-card/50'>
-                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">WPM</CardTitle>
-                                <Zap className="h-4 w-4 text-muted-foreground ml-2"/>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{finalWpm}</div>
-                            </CardContent>
-                        </Card>
-                         <Card className='bg-card/50'>
-                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
-                                <Target className="h-4 w-4 text-muted-foreground ml-2"/>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{finalAccuracy.toFixed(1)}%</div>
-                            </CardContent>
-                        </Card>
-                         <Card className='bg-card/50'>
-                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
-                                <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{finalMistakes}</div>
-                            </CardContent>
-                        </Card>
-                        <Card className='bg-card/50'>
-                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Timer</CardTitle>
-                                <Timer className="h-4 w-4 text-muted-foreground ml-2"/>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{Math.floor(elapsedTime)}s</div>
-                            </CardContent>
-                        </Card>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl">Typing Area</CardTitle>
-                        <CardDescription>
+                    <CardContent className="space-y-4">
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <Card className='bg-card/50'>
+                                <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">WPM</CardTitle>
+                                    <Zap className="h-4 w-4 text-muted-foreground ml-2"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{finalWpm}</div>
+                                </CardContent>
+                            </Card>
+                            <Card className='bg-card/50'>
+                                <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
+                                    <Target className="h-4 w-4 text-muted-foreground ml-2"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{finalAccuracy.toFixed(1)}%</div>
+                                </CardContent>
+                            </Card>
+                            <Card className='bg-card/50'>
+                                <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
+                                    <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{finalMistakes}</div>
+                                </CardContent>
+                            </Card>
+                            <Card className='bg-card/50'>
+                                <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Timer</CardTitle>
+                                    <Timer className="h-4 w-4 text-muted-foreground ml-2"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{Math.floor(elapsedTime)}s</div>
+                                </CardContent>
+                            </Card>
+                       </div>
+                       
+                        <CardDescription className="text-center">
                             {isStarted ? "Begin typing now. The timer has started." : "Click the 'Start' button to begin the timer and enable typing."}
                         </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+
                         <Textarea
-                            placeholder="Your text will appear here..."
-                            className="min-h-[250px] font-code text-lg"
+                            placeholder="Start typing here..."
+                            className="min-h-[250px] font-code text-lg bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                             value={userInput}
                             onChange={(e) => setUserInput(e.target.value)}
                             disabled={!isStarted || isFinished}
@@ -281,3 +277,5 @@ export default function AssignmentPage() {
     </div>
   );
 }
+
+    
