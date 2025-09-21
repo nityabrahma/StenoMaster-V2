@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -185,8 +186,13 @@ function StudentAssignments() {
 
   // Assignments are now pre-filtered by the data store
   const myAssignments = assignments;
+  
+  // Filter for scores that belong to the current student
   const myScores = scores.filter(s => s.studentId === user.id);
   
+  // Filter out practice tests from the completed assignments list
+  const completedAssignmentScores = myScores.filter(score => !score.assignmentId.startsWith('practice-'));
+
   const pendingAssignments = myAssignments.filter(a => a.isActive && !myScores.some(s => s.assignmentId === a.id));
   
   const handleCardClick = (assignment: Assignment, score?: Score) => {
@@ -247,9 +253,9 @@ function StudentAssignments() {
             {/* Completed Assignments */}
             <div>
                 <h2 className="text-2xl font-bold font-headline mb-4">Completed</h2>
-                {myScores.length > 0 ? (
+                {completedAssignmentScores.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {myScores.map((score) => {
+                    {completedAssignmentScores.map((score) => {
                     const assignment = assignments.find(a => a.id === score.assignmentId);
                     const isDeleted = !assignment;
 
