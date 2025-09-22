@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -67,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/login', {
               method: 'POST',
@@ -85,15 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // The loading will be turned off by the dashboard layout's data fetching.
         } catch (error: any) {
             console.error("Authentication failed", error);
-            toast({
-                title: 'Login Failed',
-                description: error.message || 'An unexpected error occurred.',
-                variant: 'destructive'
-            });
-            setIsLoading(false); // Stop loading on error
+            // Re-throw the error so the component can handle it
+            throw error;
         }
     },
-    [router, toast, setIsLoading]
+    [router, toast]
   );
   
   const signup = useCallback(

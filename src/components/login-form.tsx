@@ -12,7 +12,7 @@ import type { CheckUserResponse } from '@/lib/types';
 type LoginStep = 'enter-email' | 'enter-password';
 
 const LoginForm = () => {
-  const { login, loading: authLoading } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState<LoginStep>('enter-email');
@@ -21,10 +21,11 @@ const LoginForm = () => {
   const [role, setRole] = useState<'student' | 'teacher' | null>(null);
   const [name, setName] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const isLoading = isCheckingEmail || authLoading;
+  const isLoading = isCheckingEmail || isLoggingIn;
   
   useEffect(() => {
     if (step === 'enter-password') {
@@ -68,7 +69,19 @@ const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!role) return;
-    await login({ email, password, role });
+    
+    setIsLoggingIn(true);
+    try {
+      await login({ email, password, role });
+    } catch (error: any) {
+        toast({
+            title: 'Login Failed',
+            description: error.message || 'An unexpected error occurred.',
+            variant: 'destructive'
+        });
+    } finally {
+        setIsLoggingIn(false);
+    }
   };
   
   const handleBack = () => {
