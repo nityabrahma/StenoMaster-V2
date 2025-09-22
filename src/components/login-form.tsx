@@ -12,7 +12,7 @@ import type { CheckUserResponse } from '@/lib/types';
 type LoginStep = 'enter-email' | 'enter-password';
 
 const LoginForm = () => {
-  const { login, loading } = useAuth();
+  const { login, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState<LoginStep>('enter-email');
@@ -24,7 +24,7 @@ const LoginForm = () => {
   
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const isLoading = isCheckingEmail || loading;
+  const isLoading = isCheckingEmail || authLoading;
   
   useEffect(() => {
     if (step === 'enter-password') {
@@ -110,7 +110,7 @@ const LoginForm = () => {
       {step === 'enter-password' && (
         <form onSubmit={handleLogin} className="space-y-3">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8" disabled={isLoading}>
+                <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8" disabled={isLoading} type="button">
                     <ArrowLeft />
                 </Button>
                 <div>
