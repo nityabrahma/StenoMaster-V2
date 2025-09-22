@@ -12,7 +12,6 @@ import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import { useLoading } from '@/hooks/loading-provider';
-import ThemeToggle from '@/components/ThemeToggle';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
@@ -72,7 +71,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                             />
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">
-                            <ThemeToggle />
                             <UserButton />
                         </div>
                     </div>

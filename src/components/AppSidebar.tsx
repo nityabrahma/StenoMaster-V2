@@ -22,7 +22,6 @@ import {
 import Logo from './logo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
-import UserButton from './UserButton';
 import { useAppRouter } from '@/hooks/use-app-router';
 
 const teacherLinks = [
