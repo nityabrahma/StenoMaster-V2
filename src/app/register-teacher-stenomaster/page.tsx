@@ -101,6 +101,7 @@ const TeacherRegistrationContent = () => {
                 placeholder="Enter your full name"
                 value={teacherSignup.fullName}
                 onChange={handleInputChange}
+                disabled={isSigningUp}
               />
             </div>
             <div className="space-y-2">
@@ -111,6 +112,7 @@ const TeacherRegistrationContent = () => {
                 placeholder="Enter your email"
                 value={teacherSignup.email}
                 onChange={handleInputChange}
+                disabled={isSigningUp}
               />
             </div>
             <div className="space-y-2">
@@ -121,6 +123,7 @@ const TeacherRegistrationContent = () => {
                 placeholder="Create a password (min. 6 characters)"
                 value={teacherSignup.password}
                 onChange={handleInputChange}
+                disabled={isSigningUp}
               />
             </div>
             <div className="space-y-2">
@@ -131,6 +134,7 @@ const TeacherRegistrationContent = () => {
                 placeholder="Confirm your password"
                 value={teacherSignup.confirmPassword}
                 onChange={handleInputChange}
+                disabled={isSigningUp}
               />
             </div>
             <Button
@@ -139,7 +143,7 @@ const TeacherRegistrationContent = () => {
               className="w-full"
             >
               {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
-              Create Account
+              {isSigningUp ? 'Creating Account...' : 'Create Account'}
             </Button>
         </form>
       </Card>

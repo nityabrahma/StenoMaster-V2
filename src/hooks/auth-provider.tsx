@@ -98,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const signup = useCallback(
     async (credentials: SignupCredentials): Promise<any> => {
-        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/register', {
               method: 'POST',
@@ -121,11 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error: any) {
             console.error("Signup failed", error);
             throw error; // Re-throw to be caught in the component
-        } finally {
-            setIsLoading(false);
         }
     },
-    [setIsLoading]
+    []
   );
 
   const value = useMemo(
