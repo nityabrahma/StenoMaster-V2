@@ -82,7 +82,7 @@ const LoginForm = () => {
     <div className="w-full max-w-md mx-auto flex flex-col">
       {step === 'enter-email' && (
         <form onSubmit={handleEmailSubmit} className="space-y-3">
-          <p className="font-semibold text-center text-gray-300 pb-1">
+          <p className="font-semibold text-center text-foreground pb-1">
             Welcome! Enter your email to begin.
           </p>
           <div className="space-y-1">
@@ -93,7 +93,7 @@ const LoginForm = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
+              className="bg-card/80 border-border/50 focus:border-primary transition-colors"
               disabled={isLoading}
             />
           </div>
@@ -114,7 +114,7 @@ const LoginForm = () => {
                     <ArrowLeft />
                 </Button>
                 <div>
-                    <p className="font-semibold text-gray-300">Welcome back, {name}!</p>
+                    <p className="font-semibold text-foreground">Welcome back, {name}!</p>
                     <p className="text-sm text-muted-foreground -mt-1">{email}</p>
                 </div>
             </div>
@@ -128,7 +128,7 @@ const LoginForm = () => {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
+              className="bg-card/80 border-border/50 focus:border-primary transition-colors"
               disabled={isLoading}
             />
           </div>
