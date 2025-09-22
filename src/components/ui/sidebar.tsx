@@ -479,7 +479,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-all duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[state=collapsed]/sidebar-wrapper:justify-center group-data-[state=collapsed]/sidebar-wrapper:px-0 [&>span]:group-data-[collapsible=icon]:hidden",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-all duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[state=collapsed]/sidebar-wrapper:justify-center group-data-[state=collapsed]/sidebar-wrapper:px-2 group-data-[state=collapsed]/sidebar-wrapper:py-2 [&>span]:group-data-[collapsible=icon]:hidden",
   {
     variants: {
       variant: {
@@ -488,12 +488,12 @@ const sidebarMenuButtonVariants = cva(
           "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "h-9 text-sm",
+        default: "h-12 text-base", // increased height and text size
         sm: "h-8 text-xs",
-        lg: "h-12 text-sm",
+        lg: "h-14 text-lg", // larger option
       },
       isActive: {
-        true: "rounded-2xl border-2 border-transparent bg-gray-900/30 font-medium text-sidebar-accent-foreground",
+        true: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
         false: ""
       }
     },
@@ -534,10 +534,13 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className, "rounded-2xl border-2 transition-all duration-300 border-transparent hover:border-white/20 px-4 py-6", isActive && "bg-gray-800/50 border-white/20")}
+        className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className, 
+            "group-data-[state=collapsed]/sidebar-wrapper:[&_svg]:size-6", // Larger icon when collapsed
+            "group-data-[state=expanded]/sidebar-wrapper:[&_svg]:size-5", // Normal icon size when expanded
+            "rounded-lg transition-all duration-300"
+        )}
         style={isActive ? {
-          backdropFilter: "blur(2px)",
-          boxShadow: "inset 0 2px 6px rgba(255, 255, 255, 0.1), inset 0 -2px 6px rgba(0, 0, 0, 0.9)"
+          boxShadow: "inset 0 1px 3px rgba(255, 255, 255, 0.1), inset 0 -1px 3px rgba(0, 0, 0, 0.2)"
         } : {}}
         {...props}
       >
@@ -740,6 +743,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
-
-

@@ -115,7 +115,7 @@ function TeacherAssignments() {
                                     <div className="flex justify-center items-center gap-1">
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/assignments/${assignment.id}/edit`)}>
+                                                <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/assignments/${assignment.id}/edit`)} disabled={isCurrentlyDeleting}>
                                                     <Pencil className="h-4 w-4" />
                                                     <span className="sr-only">Edit Assignment</span>
                                                 </Button>
@@ -129,8 +129,12 @@ function TeacherAssignments() {
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                            <Trash2 className="h-4 w-4" />
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isCurrentlyDeleting}>
+                                                            {isCurrentlyDeleting ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Trash2 className="h-4 w-4" />
+                                                            )}
                                                             <span className="sr-only">Delete Assignment</span>
                                                         </Button>
                                                     </AlertDialogTrigger>
@@ -224,7 +228,7 @@ function StudentAssignments() {
                     const deadlineDate = new Date(assignment.deadline);
                     const isPastDue = deadlineDate < now;
                     return (
-                        <Card key={assignment.id} className="flex flex-col h-full cursor-pointer" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
+                        <Card key={assignment.id} className="flex flex-col h-full cursor-pointer hover:border-primary/50" onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}>
                             <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="truncate pr-4">{assignment.title}</CardTitle>
@@ -263,7 +267,7 @@ function StudentAssignments() {
                         <Card 
                         key={score.id} 
                         onClick={() => !isDeleted && handleCardClick(assignment!, score)} 
-                        className={`flex flex-col ${!isDeleted ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
+                        className={`flex flex-col ${!isDeleted ? 'cursor-pointer hover:border-primary/50' : 'cursor-default opacity-80'}`}
                         >
                         <CardHeader>
                             <div className="flex justify-between items-start">

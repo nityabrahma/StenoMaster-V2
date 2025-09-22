@@ -244,7 +244,7 @@ export default function AssignmentPage() {
                             {isStarted ? "Begin typing now. The timer has started." : "Click the 'Start' button to begin the timer and enable typing."}
                         </CardDescription>
 
-                        <Card className="flex-1 bg-transparent mt-4">
+                        <Card className="flex-1 bg-transparent mt-4 p-3">
                             <Textarea
                                 placeholder="Start typing here..."
                                 className="h-full w-full bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none font-code text-lg"

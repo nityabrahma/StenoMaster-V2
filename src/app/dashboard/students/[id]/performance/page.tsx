@@ -76,7 +76,6 @@ export default function StudentPerformancePage() {
             description: error.message || 'Could not remove the student.',
             variant: 'destructive',
         });
-    } finally {
         setIsDeleting(false);
     }
   }
@@ -196,8 +195,8 @@ export default function StudentPerformancePage() {
                  {user?.role === 'teacher' && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive flex-shrink-0">
-                                <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive flex-shrink-0" disabled={isDeleting}>
+                                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

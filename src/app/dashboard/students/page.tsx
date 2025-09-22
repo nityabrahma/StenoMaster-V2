@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -306,7 +307,7 @@ export default function StudentsPage() {
                             <div className="flex justify-center items-center gap-1">
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => setStudentToAssign(student)}>
+                                        <Button variant="ghost" size="icon" onClick={() => setStudentToAssign(student)} disabled={isCurrentlyDeleting}>
                                             <ArrowRightLeft className="h-4 w-4" />
                                             <span className="sr-only">Assign or Transfer Student</span>
                                         </Button>
@@ -319,8 +320,12 @@ export default function StudentsPage() {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                    <Trash2 className="h-4 w-4" />
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isCurrentlyDeleting}>
+                                                    {isCurrentlyDeleting ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ): (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
                                                     <span className="sr-only">Delete Student</span>
                                                 </Button>
                                             </AlertDialogTrigger>

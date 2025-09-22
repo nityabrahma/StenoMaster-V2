@@ -12,6 +12,7 @@ import { useDataStore } from '@/hooks/use-data-store';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import { useLoading } from '@/hooks/loading-provider';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, isAuthenticated } = useAuth();
@@ -58,7 +59,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <SidebarProvider>
             <div className="h-screen w-full flex flex-col bg-transparent">
                 <nav
-                    className="h-16 flex-shrink-0 sticky top-0 z-20 bg-gray-900/30"
+                    className="h-16 flex-shrink-0 sticky top-0 z-20 bg-background/30"
                     style={{
                         backdropFilter: "blur(3px)"
                     }}
@@ -70,7 +71,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                                 className="h-9 w-9 cursor-pointer bg-card/80 hover:bg-black/60"
                             />
                         </div>
-                        <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+                        <div className="flex items-center space-x-2 lg:space-x-4">
+                            <ThemeToggle />
                             <UserButton />
                         </div>
                     </div>

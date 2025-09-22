@@ -63,7 +63,7 @@ const MobileSidebar = () => {
     <Sheet open={openMobile} onOpenChange={setOpenMobile}>
       <SheetContent
         side="left"
-        className="w-[18rem] bg-card p-0 text-card-foreground [&>button]:hidden"
+        className="w-[18rem] bg-card p-0 text-card-foreground [&>button]:hidden flex flex-col"
       >
         <SheetHeader className="p-2 border-b">
           <SheetTitle className='sr-only'>StenoMaster Menu</SheetTitle>
@@ -75,7 +75,7 @@ const MobileSidebar = () => {
             <Logo />
           </div>
         </SheetHeader>
-        <SidebarContent className="p-2">
+        <SidebarContent className="p-2 flex-1">
           <SidebarMenu>
             {links.map((link) => (
               <SidebarMenuItem key={link.href}>
@@ -90,9 +90,6 @@ const MobileSidebar = () => {
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <div className="p-2 border-t mt-auto">
-          <UserButton />
-        </div>
       </SheetContent>
     </Sheet>
   )
@@ -122,7 +119,7 @@ export default function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="flex-shrink-0 md:flex md:flex-col bg-gray-900/30"
+      className="flex-shrink-0 md:flex md:flex-col bg-background/30"
       style={{
         backdropFilter: "blur(1px)"
       }}

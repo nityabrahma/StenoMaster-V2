@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import { useClasses } from '@/hooks/use-classes';
@@ -158,7 +159,7 @@ export default function ClassesPage() {
                                 <div className="flex justify-center items-center gap-1">
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={() => setEditingClass(cls)}>
+                                            <Button variant="ghost" size="icon" onClick={() => setEditingClass(cls)} disabled={isCurrentlyDeleting}>
                                                 <Pencil className="h-4 w-4" />
                                                 <span className="sr-only">Edit Class</span>
                                             </Button>
@@ -169,7 +170,7 @@ export default function ClassesPage() {
                                     </Tooltip>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={() => setManagingStudentsClass(cls)}>
+                                            <Button variant="ghost" size="icon" onClick={() => setManagingStudentsClass(cls)} disabled={isCurrentlyDeleting}>
                                                 <Users className="h-4 w-4" />
                                                 <span className="sr-only">Manage Students</span>
                                             </Button>
@@ -182,8 +183,12 @@ export default function ClassesPage() {
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                        <Trash2 className="h-4 w-4" />
+                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isCurrentlyDeleting}>
+                                                         {isCurrentlyDeleting ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                         ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                         )}
                                                         <span className="sr-only">Delete Class</span>
                                                     </Button>
                                                 </AlertDialogTrigger>
