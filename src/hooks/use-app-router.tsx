@@ -7,6 +7,7 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  Suspense,
 } from 'react';
 import {
   useRouter as useNextRouter,
@@ -32,11 +33,11 @@ export const useAppRouter = () => {
   return context;
 };
 
-export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
-  const router = useNextRouter();
+// This internal component contains the logic that uses useSearchParams
+function AppRouterLogic({ children }: { children: ReactNode }) {
+  const { isLoading, setIsLoading } = useLoading();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isLoading, setIsLoading } = useLoading();
 
   // Effect to turn off loading when navigation completes
   useEffect(() => {
@@ -46,16 +47,24 @@ export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
+  return <>{children}</>;
+}
+
+
+export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
+  const router = useNextRouter();
+  const { setIsLoading } = useLoading();
+  const pathname = usePathname();
+  
   const push = useCallback(
     (href: string) => {
-      const currentPath = pathname + '?' + searchParams.toString();
-      // Don't show loading if it's the same page
-      if (href !== currentPath) {
+      // We can't use searchParams here directly, so we check just the pathname
+      if (href !== pathname) {
         setIsLoading(true);
       }
       router.push(href);
     },
-    [router, setIsLoading, pathname, searchParams]
+    [router, setIsLoading, pathname]
   );
 
   const back = useCallback(() => {
@@ -70,7 +79,9 @@ export const AppRouterProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppRouterContext.Provider value={value}>
-      {children}
+       <Suspense>
+        <AppRouterLogic>{children}</AppRouterLogic>
+       </Suspense>
     </AppRouterContext.Provider>
   );
 };
