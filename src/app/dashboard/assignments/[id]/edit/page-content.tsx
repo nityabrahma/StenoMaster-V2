@@ -129,9 +129,11 @@ export default function EditAssignmentPageContent({ assignment }: EditAssignment
   const onSubmit = async (data: AssignmentFormValues) => {
     setIsSubmitting(true);
     try {
+        const deadlineDate = new Date(data.deadline);
+        deadlineDate.setHours(23, 59, 59, 999);
         await updateAssignment(assignment.id, {
             ...data,
-            deadline: data.deadline.toISOString(),
+            deadline: deadlineDate.toISOString(),
         });
         toast({
             title: "Assignment Updated!",

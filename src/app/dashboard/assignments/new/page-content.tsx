@@ -134,9 +134,11 @@ export default function NewAssignmentPageContent() {
   const onSubmit = async (data: AssignmentFormValues) => {
     setIsSubmitting(true);
     try {
+        const deadlineDate = new Date(data.deadline);
+        deadlineDate.setHours(23, 59, 59, 999);
         await createAssignment({
             ...data,
-            deadline: data.deadline.toISOString(),
+            deadline: deadlineDate.toISOString(),
         });
         toast({
             title: "Assignment Created!",
