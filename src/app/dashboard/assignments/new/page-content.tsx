@@ -1,3 +1,4 @@
+
 'use client';
 
 import { z } from 'zod';
@@ -85,6 +86,7 @@ export default function NewAssignmentPageContent() {
   });
   
   const imageUrlValue = form.watch('imageUrl');
+  const textValue = form.watch('text');
 
   useEffect(() => {
     const newClassId = searchParams.get('newClassId');
@@ -347,7 +349,12 @@ export default function NewAssignmentPageContent() {
                   name="text"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assignment Text</FormLabel>
+                       <div className="flex justify-between items-center">
+                        <FormLabel>Assignment Text</FormLabel>
+                        <span className="text-xs text-muted-foreground">
+                            {textValue.length} characters
+                        </span>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder="Paste or type the full text for the assignment here..."

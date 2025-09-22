@@ -210,7 +210,7 @@ export default function AssignmentPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                       <div className="grid grid-cols-3 gap-4 text-center">
                             <Card className='bg-card/50'>
                                 <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">WPM</CardTitle>
@@ -231,15 +231,6 @@ export default function AssignmentPage() {
                             </Card>
                             <Card className='bg-card/50'>
                                 <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
-                                    <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{finalMistakes}</div>
-                                </CardContent>
-                            </Card>
-                            <Card className='bg-card/50'>
-                                <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Timer</CardTitle>
                                     <Timer className="h-4 w-4 text-muted-foreground ml-2"/>
                                 </CardHeader>
@@ -253,7 +244,7 @@ export default function AssignmentPage() {
                             {isStarted ? "Begin typing now. The timer has started." : "Click the 'Start' button to begin the timer and enable typing."}
                         </CardDescription>
 
-                        <Card className="flex-1 bg-transparent">
+                        <Card className="flex-1 bg-transparent mt-4">
                             <Textarea
                                 placeholder="Start typing here..."
                                 className="h-full w-full bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none font-code text-lg"

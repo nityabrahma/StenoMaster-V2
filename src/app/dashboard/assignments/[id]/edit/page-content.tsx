@@ -1,3 +1,4 @@
+
 'use client';
 
 import { z } from 'zod';
@@ -87,6 +88,7 @@ export default function EditAssignmentPageContent({ assignment }: EditAssignment
   });
   
   const imageUrlValue = form.watch('imageUrl');
+  const textValue = form.watch('text');
   
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -319,7 +321,12 @@ export default function EditAssignmentPageContent({ assignment }: EditAssignment
                   name="text"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assignment Text</FormLabel>
+                      <div className="flex justify-between items-center">
+                        <FormLabel>Assignment Text</FormLabel>
+                        <span className="text-xs text-muted-foreground">
+                            {textValue.length} characters
+                        </span>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder="Paste or type the full text for the assignment here..."
