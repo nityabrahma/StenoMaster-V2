@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,20 +21,18 @@ const LoginForm = () => {
   const [role, setRole] = useState<'student' | 'teacher' | null>(null);
   const [name, setName] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = isCheckingEmail || loading;
-
+  
   useEffect(() => {
-    if (isLoading) {
-      document.body.style.pointerEvents = 'none';
-    } else {
-      document.body.style.pointerEvents = 'auto';
+    if (step === 'enter-password') {
+      // Small timeout to allow the UI to update before focusing
+      setTimeout(() => passwordInputRef.current?.focus(), 100);
     }
-    // Cleanup function to ensure pointer events are re-enabled on unmount
-    return () => {
-      document.body.style.pointerEvents = 'auto';
-    };
-  }, [isLoading]);
+  }, [step]);
+
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,14 +94,15 @@ const LoginForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
+              disabled={isLoading}
             />
           </div>
           <Button
-            disabled={isCheckingEmail}
+            disabled={isLoading}
             type="submit"
             className="gradient-button w-full"
           >
-            {isCheckingEmail ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Continue'}
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Continue'}
           </Button>
         </form>
       )}
@@ -112,7 +110,7 @@ const LoginForm = () => {
       {step === 'enter-password' && (
         <form onSubmit={handleLogin} className="space-y-3">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8" disabled={isLoading}>
                     <ArrowLeft />
                 </Button>
                 <div>
@@ -124,20 +122,22 @@ const LoginForm = () => {
           <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
             <Input
+              ref={passwordInputRef}
               id="password"
               type="password"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="bg-black/20 border-white/10 focus:border-blue-500 transition-colors"
+              disabled={isLoading}
             />
           </div>
           <Button
-            disabled={loading}
+            disabled={isLoading}
             type="submit"
             className="gradient-button w-full"
           >
-            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogIn className="h-4 w-4 mr-2" />}
             Sign In
           </Button>
         </form>
