@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Play, Send, Timer, Zap, Target, AlertCircle, XCircle } from 'lucide-react';
+import { Loader2, Play, Send, Timer, Zap, Target, XCircle } from 'lucide-react';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useAppRouter } from '@/hooks/use-app-router';
 import { Textarea } from '@/components/ui/textarea';
@@ -87,69 +87,70 @@ export default function AssignmentPage() {
     const originalWords = assignment.text.split(/\s+/).filter(Boolean);
     const mistakes: Mistake[] = [];
     let correctChars = 0;
-    let typedWordIndex = 0;
-    let originalWordIndex = 0;
-    let currentInputPos = 0;
+    let originalIndex = 0;
+    let typedIndex = 0;
 
-    while (typedWordIndex < typedWords.length && originalWordIndex < originalWords.length) {
-        const typedWord = typedWords[typedWordIndex];
-        const originalWord = originalWords[originalWordIndex];
+    while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
+        const originalWord = originalWords[originalIndex];
+        const typedWord = typedWords[typedIndex];
 
-        // Find the start position of the current typed word in the user's input string
-        const searchPos = userInput.indexOf(typedWord, currentInputPos);
-        const position = searchPos !== -1 ? searchPos : currentInputPos;
+        if (originalIndex >= originalWords.length) {
+            // User typed extra words
+            mistakes.push({ expected: '', actual: typedWord, position: userInput.length - 1 });
+            typedIndex++;
+            continue;
+        }
 
-        if (typedWord === originalWord) {
+        if (typedIndex >= typedWords.length) {
+            // User missed remaining words
+            mistakes.push({ expected: originalWord, actual: '', position: userInput.length });
+            originalIndex++;
+            continue;
+        }
+
+        if (originalWord === typedWord) {
             correctChars += originalWord.length;
-            typedWordIndex++;
-            originalWordIndex++;
+            originalIndex++;
+            typedIndex++;
         } else {
-            // Look ahead in original text to see if we skipped a word
+            // Look ahead to find a synchronization point
             let foundMatch = false;
-            for (let i = 1; i <= 2 && originalWordIndex + i < originalWords.length; i++) {
-                if (typedWord === originalWords[originalWordIndex + i]) {
+            for (let lookahead = 1; lookahead <= 5 && (originalIndex + lookahead) < originalWords.length; lookahead++) {
+                if (originalWords[originalIndex + lookahead] === typedWord) {
                     // Words were skipped
-                    for (let j = 0; j < i; j++) {
+                    for (let i = 0; i < lookahead; i++) {
                         mistakes.push({
-                            expected: originalWords[originalWordIndex + j],
-                            actual: '', // Empty string indicates a skipped word
-                            position: position, // Position of where the skip happened
+                            expected: originalWords[originalIndex + i],
+                            actual: '',
+                            position: userInput.indexOf(typedWord),
                         });
                     }
-                    correctChars += typedWord.length;
-                    originalWordIndex += (i + 1);
-                    typedWordIndex++;
+                    originalIndex += lookahead;
                     foundMatch = true;
                     break;
                 }
             }
 
-            if (!foundMatch) {
-                // It's a simple misspelling
+            if (foundMatch) {
+                // Now that we've synced, count the current word as correct
+                correctChars += typedWord.length;
+                originalIndex++;
+                typedIndex++;
+            } else {
+                // No sync point found, it's a misspelling or an extra word.
+                // For simplicity, we treat it as a misspelling of the original word.
                 mistakes.push({
                     expected: originalWord,
                     actual: typedWord,
-                    position: position,
+                    position: userInput.indexOf(typedWord),
                 });
-                // In a simple misspelling, we can still count correct characters if we want.
-                // For simplicity, we can say if misspelled, no chars are correct for that word.
-                // Or a more complex char-by-char diff could be done here.
-                // Let's assume the word is just wrong for now.
-                originalWordIndex++;
-                typedWordIndex++;
+                originalIndex++;
+                typedIndex++;
             }
         }
-        currentInputPos = position + typedWord.length;
     }
     
-    // Add any remaining original words as skipped
-    if (originalWordIndex < originalWords.length) {
-        for (let i = originalWordIndex; i < originalWords.length; i++) {
-            mistakes.push({ expected: originalWords[i], actual: '', position: userInput.length });
-        }
-    }
-
-    const totalPossibleChars = assignment.text.length;
+    const totalPossibleChars = assignment.text.replace(/\s+/g, ' ').length;
     const finalAccuracyCalc = totalPossibleChars > 0 ? (correctChars / totalPossibleChars) * 100 : 0;
     
     setFinalWpm(finalWpmCalc);
@@ -161,7 +162,7 @@ export default function AssignmentPage() {
             assignmentId: assignment.id,
             completedAt: new Date().toISOString(),
             wpm: finalWpmCalc,
-            accuracy: Math.max(0, finalAccuracyCalc), // Ensure accuracy isn't negative
+            accuracy: Math.max(0, finalAccuracyCalc),
             mistakes: mistakes,
             timeElapsed: finalElapsedTime,
             userInput: finalUserInput,
@@ -311,3 +312,5 @@ export default function AssignmentPage() {
     </div>
   );
 }
+
+    

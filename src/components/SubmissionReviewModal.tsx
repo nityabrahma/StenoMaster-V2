@@ -14,87 +14,93 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
-import { cn } from '@/lib/utils';
-
-
-interface SubmissionReviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  score: Score;
-  assignment: Assignment;
-}
-
 
 const renderTextWithDiff = (originalText: string, userInput: string) => {
-    const originalWords = originalText.split(/(\s+)/); // Split by space but keep delimiters
+    const originalWords = originalText.split(/(\s+)/); // Keep spaces
     const typedWords = userInput.split(/(\s+)/);
-    const diff: React.ReactNode[] = [];
+    const result: React.ReactNode[] = [];
     let originalIndex = 0;
     let typedIndex = 0;
 
     while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
         const originalWord = originalWords[originalIndex];
         const typedWord = typedWords[typedIndex];
+        
+        // Handle trailing spaces or different length inputs
+        if (originalIndex >= originalWords.length) {
+            if (typedWord && typedWord.trim()) {
+                result.push(<span key={`extra-${typedIndex}`} className="bg-yellow-500/20 text-yellow-400 rounded-sm">{typedWord}</span>);
+            } else {
+                 result.push(<span key={`extra-space-${typedIndex}`}>{typedWord}</span>);
+            }
+            typedIndex++;
+            continue;
+        }
 
-        const isOriginalSpace = originalWord && /\s+/.test(originalWord);
-        const isTypedSpace = typedWord && /\s+/.test(typedWord);
-
-        if (isOriginalSpace) {
-            diff.push(<span key={`space-o-${originalIndex}`}>{originalWord}</span>);
+        if (typedIndex >= typedWords.length) {
+            if (originalWord && originalWord.trim()) {
+                result.push(<span key={`missed-${originalIndex}`} className="bg-gray-500/20 text-gray-400 rounded-sm">{originalWord}</span>);
+            } else {
+                result.push(<span key={`missed-space-${originalIndex}`}>{originalWord}</span>);
+            }
             originalIndex++;
-            if (isTypedSpace) {
+            continue;
+        }
+
+        // If it's a space, just add it and continue
+        if (/\s+/.test(originalWord)) {
+            result.push(<span key={`space-${originalIndex}`}>{originalWord}</span>);
+            originalIndex++;
+            // Also advance typed pointer if it's also a space
+            if (/\s+/.test(typedWord)) {
                 typedIndex++;
             }
             continue;
         }
 
-        if (typedIndex >= typedWords.length) {
-            // User input is finished, but original text remains. These are missed words.
-            diff.push(<span key={`missed-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord}</span>);
-            originalIndex++;
-            continue;
-        }
-
-        if (isTypedSpace) {
-             // User typed a space, but we are expecting a word. Treat as extra space.
-             diff.push(<span key={`extra-space-${typedIndex}`}>{typedWord}</span>);
-             typedIndex++;
-             continue;
-        }
-        
         if (originalWord === typedWord) {
             // Correct word
-            diff.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord}</span>);
+            result.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord}</span>);
             originalIndex++;
             typedIndex++;
         } else {
-            // Look ahead to see if a word was skipped
-            const lookaheadIndex = originalWords.indexOf(typedWord, originalIndex + 1);
-            if (lookaheadIndex !== -1 && lookaheadIndex < originalIndex + 3) { // Look ahead 1-2 words
-                // Words from originalIndex to lookaheadIndex-1 were skipped
-                for (let i = originalIndex; i < lookaheadIndex; i++) {
-                     if (originalWords[i] && !/\s+/.test(originalWords[i])) {
-                        diff.push(<span key={`skipped-${i}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWords[i]}</span>);
-                     }
-                      if (originalWords[i+1] && /\s+/.test(originalWords[i+1])) {
-                        diff.push(<span key={`space-skip-${i}`}>{originalWords[i+1]}</span>);
-                        i++;
-                     }
+             // Look ahead for a match to handle skipped words
+            let foundMatch = false;
+            for (let lookahead = 1; lookahead <= 3 && originalIndex + lookahead < originalWords.length; lookahead++) {
+                if (originalWords[originalIndex + lookahead] === typedWord) {
+                    // Skipped words found
+                    for (let i = 0; i < lookahead; i++) {
+                        const skippedWord = originalWords[originalIndex + i];
+                         if (skippedWord && skippedWord.trim()) {
+                           result.push(<span key={`skipped-${originalIndex + i}`} className="bg-gray-500/20 text-gray-400 rounded-sm">{skippedWord}</span>);
+                        } else {
+                            result.push(<span key={`skipped-space-${originalIndex + i}`}>{skippedWord}</span>);
+                        }
+                    }
+                    originalIndex += lookahead;
+                    foundMatch = true;
+                    break;
                 }
-                // Now push the correctly typed word
-                diff.push(<span key={`correct-lookahead-${lookaheadIndex}`} className="text-green-400">{typedWord}</span>);
-                originalIndex = lookaheadIndex + 1;
+            }
+
+            if (foundMatch) {
+                // Now render the correctly typed word that we found ahead
+                result.push(<span key={`correct-sync-${originalIndex}`} className="text-green-400">{originalWords[originalIndex]}</span>);
+                originalIndex++;
                 typedIndex++;
             } else {
-                // Incorrect word (misspelling)
-                diff.push(<span key={`incorrect-${typedIndex}`} className="text-red-400 bg-red-500/20 rounded-sm line-through">{typedWord || '___'}</span>);
+                // No match found, so it's an incorrect word or an extra word
+                 result.push(<span key={`incorrect-${typedIndex}`} className="bg-red-500/20 text-red-400 rounded-sm line-through">{typedWord}</span>);
+                 // We still need to show what was expected
+                 if(originalWord && originalWord.trim()){
+                    result.push(<span key={`expected-${originalIndex}`} className="bg-gray-500/20 text-gray-400 rounded-sm">{originalWord}</span>);
+                 }
                 originalIndex++;
                 typedIndex++;
             }
         }
     }
-    
-    return diff;
+    return result;
 };
 
 
@@ -166,3 +172,5 @@ export default function SubmissionReviewModal({
     </Dialog>
   );
 }
+
+    

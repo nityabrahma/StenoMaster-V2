@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import TypingTest from '@/components/typing-test';
 import { sampleTexts } from '@/lib/sample-text';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { History, Play, Send, RefreshCw, Zap, Target, AlertCircle, Timer, Loader2 } from 'lucide-react';
+import { History, Play, Send, RefreshCw, Zap, Target, Timer, Loader2 } from 'lucide-react';
 import type { SubmissionResult } from '@/components/typing-test';
 import { useDataStore } from '@/hooks/use-data-store';
 import { useAuth } from '@/hooks/use-auth';
@@ -35,13 +36,10 @@ export default function TypingTestPage() {
     const currentTestId = (currentTextIndex + 1).toString();
     
     // Derived Stats
-    const correctChars = userInput.split('').reduce((acc, char, index) => {
-        return acc + (char === currentTestText[index] ? 1 : 0);
-    }, 0);
-    const mistakeCount = userInput.length > 0 ? userInput.length - correctChars : 0;
-    const wpm = elapsedTime > 0 ? Math.round(((userInput.length / 5) / elapsedTime) * 60) : 0;
-    const accuracy = userInput.length > 0 ? (correctChars / userInput.length) * 100 : 100;
-
+    const typedWords = userInput.split(/\s+/).filter(Boolean);
+    const wordsTypedCount = typedWords.length;
+    const wpm = elapsedTime > 0 ? Math.round((wordsTypedCount / elapsedTime) * 60) : 0;
+    
     const startTimer = useCallback(() => {
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         const start = Date.now() - elapsedTime * 1000;
@@ -93,60 +91,54 @@ export default function TypingTestPage() {
         const originalWords = currentTestText.split(/\s+/).filter(Boolean);
         const finalMistakes: Mistake[] = [];
         let correctChars = 0;
-        
-        let typedIndex = 0;
         let originalIndex = 0;
+        let typedIndex = 0;
 
-        while (typedIndex < typedWords.length && originalIndex < originalWords.length) {
-            const typedWord = typedWords[typedIndex];
+        while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
             const originalWord = originalWords[originalIndex];
+            const typedWord = typedWords[typedIndex];
 
-            if (typedWord === originalWord) {
-                correctChars += originalWord.length; // +1 for the space
+            if (originalIndex >= originalWords.length) {
+                finalMistakes.push({ expected: '', actual: typedWord, position: trimmedUserInput.length -1 });
+                typedIndex++;
+                continue;
+            }
+            if (typedIndex >= typedWords.length) {
+                finalMistakes.push({ expected: originalWord, actual: '', position: trimmedUserInput.length });
+                originalIndex++;
+                continue;
+            }
+
+            if (originalWord === typedWord) {
+                correctChars += originalWord.length;
                 originalIndex++;
                 typedIndex++;
             } else {
-                // Look ahead in original text to see if we skipped a word
                 let foundMatch = false;
-                for (let i = 1; i <= 2 && originalIndex + i < originalWords.length; i++) {
-                    if (typedWord === originalWords[originalIndex + i]) {
-                        // Words from originalIndex to originalIndex + i - 1 were skipped
-                        for (let j = 0; j < i; j++) {
-                            finalMistakes.push({
-                                expected: originalWords[originalIndex + j],
-                                actual: '[skipped]',
-                                position: -1, // Position tracking is complex, simplify for now
-                            });
+                for (let lookahead = 1; lookahead <= 5 && (originalIndex + lookahead) < originalWords.length; lookahead++) {
+                    if (originalWords[originalIndex + lookahead] === typedWord) {
+                        for (let i = 0; i < lookahead; i++) {
+                            finalMistakes.push({ expected: originalWords[originalIndex + i], actual: '', position: trimmedUserInput.indexOf(typedWord) });
                         }
-                        correctChars += typedWord.length;
-                        originalIndex += (i + 1);
-                        typedIndex++;
+                        originalIndex += lookahead;
                         foundMatch = true;
                         break;
                     }
                 }
 
-                if (!foundMatch) {
-                    // It's a simple misspelling or extra word
-                    finalMistakes.push({
-                        expected: originalWord,
-                        actual: typedWord,
-                        position: -1,
-                    });
+                if (foundMatch) {
+                    correctChars += typedWord.length;
+                    originalIndex++;
+                    typedIndex++;
+                } else {
+                    finalMistakes.push({ expected: originalWord, actual: typedWord, position: trimmedUserInput.indexOf(typedWord) });
                     originalIndex++;
                     typedIndex++;
                 }
             }
         }
-    
-        // Add any remaining original words as skipped
-        if (originalIndex < originalWords.length) {
-            for (let i = originalIndex; i < originalWords.length; i++) {
-                finalMistakes.push({ expected: originalWords[i], actual: '[skipped]', position: -1 });
-            }
-        }
         
-        const totalPossibleChars = currentTestText.length;
+        const totalPossibleChars = currentTestText.replace(/\s+/g, ' ').length;
         const finalAccuracy = totalPossibleChars > 0 ? (correctChars / totalPossibleChars) * 100 : 0;
     
         const result: Omit<Score, 'id' | 'studentId'> = {
@@ -238,7 +230,7 @@ export default function TypingTestPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                         <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">WPM</CardTitle>
@@ -254,16 +246,7 @@ export default function TypingTestPage() {
                                 <Target className="h-4 w-4 text-muted-foreground ml-2"/>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{accuracy.toFixed(1)}%</div>
-                            </CardContent>
-                        </Card>
-                         <Card className='bg-card/50'>
-                            <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Mistakes</CardTitle>
-                                <AlertCircle className="h-4 w-4 text-muted-foreground ml-2"/>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{mistakeCount}</div>
+                                <div className="text-2xl font-bold">--%</div>
                             </CardContent>
                         </Card>
                         <Card className='bg-card/50'>
@@ -306,3 +289,5 @@ export default function TypingTestPage() {
         </div>
     );
 }
+
+    
