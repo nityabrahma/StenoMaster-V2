@@ -26,6 +26,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { evaluateTyping } from '@/lib/evaluation';
 
 export default function AssignmentPage() {
   const { user } = useAuth();
@@ -49,7 +50,6 @@ export default function AssignmentPage() {
   // Final Stats
   const [finalWpm, setFinalWpm] = useState(0);
   const [finalAccuracy, setFinalAccuracy] = useState(0);
-  const [finalMistakes, setFinalMistakes] = useState(0);
 
   const startTimer = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -79,98 +79,26 @@ export default function AssignmentPage() {
     stopTimer();
 
     const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
-    const finalUserInput = userInput.trim();
-    const typedWords = finalUserInput.split(/\s+/).filter(Boolean);
-    const wordsTypedCount = typedWords.length;
-    const finalWpmCalc = finalElapsedTime > 0 ? Math.round((wordsTypedCount / finalElapsedTime) * 60) : 0;
-
-    const originalWords = assignment.text.split(/\s+/).filter(Boolean);
-    const mistakes: Mistake[] = [];
-    let correctChars = 0;
-    let originalIndex = 0;
-    let typedIndex = 0;
-
-    while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
-        const originalWord = originalWords[originalIndex];
-        const typedWord = typedWords[typedIndex];
-
-        if (originalIndex >= originalWords.length) {
-            // User typed extra words
-            mistakes.push({ expected: '', actual: typedWord, position: userInput.length - 1 });
-            typedIndex++;
-            continue;
-        }
-
-        if (typedIndex >= typedWords.length) {
-            // User missed remaining words
-            mistakes.push({ expected: originalWord, actual: '', position: userInput.length });
-            originalIndex++;
-            continue;
-        }
-
-        if (originalWord === typedWord) {
-            correctChars += originalWord.length;
-            originalIndex++;
-            typedIndex++;
-        } else {
-            // Look ahead to find a synchronization point
-            let foundMatch = false;
-            for (let lookahead = 1; lookahead <= 5 && (originalIndex + lookahead) < originalWords.length; lookahead++) {
-                if (originalWords[originalIndex + lookahead] === typedWord) {
-                    // Words were skipped
-                    for (let i = 0; i < lookahead; i++) {
-                        mistakes.push({
-                            expected: originalWords[originalIndex + i],
-                            actual: '',
-                            position: userInput.indexOf(typedWord),
-                        });
-                    }
-                    originalIndex += lookahead;
-                    foundMatch = true;
-                    break;
-                }
-            }
-
-            if (foundMatch) {
-                // Now that we've synced, count the current word as correct
-                correctChars += typedWord.length;
-                originalIndex++;
-                typedIndex++;
-            } else {
-                // No sync point found, it's a misspelling or an extra word.
-                // For simplicity, we treat it as a misspelling of the original word.
-                mistakes.push({
-                    expected: originalWord,
-                    actual: typedWord,
-                    position: userInput.indexOf(typedWord),
-                });
-                originalIndex++;
-                typedIndex++;
-            }
-        }
-    }
     
-    const totalPossibleChars = assignment.text.replace(/\s+/g, ' ').length;
-    const finalAccuracyCalc = totalPossibleChars > 0 ? (correctChars / totalPossibleChars) * 100 : 0;
-    
-    setFinalWpm(finalWpmCalc);
-    setFinalAccuracy(finalAccuracyCalc);
-    setFinalMistakes(mistakes.length);
+    const results = evaluateTyping(assignment.text, userInput, finalElapsedTime);
+
+    setFinalWpm(results.wpm);
+    setFinalAccuracy(results.accuracy);
 
     try {
         await createScore({
             assignmentId: assignment.id,
             completedAt: new Date().toISOString(),
-            wpm: finalWpmCalc,
-            accuracy: Math.max(0, finalAccuracyCalc),
-            mistakes: mistakes,
-            timeElapsed: finalElapsedTime,
-            userInput: finalUserInput,
+            wpm: results.wpm,
+            accuracy: results.accuracy,
+            mistakes: results.mistakes,
+            timeElapsed: results.timeElapsed,
+            userInput: results.userInput,
         });
       
         toast({
             title: "Assignment Submitted!",
-            description: `Your score: ${finalWpmCalc} WPM at ${Math.max(0, finalAccuracyCalc).toFixed(1)}% accuracy.`,
+            description: `Your score: ${results.wpm} WPM at ${results.accuracy.toFixed(1)}% accuracy.`,
         });
 
         setIsFinished(true);
@@ -312,5 +240,3 @@ export default function AssignmentPage() {
     </div>
   );
 }
-
-    
