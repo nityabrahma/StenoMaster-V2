@@ -9,10 +9,17 @@ export interface EvaluationResult {
     userInput: string;
 }
 
-export interface WordDiff {
+export type CharDiff = {
+    char: string;
+    status: 'correct' | 'incorrect' | 'extra' | 'missing';
+};
+
+export type WordDiff = {
     word: string;
-    status: 'correct' | 'incorrect' | 'skipped' | 'extra' | 'whitespace';
-}
+    charDiffs?: CharDiff[];
+    status: 'correct' | 'incorrect' | 'skipped' | 'extra' | 'whitespace' | 'pending';
+};
+
 
 /**
  * Calculates typing metrics (WPM, accuracy, mistakes) using an intelligent diffing algorithm.
@@ -149,109 +156,88 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
 
 /**
  * Generates a visual diff array to show differences between original text and user input.
- * This function uses a robust algorithm to handle skipped/extra words.
+ * This version handles skipped/extra words and character-level differences.
  * @param originalText The correct text.
  * @param userInput The text typed by the user.
  * @returns An array of WordDiff objects.
  */
 export function generateWordDiff(originalText: string, userInput: string): WordDiff[] {
-    const originalWords = originalText.trim().split(/(\s+)/).filter(Boolean);
-    const typedWords = userInput.trim().split(/(\s+)/).filter(Boolean);
+    const originalWords = originalText.split(/(\s+)/).filter(Boolean);
+    const typedWords = userInput.split(/(\s+)/).filter(Boolean);
     const diff: WordDiff[] = [];
-    
-    let originalIndex = 0;
-    let typedIndex = 0;
-    const lookahead = 5;
 
-    while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
-        const oWord = originalWords[originalIndex];
-        const tWord = typedWords[typedIndex];
+    let oIndex = 0;
+    let tIndex = 0;
 
-        if (oWord === undefined && tWord === undefined) break;
+    while (oIndex < originalWords.length || tIndex < typedWords.length) {
+        const oWord = originalWords[oIndex];
+        const tWord = typedWords[tIndex];
 
-        // Handle whitespace in a uniform way
+        // Handle whitespace in original
         if (oWord && /\s+/.test(oWord)) {
             diff.push({ word: oWord, status: 'whitespace' });
-            originalIndex++;
-            // If typed word is also whitespace, consume it
+            oIndex++;
             if (tWord && /\s+/.test(tWord)) {
-                typedIndex++;
+                tIndex++;
             }
             continue;
         }
-        if (tWord && /\s+/.test(tWord)) {
-            // Original word is not whitespace, but typed is. This is an extra space.
+
+        // Handle extra whitespace in typed
+        if (tWord && /\s+/.test(tWord) && oWord && !/\s+/.test(oWord)) {
             diff.push({ word: tWord, status: 'extra' });
-            typedIndex++;
+            tIndex++;
             continue;
         }
 
-        // Main comparison logic
+        // End of one of the texts
+        if (!oWord && tWord) {
+            diff.push({ word: tWord, status: 'extra' });
+            tIndex++;
+            continue;
+        }
+        if (!tWord && oWord) {
+            diff.push({ word: oWord, status: 'pending' });
+            oIndex++;
+            continue;
+        }
+        if (!tWord && !oWord) {
+            break;
+        }
+
         if (oWord === tWord) {
             diff.push({ word: oWord, status: 'correct' });
-            originalIndex++;
-            typedIndex++;
-        } else if (oWord === undefined) {
-            diff.push({ word: tWord, status: 'extra' });
-            typedIndex++;
-        } else if (tWord === undefined) {
-            diff.push({ word: oWord, status: 'skipped' });
-            originalIndex++;
+            oIndex++;
+            tIndex++;
         } else {
-            // Mismatch, try to resync
-            let foundSyncInOriginal = -1;
-            for (let i = 1; i <= lookahead && originalIndex + i < originalWords.length; i++) {
-                if (originalWords[originalIndex + i] === tWord && !/\s+/.test(originalWords[originalIndex + i])) {
-                    foundSyncInOriginal = i;
-                    break;
+            const charDiffs: CharDiff[] = [];
+            let isIncorrect = false;
+            for (let i = 0; i < Math.max(oWord.length, tWord.length); i++) {
+                if (oWord[i] && tWord[i] && oWord[i] === tWord[i]) {
+                    charDiffs.push({ char: oWord[i], status: 'correct' });
+                } else if (oWord[i] && !tWord[i]) {
+                    charDiffs.push({ char: oWord[i], status: 'missing' });
+                    isIncorrect = true;
+                } else if (!oWord[i] && tWord[i]) {
+                    charDiffs.push({ char: tWord[i], status: 'extra' });
+                    isIncorrect = true;
+                } else {
+                    charDiffs.push({ char: oWord[i], status: 'incorrect' });
+                    isIncorrect = true;
                 }
             }
-
-            if (foundSyncInOriginal !== -1) {
-                // Words in between were skipped
-                for (let j = 0; j < foundSyncInOriginal; j++) {
-                    const skippedWord = originalWords[originalIndex + j];
-                    if (skippedWord && !/\s+/.test(skippedWord)) {
-                       diff.push({ word: skippedWord, status: 'skipped' });
-                    } else if (skippedWord) {
-                       diff.push({ word: skippedWord, status: 'whitespace' });
-                    }
-                }
-                originalIndex += foundSyncInOriginal;
-                // The current tWord will now match, let the next loop iteration handle it.
-                continue;
-            }
-            
-            // Check for extra words typed by the user
-            let foundSyncInTyped = -1;
-            for (let i = 1; i <= lookahead && typedIndex + i < typedWords.length; i++) {
-                if (oWord === typedWords[typedIndex + i] && !/\s+/.test(typedWords[typedIndex + i])) {
-                    foundSyncInTyped = i;
-                    break;
-                }
-            }
-
-            if (foundSyncInTyped !== -1) {
-                // Words in between were extra
-                for (let j = 0; j < foundSyncInTyped; j++) {
-                    const extraWord = typedWords[typedIndex + j];
-                    if (extraWord && !/\s+/.test(extraWord)) {
-                        diff.push({ word: extraWord, status: 'extra' });
-                    }
-                }
-                typedIndex += foundSyncInTyped;
-                // The current oWord will now match, let the next loop iteration handle it.
-                continue;
-            }
-
-            // No sync found, it's an incorrect word
-            diff.push({ word: oWord, status: 'incorrect' });
-            // To provide better feedback, we can also show what the user typed instead.
-            // However, the current model displays the original text with annotations.
-            // So we mark the original as incorrect and advance both pointers.
-            originalIndex++;
-            typedIndex++;
+            diff.push({ word: oWord, status: 'incorrect', charDiffs });
+            oIndex++;
+            tIndex++;
         }
     }
+
+    // Append any remaining original words as pending
+    while (oIndex < originalWords.length) {
+        const word = originalWords[oIndex];
+        diff.push({ word, status: /\s+/.test(word) ? 'whitespace' : 'pending' });
+        oIndex++;
+    }
+
     return diff;
 }

@@ -1,9 +1,10 @@
+
 'use client';
 import { useRef, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Mistake } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { generateWordDiff, WordDiff } from '@/lib/evaluation';
+import { generateWordDiff, WordDiff, CharDiff } from '@/lib/evaluation';
 
 export type SubmissionResult = {
   wpm: number;
@@ -23,6 +24,50 @@ type TypingTestProps = {
 };
 
 
+const RenderedWord = ({ wordDiff }: { wordDiff: WordDiff }) => {
+    const { status, word, charDiffs } = wordDiff;
+
+    if (status === 'whitespace') {
+        return <span> </span>;
+    }
+
+    let wordStyle = "text-muted-foreground"; // Default for pending words
+
+    if (status === 'correct') {
+        wordStyle = "text-green-400";
+    } else if (status === 'skipped') {
+        wordStyle = "bg-gray-500/30 text-gray-400 rounded-sm";
+    }
+
+    if (status === 'incorrect' && charDiffs) {
+        return (
+            <span>
+                {charDiffs.map((charDiff, index) => {
+                    let className = '';
+                    switch (charDiff.status) {
+                        case 'correct':
+                            className = 'text-green-400';
+                            break;
+                        case 'incorrect':
+                            className = 'bg-red-500/20 text-red-400';
+                            break;
+                        case 'extra':
+                            className = 'bg-yellow-500/20 text-yellow-400';
+                            break;
+                        case 'missing':
+                             return <span key={index} className="bg-red-500/20 text-red-400 line-through">{charDiff.char}</span>
+                    }
+                    return <span key={index} className={className}>{charDiff.char}</span>;
+                })}
+                {' '}
+            </span>
+        )
+    }
+
+    return <span className={wordStyle}>{word}{' '}</span>;
+};
+
+
 export default function TypingTest({ 
     text, 
     userInput, 
@@ -39,10 +84,8 @@ export default function TypingTest({
     }
   }, [isStarted, isFinished]);
   
-  useEffect(() => {
-    // Reset user input when the text changes for a new practice test
-    onUserInputChange('');
-  }, [text, onUserInputChange]);
+  // This effect is not needed anymore with the new logic,
+  // as the diffing handles the current input state.
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isStarted || isFinished) return;
@@ -50,61 +93,19 @@ export default function TypingTest({
     let value = e.target.value;
     onUserInputChange(value);
 
-    // Completion condition can be based on length or a specific key press
-    // For now, let's keep it simple.
-    if (value.length >= text.length) {
-      onComplete();
-    }
+    // Completion condition is handled by the submit button now.
   };
   
 const renderedText = useMemo(() => {
     const diffs = generateWordDiff(text, userInput);
-    let typedIndex = 0;
-    
-    const elements = diffs.map((diff, index) => {
-        let className = '';
-        let currentWordLength = diff.word.length;
-
-        switch (diff.status) {
-            case 'correct':
-                className = 'text-green-400';
-                typedIndex += currentWordLength;
-                break;
-            case 'incorrect':
-                className = 'text-red-400 bg-red-500/20';
-                typedIndex += currentWordLength;
-                break;
-            case 'skipped':
-                 className = 'text-gray-400 underline decoration-red-500 decoration-2';
-                 break;
-            case 'extra':
-                className = 'text-yellow-400 bg-yellow-500/20';
-                // Extra words don't advance the original text index
-                break;
-            case 'whitespace':
-                typedIndex += currentWordLength;
-                return <span key={`diff-${index}`}>{diff.word}</span>;
-            default:
-                break;
-        }
-        return <span key={`diff-${index}`} className={cn("rounded-sm", className)}>{diff.word}</span>
-    });
-
-    // Manually add cursor if needed
-    // This is a simplified representation. A more complex one would split words to place the cursor mid-word.
-    if (isStarted && !isFinished && userInput.length < text.length) {
-      // This is a naive cursor implementation. For a real cursor, we'd need to manipulate the DOM more directly
-      // or split the word where the cursor is.
-    }
-
-    return elements;
-}, [text, userInput, isStarted, isFinished]);
+    return diffs.map((diff, index) => <RenderedWord key={index} wordDiff={diff} />);
+}, [text, userInput]);
 
 
   return (
     <Card className="relative" onClick={() => inputRef.current?.focus()}>
       <CardContent className="p-6">
-        <div className="font-code text-lg leading-relaxed tracking-wider whitespace-pre-wrap">
+        <div className="font-code text-lg leading-relaxed tracking-wider">
           {renderedText}
         </div>
         <input

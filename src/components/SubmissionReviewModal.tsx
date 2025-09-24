@@ -14,33 +14,53 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
-import { generateWordDiff, WordDiff } from '@/lib/evaluation';
+import { generateWordDiff, WordDiff, CharDiff } from '@/lib/evaluation';
 import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
 
-const renderTextWithDiff = (diffs: WordDiff[]) => {
-    return diffs.map((diff, index) => {
-        let className = '';
-        switch (diff.status) {
-            case 'correct':
-                className = 'text-green-400';
-                break;
-            case 'incorrect':
-                className = 'bg-red-500/20 text-red-400 line-through';
-                break;
-            case 'skipped':
-                className = 'bg-gray-500/30 text-gray-400 rounded-sm underline decoration-dotted';
-                break;
-            case 'extra':
-                className = 'bg-yellow-500/20 text-yellow-400 rounded-sm';
-                break;
-            case 'whitespace':
-                return <span key={`diff-${index}`}>{diff.word}</span>;
-            default:
-                break;
-        }
-        return <span key={`diff-${index}`} className={className}>{diff.word}</span>
-    });
-};
+
+const renderWord = (wordDiff: WordDiff, index: number) => {
+    if (wordDiff.status === 'whitespace') {
+        return <span key={index}> </span>;
+    }
+    if (wordDiff.status === 'correct') {
+        return <span key={index} className="text-green-400">{wordDiff.word}{' '}</span>;
+    }
+    if (wordDiff.status === 'skipped') {
+        return <span key={index} className="bg-gray-500/30 text-gray-400 rounded-sm">{wordDiff.word}{' '}</span>;
+    }
+    if (wordDiff.status === 'extra') {
+         return <span key={index} className="bg-yellow-500/20 text-yellow-400 rounded-sm">{wordDiff.word}{' '}</span>;
+    }
+
+    // Handle incorrect with char-level diff
+    if (wordDiff.status === 'incorrect' && wordDiff.charDiffs) {
+        return (
+            <span key={index}>
+                {wordDiff.charDiffs.map((charDiff, charIndex) => {
+                    let className = '';
+                    switch (charDiff.status) {
+                        case 'correct':
+                            className = 'text-green-400';
+                            break;
+                        case 'incorrect':
+                            className = 'bg-red-500/20 text-red-400';
+                            break;
+                        case 'extra':
+                            className = 'bg-yellow-500/20 text-yellow-400';
+                            break;
+                        case 'missing':
+                             return <span key={charIndex} className="bg-red-500/20 text-red-400 line-through">{charDiff.char}</span>
+                    }
+                    return <span key={charIndex} className={className}>{charDiff.char}</span>;
+                })}
+                {' '}
+            </span>
+        );
+    }
+
+    return <span key={index}>{wordDiff.word}{' '}</span>
+}
 
 
 interface SubmissionReviewModalProps {
@@ -110,7 +130,7 @@ export default function SubmissionReviewModal({
                 <Card className="flex-1 bg-background/80 overflow-y-auto">
                     <CardContent className="p-4">
                         <p className="font-code text-base leading-relaxed whitespace-pre-wrap">
-                        {renderTextWithDiff(wordDiffs)}
+                            {wordDiffs.map(renderWord)}
                         </p>
                     </CardContent>
                 </Card>
@@ -126,13 +146,11 @@ export default function SubmissionReviewModal({
                                 <ul className="space-y-3">
                                     {score.mistakes.map((mistake, index) => (
                                         <li key={index} className="text-sm border-b border-border/50 pb-2">
-                                            {mistake.actual === '' && (
-                                                <p><span className="font-semibold text-yellow-400">Skipped:</span> "{mistake.expected}"</p>
-                                            )}
-                                            {mistake.expected === '' && (
-                                                 <p><span className="font-semibold text-orange-400">Extra Word:</span> "{mistake.actual}"</p>
-                                            )}
-                                            {mistake.expected !== '' && mistake.actual !== '' && (
+                                            {mistake.actual === '' ? (
+                                                <p><span className="font-semibold text-gray-400">Skipped:</span> "{mistake.expected}"</p>
+                                            ) : mistake.expected === '' ? (
+                                                 <p><span className="font-semibold text-yellow-400">Extra Word:</span> "{mistake.actual}"</p>
+                                            ) : (
                                                 <p><span className="font-semibold text-red-400">Incorrect:</span> You typed "{mistake.actual}" instead of "{mistake.expected}"</p>
                                             )}
                                         </li>
