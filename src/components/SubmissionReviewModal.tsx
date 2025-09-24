@@ -19,47 +19,45 @@ import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 
+const renderCharDiffs = (charDiffs: CharDiff[], word: string, wordIndex: number) => {
+    return (
+        <span key={wordIndex}>
+            {charDiffs.map((charDiff, charIndex) => {
+                const key = `${wordIndex}-${charIndex}`;
+                switch (charDiff.status) {
+                    case 'correct':
+                        return <span key={key} className="text-green-400">{charDiff.char}</span>;
+                    case 'incorrect':
+                        return <span key={key} className="text-red-400 bg-red-500/20">{charDiff.char}</span>;
+                    case 'extra':
+                        return <span key={key} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}</span>;
+                    case 'missing':
+                        return <span key={key} className="text-red-400 bg-red-500/20 line-through">{charDiff.char}</span>;
+                }
+            })}
+            {' '}
+        </span>
+    )
+}
+
 const renderWord = (wordDiff: WordDiff, index: number) => {
-    if (wordDiff.status === 'whitespace') {
-        return <span key={index}> </span>;
+    switch (wordDiff.status) {
+        case 'correct':
+            return <span key={index} className="text-green-400">{wordDiff.word}{' '}</span>;
+        case 'skipped':
+            return <span key={index} className="bg-gray-500/30 text-gray-400 rounded-sm">{wordDiff.word}{' '}</span>;
+        case 'extra':
+             return <span key={index} className="bg-yellow-500/20 text-yellow-400 rounded-sm">{wordDiff.word}{' '}</span>;
+        case 'incorrect':
+            if (wordDiff.charDiffs) {
+                return renderCharDiffs(wordDiff.charDiffs, wordDiff.word, index);
+            }
+            return <span key={index} className="text-red-400 bg-red-500/20">{wordDiff.word} </span>;
+        case 'whitespace':
+            return <span key={index}> </span>;
+        default:
+            return <span key={index}>{wordDiff.word} </span>;
     }
-    if (wordDiff.status === 'correct') {
-        return <span key={index} className="text-green-400">{wordDiff.word}{' '}</span>;
-    }
-    if (wordDiff.status === 'skipped') {
-        return <span key={index} className="bg-gray-500/30 text-gray-400 rounded-sm">{wordDiff.word}{' '}</span>;
-    }
-    if (wordDiff.status === 'extra') {
-         return <span key={index} className="bg-yellow-500/20 text-yellow-400 rounded-sm">{wordDiff.word}{' '}</span>;
-    }
-
-    // Handle incorrect with char-level diff
-    if (wordDiff.status === 'incorrect' && wordDiff.charDiffs) {
-        return (
-            <span key={index}>
-                {wordDiff.charDiffs.map((charDiff, charIndex) => {
-                    let className = '';
-                    switch (charDiff.status) {
-                        case 'correct':
-                            className = 'text-green-400';
-                            break;
-                        case 'incorrect':
-                            className = 'bg-red-500/20 text-red-400';
-                            break;
-                        case 'extra':
-                            className = 'bg-yellow-500/20 text-yellow-400';
-                            break;
-                        case 'missing':
-                             return <span key={charIndex} className="bg-red-500/20 text-red-400 line-through">{charDiff.char}</span>
-                    }
-                    return <span key={charIndex} className={className}>{charDiff.char}</span>;
-                })}
-                {' '}
-            </span>
-        );
-    }
-
-    return <span key={index}>{wordDiff.word}{' '}</span>
 }
 
 
