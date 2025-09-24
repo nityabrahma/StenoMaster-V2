@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,7 +26,6 @@ export default function TypingTestPage() {
     const [isStarted, setIsStarted] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isInputBlocked, setIsInputBlocked] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -67,7 +65,6 @@ export default function TypingTestPage() {
         setStartTime(null);
         setElapsedTime(0);
         setUserInput('');
-        setIsInputBlocked(false);
         if(nextIndex !== undefined) {
             setCurrentTextIndex(nextIndex);
         } else {
@@ -96,48 +93,56 @@ export default function TypingTestPage() {
         const originalWords = currentTestText.split(/\s+/).filter(Boolean);
         const finalMistakes: Mistake[] = [];
         let correctChars = 0;
-        let typedWordIndex = 0;
-        let originalWordIndex = 0;
-        let currentInputPos = 0;
+        
+        let typedIndex = 0;
+        let originalIndex = 0;
 
-        while (typedWordIndex < typedWords.length && originalWordIndex < originalWords.length) {
-            const typedWord = typedWords[typedWordIndex];
-            const originalWord = originalWords[originalWordIndex];
-            
-            const searchPos = trimmedUserInput.indexOf(typedWord, currentInputPos);
-            const position = searchPos !== -1 ? searchPos : currentInputPos;
-    
+        while (typedIndex < typedWords.length && originalIndex < originalWords.length) {
+            const typedWord = typedWords[typedIndex];
+            const originalWord = originalWords[originalIndex];
+
             if (typedWord === originalWord) {
-                correctChars += originalWord.length;
-                typedWordIndex++;
-                originalWordIndex++;
+                correctChars += originalWord.length; // +1 for the space
+                originalIndex++;
+                typedIndex++;
             } else {
+                // Look ahead in original text to see if we skipped a word
                 let foundMatch = false;
-                for (let i = 1; i <= 2 && originalWordIndex + i < originalWords.length; i++) {
-                    if (typedWord === originalWords[originalWordIndex + i]) {
+                for (let i = 1; i <= 2 && originalIndex + i < originalWords.length; i++) {
+                    if (typedWord === originalWords[originalIndex + i]) {
+                        // Words from originalIndex to originalIndex + i - 1 were skipped
                         for (let j = 0; j < i; j++) {
-                            finalMistakes.push({ expected: originalWords[originalWordIndex + j], actual: '', position });
+                            finalMistakes.push({
+                                expected: originalWords[originalIndex + j],
+                                actual: '[skipped]',
+                                position: -1, // Position tracking is complex, simplify for now
+                            });
                         }
                         correctChars += typedWord.length;
-                        originalWordIndex += (i + 1);
-                        typedWordIndex++;
+                        originalIndex += (i + 1);
+                        typedIndex++;
                         foundMatch = true;
                         break;
                     }
                 }
-    
+
                 if (!foundMatch) {
-                    finalMistakes.push({ expected: originalWord, actual: typedWord, position });
-                    originalWordIndex++;
-                    typedWordIndex++;
+                    // It's a simple misspelling or extra word
+                    finalMistakes.push({
+                        expected: originalWord,
+                        actual: typedWord,
+                        position: -1,
+                    });
+                    originalIndex++;
+                    typedIndex++;
                 }
             }
-            currentInputPos = position + typedWord.length;
         }
     
-        if (originalWordIndex < originalWords.length) {
-            for (let i = originalWordIndex; i < originalWords.length; i++) {
-                finalMistakes.push({ expected: originalWords[i], actual: '', position: trimmedUserInput.length });
+        // Add any remaining original words as skipped
+        if (originalIndex < originalWords.length) {
+            for (let i = originalIndex; i < originalWords.length; i++) {
+                finalMistakes.push({ expected: originalWords[i], actual: '[skipped]', position: -1 });
             }
         }
         
@@ -233,12 +238,6 @@ export default function TypingTestPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {isInputBlocked && (
-                        <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive-foreground rounded-md text-sm flex items-center gap-2">
-                            <AlertCircle className="h-5 w-5 text-destructive" />
-                            <span>Correct your mistake to continue. You seem to have skipped a word.</span>
-                        </div>
-                    )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                         <Card className='bg-card/50'>
                             <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
@@ -285,8 +284,6 @@ export default function TypingTestPage() {
                         isStarted={isStarted}
                         isFinished={isFinished}
                         onComplete={() => handleComplete(userInput)}
-                        strict={true}
-                        setIsInputBlocked={setIsInputBlocked}
                     />
                 </CardContent>
             </Card>
