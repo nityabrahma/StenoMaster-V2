@@ -82,61 +82,83 @@ export default function TypingTestPage() {
 
     const handleComplete = useCallback(async (finalUserInput: string) => {
         if (!user || isFinished || isSubmitting) return;
-
+    
         setIsSubmitting(true);
         stopTimer();
         setIsFinished(true);
-
+    
         const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
-        const wordsTypedCount = finalUserInput.trim().split(/\s+/).length;
+        const trimmedUserInput = finalUserInput.trim();
+        const typedWords = trimmedUserInput.split(/\s+/).filter(Boolean);
+        const wordsTypedCount = typedWords.length;
         const finalWpm = finalElapsedTime > 0 ? Math.round((wordsTypedCount / finalElapsedTime) * 60) : 0;
         
-        const originalWords = currentTestText.split(/\s+/);
-        const typedWords = finalUserInput.trim().split(/\s+/);
-        let correctWordChars = 0;
+        const originalWords = currentTestText.split(/\s+/).filter(Boolean);
         const finalMistakes: Mistake[] = [];
+        let correctChars = 0;
+        let typedWordIndex = 0;
         let originalWordIndex = 0;
+        let currentInputPos = 0;
 
-        for (let i = 0; i < typedWords.length; i++) {
-            if (originalWordIndex >= originalWords.length) break;
-
-            const typedWord = typedWords[i];
+        while (typedWordIndex < typedWords.length && originalWordIndex < originalWords.length) {
+            const typedWord = typedWords[typedWordIndex];
             const originalWord = originalWords[originalWordIndex];
             
-            let position = finalUserInput.indexOf(typedWord, (finalMistakes.at(-1)?.position ?? -1) + 1);
-
+            const searchPos = trimmedUserInput.indexOf(typedWord, currentInputPos);
+            const position = searchPos !== -1 ? searchPos : currentInputPos;
+    
             if (typedWord === originalWord) {
-                correctWordChars += typedWord.length;
+                correctChars += originalWord.length;
+                typedWordIndex++;
                 originalWordIndex++;
             } else {
-                 if (originalWordIndex + 1 < originalWords.length && typedWord === originalWords[originalWordIndex + 1]) {
-                    finalMistakes.push({ expected: originalWord, actual: '', position });
-                    correctWordChars += typedWord.length;
-                    originalWordIndex += 2;
-                } else {
+                let foundMatch = false;
+                for (let i = 1; i <= 2 && originalWordIndex + i < originalWords.length; i++) {
+                    if (typedWord === originalWords[originalWordIndex + i]) {
+                        for (let j = 0; j < i; j++) {
+                            finalMistakes.push({ expected: originalWords[originalWordIndex + j], actual: '', position });
+                        }
+                        correctChars += typedWord.length;
+                        originalWordIndex += (i + 1);
+                        typedWordIndex++;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+    
+                if (!foundMatch) {
                     finalMistakes.push({ expected: originalWord, actual: typedWord, position });
                     originalWordIndex++;
+                    typedWordIndex++;
                 }
+            }
+            currentInputPos = position + typedWord.length;
+        }
+    
+        if (originalWordIndex < originalWords.length) {
+            for (let i = originalWordIndex; i < originalWords.length; i++) {
+                finalMistakes.push({ expected: originalWords[i], actual: '', position: trimmedUserInput.length });
             }
         }
         
-        const finalAccuracy = finalUserInput.length > 0 ? (correctWordChars / finalUserInput.length) * 100 : 0;
-
+        const totalPossibleChars = currentTestText.length;
+        const finalAccuracy = totalPossibleChars > 0 ? (correctChars / totalPossibleChars) * 100 : 0;
+    
         const result: Omit<Score, 'id' | 'studentId'> = {
             assignmentId: `practice-${currentTestId}`,
             completedAt: new Date().toISOString(),
             wpm: finalWpm,
-            accuracy: finalAccuracy,
+            accuracy: Math.max(0, finalAccuracy),
             mistakes: finalMistakes,
             timeElapsed: finalElapsedTime,
-            userInput: finalUserInput
+            userInput: trimmedUserInput
         };
-
+    
         try {
             await createScore(result);
             toast({
                 title: "Practice Complete!",
-                description: `Your score: ${finalWpm} WPM at ${finalAccuracy.toFixed(1)}% accuracy.`,
+                description: `Your score: ${finalWpm} WPM at ${Math.max(0, finalAccuracy).toFixed(1)}% accuracy.`,
             });
             resetTest();
         } catch (error: any) {

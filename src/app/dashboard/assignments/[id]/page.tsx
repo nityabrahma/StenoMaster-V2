@@ -79,49 +79,78 @@ export default function AssignmentPage() {
     stopTimer();
 
     const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
-    const wordsTyped = userInput.trim().split(/\s+/).length;
-    const finalWpmCalc = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
+    const finalUserInput = userInput.trim();
+    const typedWords = finalUserInput.split(/\s+/).filter(Boolean);
+    const wordsTypedCount = typedWords.length;
+    const finalWpmCalc = finalElapsedTime > 0 ? Math.round((wordsTypedCount / finalElapsedTime) * 60) : 0;
 
+    const originalWords = assignment.text.split(/\s+/).filter(Boolean);
     const mistakes: Mistake[] = [];
-    const originalWords = assignment.text.split(/\s+/);
-    const typedWords = userInput.trim().split(/\s+/);
     let correctChars = 0;
+    let typedWordIndex = 0;
     let originalWordIndex = 0;
+    let currentInputPos = 0;
 
-    for (let i = 0; i < typedWords.length; i++) {
-        if (originalWordIndex >= originalWords.length) break;
-
-        const typedWord = typedWords[i];
+    while (typedWordIndex < typedWords.length && originalWordIndex < originalWords.length) {
+        const typedWord = typedWords[typedWordIndex];
         const originalWord = originalWords[originalWordIndex];
-        
-        let position = userInput.indexOf(typedWord, (mistakes.at(-1)?.position ?? -1) + 1);
+
+        // Find the start position of the current typed word in the user's input string
+        const searchPos = userInput.indexOf(typedWord, currentInputPos);
+        const position = searchPos !== -1 ? searchPos : currentInputPos;
 
         if (typedWord === originalWord) {
-            correctChars += typedWord.length;
+            correctChars += originalWord.length;
+            typedWordIndex++;
             originalWordIndex++;
         } else {
-            // Check if user skipped a word
-            if (originalWordIndex + 1 < originalWords.length && typedWord === originalWords[originalWordIndex + 1]) {
-                 mistakes.push({
-                    expected: originalWord,
-                    actual: '', // Missed word
-                    position: position
-                });
-                correctChars += typedWord.length; // The current typed word is correct for the *next* original word
-                originalWordIndex += 2; // Skip the missed original and the matched original
-            } else {
+            // Look ahead in original text to see if we skipped a word
+            let foundMatch = false;
+            for (let i = 1; i <= 2 && originalWordIndex + i < originalWords.length; i++) {
+                if (typedWord === originalWords[originalWordIndex + i]) {
+                    // Words were skipped
+                    for (let j = 0; j < i; j++) {
+                        mistakes.push({
+                            expected: originalWords[originalWordIndex + j],
+                            actual: '', // Empty string indicates a skipped word
+                            position: position, // Position of where the skip happened
+                        });
+                    }
+                    correctChars += typedWord.length;
+                    originalWordIndex += (i + 1);
+                    typedWordIndex++;
+                    foundMatch = true;
+                    break;
+                }
+            }
+
+            if (!foundMatch) {
+                // It's a simple misspelling
                 mistakes.push({
                     expected: originalWord,
                     actual: typedWord,
                     position: position,
                 });
+                // In a simple misspelling, we can still count correct characters if we want.
+                // For simplicity, we can say if misspelled, no chars are correct for that word.
+                // Or a more complex char-by-char diff could be done here.
+                // Let's assume the word is just wrong for now.
                 originalWordIndex++;
+                typedWordIndex++;
             }
+        }
+        currentInputPos = position + typedWord.length;
+    }
+    
+    // Add any remaining original words as skipped
+    if (originalWordIndex < originalWords.length) {
+        for (let i = originalWordIndex; i < originalWords.length; i++) {
+            mistakes.push({ expected: originalWords[i], actual: '', position: userInput.length });
         }
     }
 
-
-    const finalAccuracyCalc = userInput.length > 0 ? (correctChars / userInput.length) * 100 : 0;
+    const totalPossibleChars = assignment.text.length;
+    const finalAccuracyCalc = totalPossibleChars > 0 ? (correctChars / totalPossibleChars) * 100 : 0;
     
     setFinalWpm(finalWpmCalc);
     setFinalAccuracy(finalAccuracyCalc);
@@ -132,15 +161,15 @@ export default function AssignmentPage() {
             assignmentId: assignment.id,
             completedAt: new Date().toISOString(),
             wpm: finalWpmCalc,
-            accuracy: finalAccuracyCalc,
+            accuracy: Math.max(0, finalAccuracyCalc), // Ensure accuracy isn't negative
             mistakes: mistakes,
             timeElapsed: finalElapsedTime,
-            userInput: userInput,
+            userInput: finalUserInput,
         });
       
         toast({
             title: "Assignment Submitted!",
-            description: `Your score: ${finalWpmCalc} WPM at ${finalAccuracyCalc.toFixed(1)}% accuracy.`,
+            description: `Your score: ${finalWpmCalc} WPM at ${Math.max(0, finalAccuracyCalc).toFixed(1)}% accuracy.`,
         });
 
         setIsFinished(true);
