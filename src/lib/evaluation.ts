@@ -1,6 +1,4 @@
 
-'use server';
-
 import type { Mistake } from './types';
 
 export interface EvaluationResult {
