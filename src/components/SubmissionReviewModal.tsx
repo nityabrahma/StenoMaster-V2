@@ -26,39 +26,61 @@ interface SubmissionReviewModalProps {
 
 
 const renderTextWithDiff = (originalText: string, userInput: string) => {
-    const originalWords = originalText.split(' ');
-    const typedWords = userInput.split(' ');
+    const originalWords = originalText.split(/(\s+)/); // Split by space but keep delimiters
+    const typedWords = userInput.split(/(\s+)/);
     const diff: React.ReactNode[] = [];
     let originalIndex = 0;
     let typedIndex = 0;
 
-    while(originalIndex < originalWords.length || typedIndex < typedWords.length) {
+    while (originalIndex < originalWords.length) {
         const originalWord = originalWords[originalIndex];
         const typedWord = typedWords[typedIndex];
 
-        if (originalIndex < originalWords.length && originalWord === typedWord) {
+        // If it's a whitespace delimiter, just add it and move on.
+        if (/\s+/.test(originalWord)) {
+            diff.push(<span key={`space-o-${originalIndex}`}>{originalWord}</span>);
+            originalIndex++;
+            if (typedIndex < typedWords.length && /\s+/.test(typedWords[typedIndex])) {
+                typedIndex++;
+            }
+            continue;
+        }
+
+        if (typedIndex >= typedWords.length) {
+            // Missed remaining original words
+            diff.push(<span key={`missed-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord}</span>);
+            originalIndex++;
+            continue;
+        }
+
+        if (originalWord === typedWord) {
             // Correct word
-            diff.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord} </span>);
+            diff.push(<span key={`correct-${originalIndex}`} className="text-green-400">{originalWord}</span>);
             originalIndex++;
             typedIndex++;
-        } else if (originalIndex < originalWords.length && typedIndex < typedWords.length) {
+        } else if (originalIndex + 2 < originalWords.length && originalWords[originalIndex + 2] === typedWord) {
+            // Skipped a word
+            diff.push(<span key={`skipped-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord}</span>);
+            diff.push(<span key={`space-s-${originalIndex}`}>{originalWords[originalIndex + 1]}</span>);
+            diff.push(<span key={`correct-skip-${originalIndex + 2}`} className="text-green-400">{originalWords[originalIndex + 2]}</span>);
+            originalIndex += 3;
+            typedIndex++;
+        } else {
             // Incorrect word
-            diff.push(
-              <span key={`incorrect-${originalIndex}`}>
-                <span className="text-red-400 bg-red-500/20 rounded-sm line-through">{typedWord}</span>
-                <span className="text-green-400">({originalWord}) </span>
-              </span>
-            );
+             diff.push(<span key={`incorrect-${typedIndex}`} className="text-red-400 bg-red-500/20 rounded-sm line-through">{typedWord || '___'}</span>);
             originalIndex++;
             typedIndex++;
-        } else if (typedIndex < typedWords.length) {
-            // Extra word
-            diff.push(<span key={`extra-${typedIndex}`} className="text-yellow-400 bg-yellow-500/20 rounded-sm">{typedWord} </span>);
-            typedIndex++;
-        } else if (originalIndex < originalWords.length) {
-            // Missed word
-            diff.push(<span key={`missed-${originalIndex}`} className="text-gray-500 bg-gray-500/20 rounded-sm">{originalWord} </span>);
-            originalIndex++;
+        }
+    }
+
+     // Add any extra words the user typed
+    if (typedIndex < typedWords.length) {
+        for (let i = typedIndex; i < typedWords.length; i++) {
+             if (/\s+/.test(typedWords[i])) {
+                diff.push(<span key={`extra-space-${i}`}>{typedWords[i]}</span>);
+                continue;
+            }
+            diff.push(<span key={`extra-${i}`} className="text-yellow-400 bg-yellow-500/20 rounded-sm">{typedWords[i]}</span>);
         }
     }
     

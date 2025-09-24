@@ -83,22 +83,43 @@ export default function AssignmentPage() {
     const finalWpmCalc = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
 
     const mistakes: Mistake[] = [];
-    const originalWords = assignment.text.split(' ');
-    const typedWords = userInput.split(' ');
-
-    const maxLength = Math.max(originalWords.length, typedWords.length);
+    const originalWords = assignment.text.split(/\s+/);
+    const typedWords = userInput.trim().split(/\s+/);
     let correctChars = 0;
-    for (let i = 0; i < assignment.text.length; i++) {
-        if(userInput[i] && userInput[i] === assignment.text[i]) {
-            correctChars++;
-        } else if (userInput[i]) {
-             mistakes.push({
-                expected: assignment.text[i],
-                actual: userInput[i],
-                position: i
-            });
+    let originalWordIndex = 0;
+
+    for (let i = 0; i < typedWords.length; i++) {
+        if (originalWordIndex >= originalWords.length) break;
+
+        const typedWord = typedWords[i];
+        const originalWord = originalWords[originalWordIndex];
+        
+        let position = userInput.indexOf(typedWord, (mistakes.at(-1)?.position ?? -1) + 1);
+
+        if (typedWord === originalWord) {
+            correctChars += typedWord.length;
+            originalWordIndex++;
+        } else {
+            // Check if user skipped a word
+            if (originalWordIndex + 1 < originalWords.length && typedWord === originalWords[originalWordIndex + 1]) {
+                 mistakes.push({
+                    expected: originalWord,
+                    actual: '', // Missed word
+                    position: position
+                });
+                correctChars += typedWord.length; // The current typed word is correct for the *next* original word
+                originalWordIndex += 2; // Skip the missed original and the matched original
+            } else {
+                mistakes.push({
+                    expected: originalWord,
+                    actual: typedWord,
+                    position: position,
+                });
+                originalWordIndex++;
+            }
         }
     }
+
 
     const finalAccuracyCalc = userInput.length > 0 ? (correctChars / userInput.length) * 100 : 0;
     

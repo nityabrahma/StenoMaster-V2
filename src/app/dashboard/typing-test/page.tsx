@@ -12,7 +12,7 @@ import { useDataStore } from '@/hooks/use-data-store';
 import { useAuth } from '@/hooks/use-auth';
 import PracticeTestsModal from '@/components/PracticeTestsModal';
 import SubmissionReviewModal from '@/components/SubmissionReviewModal';
-import type { Assignment, Score } from '@/lib/types';
+import type { Assignment, Score, Mistake } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 export default function TypingTestPage() {
@@ -88,22 +88,43 @@ export default function TypingTestPage() {
         setIsFinished(true);
 
         const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
-        const wordsTyped = finalUserInput.length / 5;
-        const finalWpm = finalElapsedTime > 0 ? Math.round((wordsTyped / finalElapsedTime) * 60) : 0;
+        const wordsTypedCount = finalUserInput.trim().split(/\s+/).length;
+        const finalWpm = finalElapsedTime > 0 ? Math.round((wordsTypedCount / finalElapsedTime) * 60) : 0;
         
-        const finalMistakes: { expected: string; actual: string; position: number }[] = [];
-        finalUserInput.split('').forEach((char, index) => {
-            if (index < currentTestText.length && char !== currentTestText[index]) {
-                finalMistakes.push({
-                    expected: currentTestText[index],
-                    actual: char,
-                    position: index
-                });
-            }
-        });
-        const finalAccuracy = finalUserInput.length > 0 ? ((finalUserInput.length - finalMistakes.length) / finalUserInput.length) * 100 : 0;
+        const originalWords = currentTestText.split(/\s+/);
+        const typedWords = finalUserInput.trim().split(/\s+/);
+        let correctWordChars = 0;
+        const finalMistakes: Mistake[] = [];
+        let originalWordIndex = 0;
 
-        const result: Omit<Score, 'id' | 'studentId' | 'assignmentId' | 'completedAt'> = {
+        for (let i = 0; i < typedWords.length; i++) {
+            if (originalWordIndex >= originalWords.length) break;
+
+            const typedWord = typedWords[i];
+            const originalWord = originalWords[originalWordIndex];
+            
+            let position = finalUserInput.indexOf(typedWord, (finalMistakes.at(-1)?.position ?? -1) + 1);
+
+            if (typedWord === originalWord) {
+                correctWordChars += typedWord.length;
+                originalWordIndex++;
+            } else {
+                 if (originalWordIndex + 1 < originalWords.length && typedWord === originalWords[originalWordIndex + 1]) {
+                    finalMistakes.push({ expected: originalWord, actual: '', position });
+                    correctWordChars += typedWord.length;
+                    originalWordIndex += 2;
+                } else {
+                    finalMistakes.push({ expected: originalWord, actual: typedWord, position });
+                    originalWordIndex++;
+                }
+            }
+        }
+        
+        const finalAccuracy = finalUserInput.length > 0 ? (correctWordChars / finalUserInput.length) * 100 : 0;
+
+        const result: Omit<Score, 'id' | 'studentId'> = {
+            assignmentId: `practice-${currentTestId}`,
+            completedAt: new Date().toISOString(),
             wpm: finalWpm,
             accuracy: finalAccuracy,
             mistakes: finalMistakes,
@@ -112,11 +133,7 @@ export default function TypingTestPage() {
         };
 
         try {
-            await createScore({
-                assignmentId: `practice-${currentTestId}`,
-                completedAt: new Date().toISOString(),
-                ...result,
-            });
+            await createScore(result);
             toast({
                 title: "Practice Complete!",
                 description: `Your score: ${finalWpm} WPM at ${finalAccuracy.toFixed(1)}% accuracy.`,
