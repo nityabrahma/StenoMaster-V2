@@ -15,6 +15,7 @@ import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { generateWordDiff, WordDiff } from '@/lib/evaluation';
+import { ScrollArea } from './ui/scroll-area';
 
 const renderTextWithDiff = (diffs: WordDiff[]) => {
     return diffs.map((diff, index) => {
@@ -27,7 +28,7 @@ const renderTextWithDiff = (diffs: WordDiff[]) => {
                 className = 'bg-red-500/20 text-red-400 line-through';
                 break;
             case 'skipped':
-                className = 'bg-gray-500/30 text-gray-400 rounded-sm';
+                className = 'bg-gray-500/30 text-gray-400 rounded-sm underline decoration-dotted';
                 break;
             case 'extra':
                 className = 'bg-yellow-500/20 text-yellow-400 rounded-sm';
@@ -63,7 +64,7 @@ export default function SubmissionReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl w-full">
+      <DialogContent className="max-w-4xl w-full">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">
             Review: {assignment.title}
@@ -103,15 +104,49 @@ export default function SubmissionReviewModal({
             </Card>
         </div>
 
-        <Card className="max-h-[40vh] overflow-y-auto bg-background/80">
-          <CardContent className="p-4">
-            <p className="font-code text-base leading-relaxed whitespace-pre-wrap">
-              {renderTextWithDiff(wordDiffs)}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-2 gap-6 h-[40vh]">
+            <div className="flex flex-col">
+                <h3 className="font-semibold mb-2">Your Submission with Errors</h3>
+                <Card className="flex-1 bg-background/80 overflow-y-auto">
+                    <CardContent className="p-4">
+                        <p className="font-code text-base leading-relaxed whitespace-pre-wrap">
+                        {renderTextWithDiff(wordDiffs)}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="flex flex-col">
+                <h3 className="font-semibold mb-2">Mistakes Breakdown</h3>
+                <Card className="flex-1 bg-background/80">
+                    <ScrollArea className="h-full">
+                        <CardContent className="p-4">
+                            {score.mistakes.length === 0 ? (
+                                <p className="text-muted-foreground text-center pt-10">No mistakes found. Great job!</p>
+                            ) : (
+                                <ul className="space-y-3">
+                                    {score.mistakes.map((mistake, index) => (
+                                        <li key={index} className="text-sm border-b border-border/50 pb-2">
+                                            {mistake.actual === '' && (
+                                                <p><span className="font-semibold text-yellow-400">Skipped:</span> "{mistake.expected}"</p>
+                                            )}
+                                            {mistake.expected === '' && (
+                                                 <p><span className="font-semibold text-orange-400">Extra Word:</span> "{mistake.actual}"</p>
+                                            )}
+                                            {mistake.expected !== '' && mistake.actual !== '' && (
+                                                <p><span className="font-semibold text-red-400">Incorrect:</span> You typed "{mistake.actual}" instead of "{mistake.expected}"</p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </CardContent>
+                    </ScrollArea>
+                </Card>
+            </div>
+        </div>
 
-        <DialogFooter>
+
+        <DialogFooter className="mt-4">
           <Button onClick={onClose}>Close</Button>
         </DialogFooter>
       </DialogContent>
