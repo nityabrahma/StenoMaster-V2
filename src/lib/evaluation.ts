@@ -35,7 +35,7 @@ export interface EvaluationResult {
 
 export type CharDiff = {
     char: string;
-    status: 'correct' | 'incorrect' | 'extra' | 'missing';
+    status: 'correct' | 'incorrect' | 'extra' | 'missing' | 'pending';
 };
 
 export type WordDiff = {
@@ -63,6 +63,25 @@ function tokenize(text: string): string[] {
 }
 
 /**
+ * Finds the closest future index of a target token.
+ * @param targetToken The token to search for.
+ * @param tokens The array of tokens to search within.
+ * @param startIndex The index from which to start the search.
+ * @returns The index of the closest match, or -1 if not found.
+ */
+function findClosestFutureMatch(targetToken: string, tokens: string[], startIndex: number): number {
+    let closestIndex = -1;
+    for (let i = startIndex; i < tokens.length; i++) {
+        if (tokens[i] === targetToken) {
+            closestIndex = i;
+            break;
+        }
+    }
+    return closestIndex;
+}
+
+
+/**
  * Generates a detailed, token-by-token diff using an advanced resynchronization algorithm.
  * This is the single source of truth for all analysis.
  * @param originalText The correct text.
@@ -73,7 +92,6 @@ export function generateAdvancedDiff(originalText: string, userInput: string): W
     const originalTokens = tokenize(originalText);
     const typedTokens = tokenize(userInput);
     const diff: WordDiff[] = [];
-    const SYNC_LOOKAHEAD = 5; // How many tokens to look ahead to find a match and resync.
 
     let oIndex = 0;
     let tIndex = 0;
@@ -86,7 +104,6 @@ export function generateAdvancedDiff(originalText: string, userInput: string): W
         if (oToken && /\s+/.test(oToken)) {
             diff.push({ word: oToken, status: 'whitespace' });
             oIndex++;
-            // Consume corresponding typed whitespace if it exists to stay in sync
             if (tToken && /\s+/.test(tToken)) {
                 tIndex++;
             }
@@ -95,18 +112,16 @@ export function generateAdvancedDiff(originalText: string, userInput: string): W
 
         // 2. Handle end-of-text scenarios
         if (oToken === undefined) {
-            if (tToken) {
-                 if (!/\s+/.test(tToken)) diff.push({ word: tToken, status: 'extra' });
-            }
+            if (tToken && !/\s+/.test(tToken)) diff.push({ word: tToken, status: 'extra' });
             tIndex++;
             continue;
         }
         if (tToken === undefined) {
-             if (!/\s+/.test(oToken)) diff.push({ word: oToken, status: 'pending' });
+            if (!/\s+/.test(oToken)) diff.push({ word: oToken, status: 'pending' });
             oIndex++;
             continue;
         }
-        
+
         // Ignore extra whitespace typed by the user
         if (/\s+/.test(tToken)) {
             tIndex++;
@@ -120,60 +135,71 @@ export function generateAdvancedDiff(originalText: string, userInput: string): W
             tIndex++;
             continue;
         }
+        
+        // 4. Mismatch: Attempt to resynchronize
+        const futureOTokenIndex = findClosestFutureMatch(tToken, originalTokens, oIndex + 1);
+        const futureTTokenIndex = findClosestFutureMatch(oToken, typedTokens, tIndex + 1);
 
-        // 4. Mismatch: Attempt to resynchronize within the lookahead window
-        let foundSync = false;
-
-        // Look ahead for skipped tokens in the original text
-        for (let i = 1; i <= SYNC_LOOKAHEAD && oIndex + i < originalTokens.length; i++) {
-            if (originalTokens[oIndex + i] === tToken) {
-                for (let j = 0; j < i; j++) {
-                    const skippedToken = originalTokens[oIndex + j];
+        // Scenario: User skipped words
+        if (futureOTokenIndex !== -1) {
+            // Check if skipping ahead is a better option than marking as incorrect.
+            // A simple heuristic: if the user typed a word that exists in the future,
+            // and the alternative is a long trail of incorrect/extra words, skipping is better.
+            const distance = futureOTokenIndex - oIndex;
+            // A small distance is a strong signal for a skip.
+            if (distance > 0) {
+                 for (let i = 0; i < distance; i++) {
+                    const skippedToken = originalTokens[oIndex + i];
                     if (!/\s+/.test(skippedToken)) {
                         diff.push({ word: skippedToken, status: 'skipped' });
                     }
                 }
-                oIndex += i;
-                foundSync = true;
-                break;
+                oIndex = futureOTokenIndex; // Jump to the synced position
+                continue; // Re-evaluate from the new position
             }
         }
-        if (foundSync) continue;
-
-        // Look ahead for extra tokens in the typed input
-        for (let i = 1; i <= SYNC_LOOKAHEAD && tIndex + i < typedTokens.length; i++) {
-            if (oToken === typedTokens[tIndex + i]) {
-                for (let j = 0; j < i; j++) {
-                    const extraToken = typedTokens[tIndex + j];
-                    if (!/\s+/.test(extraToken)) {
+        
+        // Scenario: User typed extra words
+        if (futureTTokenIndex !== -1) {
+             const distance = futureTTokenIndex - tIndex;
+             if (distance > 0) {
+                for (let i = 0; i < distance; i++) {
+                    const extraToken = typedTokens[tIndex + i];
+                     if (!/\s+/.test(extraToken)) {
                         diff.push({ word: extraToken, status: 'extra' });
                     }
                 }
-                tIndex += i;
-                foundSync = true;
-                break;
-            }
+                tIndex = futureTTokenIndex;
+                continue;
+             }
         }
-        if (foundSync) continue;
 
-        // 5. No sync found, assume a simple misspelling
+        // 5. No sync found, assume a simple misspelling or partially typed word
         const charDiffs: CharDiff[] = [];
-        const maxLen = Math.max(oToken.length, tToken.length);
-        for (let i = 0; i < maxLen; i++) {
+        const tLen = tToken.length;
+        const oLen = oToken.length;
+
+        for (let i = 0; i < oLen; i++) {
             const oChar = oToken[i];
             const tChar = tToken[i];
+
             if (tChar === undefined) {
-                charDiffs.push({ char: oChar, status: 'missing' });
-            } else if (oChar === undefined) {
-                charDiffs.push({ char: tChar, status: 'extra' });
+                // User hasn't typed this far into the word yet.
+                charDiffs.push({ char: oChar, status: 'pending' });
             } else if (oChar !== tChar) {
-                // IMPORTANT: Show the character the user TYPED, not the original one.
-                charDiffs.push({ char: tChar, status: 'incorrect' });
+                charDiffs.push({ char: oChar, status: 'incorrect' });
             } else {
-                charDiffs.push({ char: tChar, status: 'correct' });
+                charDiffs.push({ char: oChar, status: 'correct' });
             }
         }
-        diff.push({ word: tToken, expected: oToken, charDiffs, status: 'incorrect' });
+        // Handle extra characters typed by the user beyond the original word's length
+        if (tLen > oLen) {
+            for (let i = oLen; i < tLen; i++) {
+                charDiffs.push({ char: tToken[i], status: 'extra' });
+            }
+        }
+        
+        diff.push({ word: oToken, expected: oToken, charDiffs, status: 'incorrect' });
         oIndex++;
         tIndex++;
     }
@@ -211,7 +237,6 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
     let missedChars = 0;
 
     diffs.forEach((diff, index) => {
-        // We only care about non-pending and non-whitespace tokens for accuracy
         if (diff.status === 'pending' || diff.status === 'whitespace') {
             return;
         }
@@ -224,12 +249,14 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
                 correctChars += diff.word.length;
                 break;
             case 'incorrect':
+                // For 'incorrect', the 'word' is the user's input, 'expected' is original
                 mistakes.push({ expected: diff.expected!, actual: diff.word, position: index });
                 diff.charDiffs?.forEach(charDiff => {
-                    if (charDiff.status === 'correct') correctChars++;
-                    if (charDiff.status === 'incorrect') incorrectChars++;
-                    if (charDiff.status === 'extra') extraChars++;
-                    if (charDiff.status === 'missing') missedChars++;
+                    if(charDiff.status === 'correct') correctChars++;
+                    if(charDiff.status === 'incorrect') incorrectChars++;
+                    if(charDiff.status === 'extra') extraChars++;
+                    // 'missing' status from charDiffs inside an 'incorrect' word is an incorrect char
+                    if(charDiff.status === 'missing') incorrectChars++;
                 });
                 break;
             case 'skipped':
@@ -237,17 +264,13 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
                 missedChars += diff.word.length;
                 break;
             case 'extra':
-                mistakes.push({ expected: '', actual: diff.word, position: index });
+                 mistakes.push({ expected: '', actual: diff.word, position: index });
                 extraChars += diff.word.length;
                 break;
         }
     });
 
-    // Accuracy is the ratio of correct characters to all characters the user was supposed to type.
     const accuracy = totalAttemptedChars > 0 ? (correctChars / totalAttemptedChars) * 100 : 100;
-
-    // Standard WPM calculation is based on (total characters typed / 5) / time in minutes.
-    // This is often called "Gross WPM".
     const grossWpm = timeElapsed > 0 ? (userInput.length / 5) / (timeElapsed / 60) : 0;
 
     return {

@@ -1,6 +1,6 @@
 
 'use client';
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Mistake } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -24,29 +24,31 @@ type TypingTestProps = {
 };
 
 
-const renderCharDiffs = (charDiffs: CharDiff[], expectedWord: string, wordIndex: number) => {
-    return (
-        <span key={wordIndex}>
-            {expectedWord.split('').map((char, charIndex) => {
-                const diff = charDiffs[charIndex];
-                const key = `${wordIndex}-${charIndex}`;
-                
-                if (!diff || diff.status === 'missing' || diff.status === 'incorrect') {
-                     return <span key={key} className="text-red-400 bg-red-500/20">{char}</span>;
-                }
-                if (diff.status === 'correct') {
-                     return <span key={key} className="text-green-400">{char}</span>;
-                }
-                 return <span key={key}>{char}</span>; // Fallback for pending
-            })}
-            {charDiffs.slice(expectedWord.length).map((charDiff, i) => (
-                 <span key={`${wordIndex}-extra-${i}`} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}</span>
-            ))}
-        </span>
-    )
-}
+const Cursor = () => (
+    <span className="animate-pulse duration-500 border-b-2 border-primary -mb-1" />
+);
 
-const RenderedWord = ({ wordDiff, index }: { wordDiff: WordDiff, index: number }) => {
+const renderCharDiffs = (charDiffs: CharDiff[], wordIndex: number, cursorIndex: number | null) => {
+    return charDiffs.map((charDiff, charIndex) => {
+        const key = `${wordIndex}-${charIndex}`;
+        const isCursorPosition = cursorIndex === charIndex;
+        
+        switch (charDiff.status) {
+            case 'correct':
+                return <span key={key} className="text-green-400">{charDiff.char}{isCursorPosition && <Cursor />}</span>;
+            case 'incorrect':
+                return <span key={key} className="text-red-400 bg-red-500/20">{charDiff.char}{isCursorPosition && <Cursor />}</span>;
+            case 'extra':
+                return <span key={key} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}{isCursorPosition && <Cursor />}</span>;
+            case 'pending':
+                return <span key={key}>{charDiff.char}{isCursorPosition && <Cursor />}</span>;
+            default:
+                 return <span key={key}>{charDiff.char}{isCursorPosition && <Cursor />}</span>;
+        }
+    });
+};
+
+const RenderedWord = ({ wordDiff, index, isCurrentWord, cursorPosition }: { wordDiff: WordDiff, index: number, isCurrentWord: boolean, cursorPosition: number | null }) => {
     const { status, word, expected, charDiffs } = wordDiff;
 
     switch (status) {
@@ -58,13 +60,11 @@ const RenderedWord = ({ wordDiff, index }: { wordDiff: WordDiff, index: number }
             return <span className="text-yellow-400 bg-yellow-500/20 rounded-sm">{word}</span>;
         case 'incorrect':
             if (charDiffs && expected) {
-                 // The word itself is the user's typed input, but we render based on the expected word
-                 // to keep the layout stable.
-                return renderCharDiffs(charDiffs, expected, index);
+                return <>{renderCharDiffs(charDiffs, index, isCurrentWord ? cursorPosition : null)}</>;
             }
             return <span className="text-red-400 bg-red-500/20">{expected || word}</span>;
         case 'pending':
-            return <span>{word}</span>;
+             return <span>{isCurrentWord && cursorPosition === 0 && <Cursor />}{word}</span>;
         case 'whitespace':
             return <span>{word}</span>;
         default:
@@ -82,6 +82,9 @@ export default function TypingTest({
     onComplete,
 }: TypingTestProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [diffs, setDiffs] = useState<WordDiff[]>([]);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
 
   useEffect(() => {
     if (isStarted && !isFinished) {
@@ -89,15 +92,54 @@ export default function TypingTest({
     }
   }, [isStarted, isFinished]);
 
+  useEffect(() => {
+    const newDiffs = generateAdvancedDiff(text, userInput);
+    setDiffs(newDiffs);
+
+    let typedWordsCount = 0;
+    let charPos = 0;
+    for(let i=0; i<newDiffs.length; i++){
+        const diff = newDiffs[i];
+        if(diff.status !== 'pending' && diff.status !== 'whitespace'){
+            typedWordsCount = i;
+        }
+        if(diff.status === 'incorrect' || diff.status === 'correct'){
+            charPos = diff.word.length;
+        } else {
+           if(diff.status !== 'pending') charPos = 0;
+        }
+    }
+    
+    const lastNonPendingDiffIndex = newDiffs.findLastIndex(d => d.status !== 'pending');
+    const currentDiff = newDiffs[lastNonPendingDiffIndex + 1] || newDiffs[newDiffs.length -1];
+    
+    if(currentDiff && currentDiff.status === 'pending') {
+        setCurrentWordIndex(lastNonPendingDiffIndex + 1);
+        setCursorPosition(0);
+    } else if (currentDiff && currentDiff.charDiffs) {
+        setCurrentWordIndex(lastNonPendingDiffIndex);
+        const lastTypedCharIndex = currentDiff.charDiffs.findLastIndex(c => c.status !== 'pending' && c.status !== 'missing');
+        setCursorPosition(lastTypedCharIndex + 1);
+    }
+
+  }, [text, userInput]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isStarted || isFinished) return;
     onUserInputChange(e.target.value);
   };
   
 const renderedText = useMemo(() => {
-    const diffs = generateAdvancedDiff(text, userInput);
-    return diffs.map((diff, index) => <RenderedWord key={index} wordDiff={diff} index={index} />);
-}, [text, userInput]);
+    return diffs.map((diff, index) => (
+        <RenderedWord 
+            key={index} 
+            wordDiff={diff} 
+            index={index}
+            isCurrentWord={index === currentWordIndex}
+            cursorPosition={cursorPosition}
+        />
+    ));
+}, [diffs, currentWordIndex, cursorPosition]);
 
 
   return (
