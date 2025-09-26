@@ -24,7 +24,7 @@ type TypingTestProps = {
 };
 
 
-const renderCharDiffs = (charDiffs: CharDiff[], word: string, wordIndex: number) => {
+const renderCharDiffs = (charDiffs: CharDiff[], expectedWord: string, wordIndex: number) => {
     return (
         <span key={wordIndex}>
             {charDiffs.map((charDiff, charIndex) => {
@@ -33,8 +33,10 @@ const renderCharDiffs = (charDiffs: CharDiff[], word: string, wordIndex: number)
                     case 'correct':
                         return <span key={key} className="text-green-400">{charDiff.char}</span>;
                     case 'incorrect':
-                        return <span key={key} className="text-red-400 bg-red-500/20">{charDiff.char}</span>;
+                        // Render the original character with an error background
+                        return <span key={key} className="text-red-400 bg-red-500/20">{expectedWord[charIndex] ?? ''}</span>;
                     case 'extra':
+                         // Extra characters typed by the user are shown, but they don't replace original text
                         return <span key={key} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}</span>;
                     case 'missing':
                          return <span key={key} className="text-red-400 bg-red-500/20 line-through">{charDiff.char}</span>;
@@ -48,7 +50,7 @@ const renderCharDiffs = (charDiffs: CharDiff[], word: string, wordIndex: number)
 }
 
 const RenderedWord = ({ wordDiff, index }: { wordDiff: WordDiff, index: number }) => {
-    const { status, word, charDiffs } = wordDiff;
+    const { status, word, expected, charDiffs } = wordDiff;
 
     switch (status) {
         case 'correct':
@@ -58,8 +60,8 @@ const RenderedWord = ({ wordDiff, index }: { wordDiff: WordDiff, index: number }
         case 'extra':
             return <span className="text-yellow-400 bg-yellow-500/20 rounded-sm">{word} </span>;
         case 'incorrect':
-            if (charDiffs) {
-                return renderCharDiffs(charDiffs, word, index);
+            if (charDiffs && expected) {
+                return renderCharDiffs(charDiffs, expected, index);
             }
             return <span className="text-red-400 bg-red-500/20">{word} </span>;
         case 'pending':
