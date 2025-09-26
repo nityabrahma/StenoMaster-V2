@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { generateAdvancedDiff, WordDiff, CharDiff } from '@/lib/evaluation';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';

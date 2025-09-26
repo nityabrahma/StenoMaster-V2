@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         role: user.userType,
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7h' });
 
     await UserModel.updateOne({ _id: user._id }, { $set: { sessionToken: token } });
 
