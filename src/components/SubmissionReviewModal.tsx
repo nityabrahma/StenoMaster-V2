@@ -32,7 +32,9 @@ const renderCharDiffs = (charDiffs: CharDiff[], word: string, wordIndex: number)
                     case 'extra':
                         return <span key={key} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}</span>;
                     case 'missing':
-                        return <span key={key} className="text-red-400 bg-red-500/20 line-through">{charDiff.char}</span>;
+                         return <span key={key} className="text-red-400 bg-red-500/20 line-through">{charDiff.char}</span>;
+                    case 'pending':
+                        return <span key={key} className="text-muted-foreground">{charDiff.char}</span>;
                 }
             })}
             {' '}
@@ -55,6 +57,8 @@ const renderWord = (wordDiff: WordDiff, index: number) => {
             return <span key={index} className="text-red-400 bg-red-500/20">{wordDiff.word} </span>;
         case 'whitespace':
             return <span key={index}> </span>;
+        case 'pending':
+            return <span key={index} className="text-muted-foreground">{wordDiff.word}{' '}</span>;
         default:
             return <span key={index}>{wordDiff.word} </span>;
     }

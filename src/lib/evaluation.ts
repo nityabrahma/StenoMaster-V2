@@ -11,7 +11,7 @@ export interface EvaluationResult {
 
 export type CharDiff = {
     char: string;
-    status: 'correct' | 'incorrect' | 'extra' | 'missing';
+    status: 'correct' | 'incorrect' | 'extra' | 'missing' | 'pending';
 };
 
 export type WordDiff = {
@@ -209,6 +209,7 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
         let foundSync = false;
         // Look ahead in original text to see if user skipped a word
         for (let i = 1; i <= lookahead && oIndex + i < originalWords.length; i++) {
+            if (/\s+/.test(originalWords[oIndex + i])) continue; // don't sync on whitespace
             if (originalWords[oIndex + i] === tWord) {
                 // Words from oIndex to oIndex + i - 1 were skipped
                 for (let j = 0; j < i; j++) {
@@ -224,6 +225,7 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
         
         // Look ahead in typed text to see if user added an extra word
         for (let i = 1; i <= lookahead && tIndex + i < typedWords.length; i++) {
+            if (/\s+/.test(typedWords[tIndex + i])) continue; // don't sync on whitespace
             if (oWord === typedWords[tIndex + i]) {
                 // Words from tIndex to tIndex + i - 1 were extra
                 for (let j = 0; j < i; j++) {
@@ -251,7 +253,8 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
             } else if (oChar === undefined) {
                 charDiffs.push({ char: tChar, status: 'extra' });
             } else if (tChar === undefined) {
-                charDiffs.push({ char: oChar, status: 'missing' });
+                // This is a key change: if the user hasn't typed this far, it's 'pending', not 'missing'.
+                charDiffs.push({ char: oChar, status: 'pending' });
             } else {
                 charDiffs.push({ char: oChar, status: 'incorrect' });
             }
