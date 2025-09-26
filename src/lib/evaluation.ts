@@ -37,7 +37,6 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
     let correctChars = 0;
     let originalIndex = 0;
     let typedIndex = 0;
-    const lookahead = 5;
 
     while (originalIndex < originalWords.length || typedIndex < typedWords.length) {
         const oWord = originalWords[originalIndex];
@@ -69,7 +68,7 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
 
         // Mismatch: Attempt to resynchronize by looking ahead in the original text
         let foundSync = false;
-        for (let i = 1; i <= lookahead && (originalIndex + i) < originalWords.length; i++) {
+        for (let i = 1; (originalIndex + i) < originalWords.length; i++) {
             if (originalWords[originalIndex + i] === tWord) {
                 // Found a sync point. Words in between were skipped.
                 for (let j = 0; j < i; j++) {
@@ -86,15 +85,12 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
         }
         
         if (foundSync) {
-            // After skipping, the current typed word is now correct.
-            // Loop will handle it in the next iteration.
             continue;
         }
 
         // No sync found by skipping. Let's try to find an extra word.
-        // Look ahead in the typed text to see if it matches the current original word.
         let foundExtra = false;
-        for (let i = 1; i <= lookahead && (typedIndex + i) < typedWords.length; i++) {
+        for (let i = 1; (typedIndex + i) < typedWords.length; i++) {
              if (originalWords[originalIndex] === typedWords[typedIndex + i]) {
                 // Found a sync point. Words in between were extra.
                 for (let j = 0; j < i; j++) {
@@ -111,8 +107,6 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
         }
 
         if (foundExtra) {
-            // After accounting for extra words, the current original word should now match.
-            // The loop will handle it in the next iteration.
             continue;
         }
         
@@ -168,7 +162,6 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
 
     let oIndex = 0; // Pointer for originalWords
     let tIndex = 0; // Pointer for typedWords
-    const lookahead = 5;
 
     while (oIndex < originalWords.length) {
         const oWord = originalWords[oIndex];
@@ -208,13 +201,15 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
         // Mismatch logic: try to re-sync
         let foundSync = false;
         // Look ahead in original text to see if user skipped a word
-        for (let i = 1; i <= lookahead && oIndex + i < originalWords.length; i++) {
+        for (let i = 1; oIndex + i < originalWords.length; i++) {
             if (/\s+/.test(originalWords[oIndex + i])) continue; // don't sync on whitespace
             if (originalWords[oIndex + i] === tWord) {
                 // Words from oIndex to oIndex + i - 1 were skipped
                 for (let j = 0; j < i; j++) {
                     const skippedWord = originalWords[oIndex + j];
-                    diff.push({ word: skippedWord, status: /\s+/.test(skippedWord) ? 'whitespace' : 'skipped' });
+                    if (!/\s+/.test(skippedWord)) {
+                        diff.push({ word: skippedWord, status: 'skipped' });
+                    }
                 }
                 oIndex += i;
                 foundSync = true;
@@ -224,7 +219,7 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
         if (foundSync) continue;
         
         // Look ahead in typed text to see if user added an extra word
-        for (let i = 1; i <= lookahead && tIndex + i < typedWords.length; i++) {
+        for (let i = 1; tIndex + i < typedWords.length; i++) {
             if (/\s+/.test(typedWords[tIndex + i])) continue; // don't sync on whitespace
             if (oWord === typedWords[tIndex + i]) {
                 // Words from tIndex to tIndex + i - 1 were extra
@@ -253,7 +248,6 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
             } else if (oChar === undefined) {
                 charDiffs.push({ char: tChar, status: 'extra' });
             } else if (tChar === undefined) {
-                // This is a key change: if the user hasn't typed this far, it's 'pending', not 'missing'.
                 charDiffs.push({ char: oChar, status: 'pending' });
             } else {
                 charDiffs.push({ char: oChar, status: 'incorrect' });
