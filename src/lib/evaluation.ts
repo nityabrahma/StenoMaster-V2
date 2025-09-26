@@ -31,6 +31,10 @@ export type WordDiff = {
  * @returns An object with the calculated metrics.
  */
 export function evaluateTyping(originalText: string, userInput: string, timeElapsed: number): EvaluationResult {
+    if (!userInput) {
+        return { wpm: 0, accuracy: 100, mistakes: [], timeElapsed, userInput: '' };
+    }
+
     const originalWords = originalText.trim().split(/\s+/).filter(Boolean);
     const typedWords = userInput.trim().split(/\s+/).filter(Boolean);
 
@@ -133,21 +137,37 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
         typedIndex++;
     }
     
-    const totalPossibleChars = originalText.length;
-    let incorrectChars = 0;
+    // Calculate accuracy based on typed portion
+    let errors = 0;
+    const typedLength = userInput.length;
     mistakes.forEach(mistake => {
-        if (mistake.actual === '') { // Skipped
-            incorrectChars += mistake.expected.length + 1;
-        } else if (mistake.expected === '') { // Extra
-            incorrectChars += mistake.actual.length + 1;
-        } else { // Misspelled
-            incorrectChars += Math.max(mistake.expected.length, mistake.actual.length) + 1;
+        // Simple Levenshtein distance for error count
+        const expected = mistake.expected || '';
+        const actual = mistake.actual || '';
+        const d = [];
+        for (let i = 0; i <= expected.length; i++) {
+            d[i] = [i];
         }
+        for (let j = 0; j <= actual.length; j++) {
+            d[0][j] = j;
+        }
+        for (let i = 1; i <= expected.length; i++) {
+            for (let j = 1; j <= actual.length; j++) {
+                const cost = (expected[i - 1] === actual[j - 1]) ? 0 : 1;
+                d[i][j] = Math.min(
+                    d[i - 1][j] + 1,       // Deletion
+                    d[i][j - 1] + 1,       // Insertion
+                    d[i - 1][j - 1] + cost // Substitution
+                );
+            }
+        }
+        errors += d[expected.length][actual.length];
     });
 
-    const calculatedCorrectChars = totalPossibleChars - incorrectChars;
-    const accuracy = totalPossibleChars > 0 ? Math.max(0, (calculatedCorrectChars / totalPossibleChars) * 100) : 0;
+    const correctTypedChars = Math.max(0, typedLength - errors);
+    const accuracy = typedLength > 0 ? (correctTypedChars / typedLength) * 100 : 100;
     
+    // WPM based on 5-character words
     const grossWords = userInput.length / 5;
     const wpm = timeElapsed > 0 ? Math.round(grossWords / (timeElapsed / 60)) : 0;
 
@@ -169,8 +189,8 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
  * @returns An array of WordDiff objects.
  */
 export function generateWordDiff(originalText: string, userInput: string): WordDiff[] {
-    const originalWords = originalText.split(/(\s+)/).filter(Boolean);
-    const typedWords = userInput.split(/(\s+)/).filter(Boolean);
+    const originalWords = originalText.split(/(\s+)/);
+    const typedWords = userInput.split(/(\s+)/);
     const diff: WordDiff[] = [];
 
     let oIndex = 0;
@@ -192,8 +212,14 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
             continue;
         }
          if (tWord && /\s+/.test(tWord)) {
-            diff.push({ word: tWord, status: 'extra' });
-            tIndex++;
+            // Extra whitespace typed by user, but let's not mark it as an "extra" word.
+            // We can just advance the typed index. If it causes a mismatch later, it will be handled.
+            if(tIndex < typedWords.length -1) { // avoid infinite loops at the end
+                tIndex++;
+            } else {
+                 diff.push({ word: tWord, status: 'extra' });
+                 tIndex++;
+            }
             continue;
         }
 
@@ -267,13 +293,16 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
             const oChar = oWord[i];
             const tChar = tWord[i];
 
-            if (i >= oWord.length) {
-                charDiffs.push({ char: tChar, status: 'extra' });
-            } else if (i >= tWord.length) {
+            if (tChar === undefined) {
+                // User hasn't typed this far into the word yet
                 charDiffs.push({ char: oChar, status: 'pending' });
+            } else if (oChar === undefined) {
+                // User typed extra characters in this word
+                charDiffs.push({ char: tChar, status: 'extra' });
             } else if (oChar === tChar) {
-                charDiffs.push({ char: tChar, status: 'correct' });
+                charDiffs.push({ char: oChar, status: 'correct' });
             } else {
+                // Character mismatch
                 charDiffs.push({ char: oChar, status: 'incorrect' });
             }
         }

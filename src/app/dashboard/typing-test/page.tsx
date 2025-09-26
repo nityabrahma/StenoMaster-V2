@@ -31,14 +31,39 @@ export default function TypingTestPage() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [userInput, setUserInput] = useState('');
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const wpmHistory = useRef<number[]>([]);
 
     const currentTestText = sampleTexts[currentTextIndex];
     const currentTestId = (currentTextIndex + 1).toString();
     
     // Derived Stats
-    const typedWords = userInput.split(/\s+/).filter(Boolean);
-    const wordsTypedCount = typedWords.length;
-    const wpm = elapsedTime > 0 ? Math.round((wordsTypedCount / elapsedTime) * 60) : 0;
+    const [wpm, setWpm] = useState(0);
+    const [accuracy, setAccuracy] = useState(100);
+
+    const calculateLiveStats = useCallback(() => {
+        if (!isStarted || elapsedTime === 0) {
+            setWpm(0);
+            setAccuracy(100);
+            return;
+        }
+
+        const typedChars = userInput.length;
+        const grossWpm = (typedChars / 5) / (elapsedTime / 60);
+        setWpm(Math.round(grossWpm));
+        wpmHistory.current.push(Math.round(grossWpm));
+
+        // Live accuracy
+        const originalSlice = currentTestText.substring(0, typedChars);
+        let errors = 0;
+        for (let i = 0; i < typedChars; i++) {
+            if (userInput[i] !== originalSlice[i]) {
+                errors++;
+            }
+        }
+        const newAccuracy = typedChars > 0 ? Math.max(0, ((typedChars - errors) / typedChars) * 100) : 100;
+        setAccuracy(newAccuracy);
+
+    }, [userInput, elapsedTime, isStarted, currentTestText]);
     
     const startTimer = useCallback(() => {
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -56,6 +81,13 @@ export default function TypingTestPage() {
         }
     }, []);
     
+    useEffect(() => {
+        if (isStarted) {
+            calculateLiveStats();
+        }
+    }, [isStarted, calculateLiveStats]);
+
+
     const resetTest = useCallback((nextIndex?: number) => {
         stopTimer();
         setIsStarted(false);
@@ -63,10 +95,14 @@ export default function TypingTestPage() {
         setStartTime(null);
         setElapsedTime(0);
         setUserInput('');
+        setWpm(0);
+        setAccuracy(100);
+        wpmHistory.current = [];
         if(nextIndex !== undefined) {
             setCurrentTextIndex(nextIndex);
         } else {
-            setCurrentTextIndex((current) => (current + 1) % sampleTexts.length);
+            // Simple random for now, can be improved to not repeat.
+            setCurrentTextIndex(Math.floor(Math.random() * sampleTexts.length));
         }
     }, [stopTimer]);
 
@@ -84,13 +120,17 @@ export default function TypingTestPage() {
     
         const finalElapsedTime = (Date.now() - (startTime ?? Date.now())) / 1000;
         
+        const avgWpm = wpmHistory.current.length > 0
+            ? Math.round(wpmHistory.current.reduce((a, b) => a + b, 0) / wpmHistory.current.length)
+            : 0;
+
         const results = evaluateTyping(currentTestText, finalUserInput, finalElapsedTime);
     
         try {
             await createScore({
                 assignmentId: `practice-${currentTestId}`,
                 completedAt: new Date().toISOString(),
-                wpm: results.wpm,
+                wpm: avgWpm, // Use average WPM
                 accuracy: results.accuracy,
                 mistakes: results.mistakes,
                 timeElapsed: results.timeElapsed,
@@ -99,7 +139,7 @@ export default function TypingTestPage() {
 
             toast({
                 title: "Practice Complete!",
-                description: `Your score: ${results.wpm} WPM at ${results.accuracy.toFixed(1)}% accuracy.`,
+                description: `Your score: ${avgWpm} WPM at ${results.accuracy.toFixed(1)}% accuracy.`,
             });
             resetTest();
         } catch (error: any) {
@@ -190,7 +230,7 @@ export default function TypingTestPage() {
                                 <Target className="h-4 w-4 text-muted-foreground ml-2"/>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">--%</div>
+                                <div className="text-2xl font-bold">{accuracy.toFixed(1)}%</div>
                             </CardContent>
                         </Card>
                         <Card className='bg-card/50'>
