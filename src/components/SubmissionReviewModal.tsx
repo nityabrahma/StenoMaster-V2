@@ -14,58 +14,61 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Score, Assignment } from '@/lib/types';
 import { Zap, Target, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
-import { generateWordDiff, WordDiff, CharDiff } from '@/lib/evaluation';
+import { generateAdvancedDiff, WordDiff, CharDiff } from '@/lib/evaluation';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-
-const renderCharDiffs = (charDiffs: CharDiff[], typedWord: string, wordIndex: number) => {
-    return (
-        <span key={wordIndex}>
-            {charDiffs.map((charDiff, charIndex) => {
-                const key = `${wordIndex}-${charIndex}`;
-                switch (charDiff.status) {
-                    case 'correct':
-                        return <span key={key} className="text-green-400">{typedWord[charIndex]}</span>;
-                    case 'incorrect':
-                        return <span key={key} className="text-red-400 bg-red-500/20">{typedWord[charIndex] ?? ''}</span>;
-                    case 'extra':
-                        return <span key={key} className="text-yellow-400 bg-yellow-500/20">{charDiff.char}</span>;
-                    case 'pending': // Should not happen in final review, but handle gracefully
-                        return <span key={key} className="text-muted-foreground line-through">{charDiff.char}</span>;
-                    case 'missing':
-                        return <span key={key} className="text-red-400 bg-red-500/20 line-through">{charDiff.char}</span>;
-                }
-            })}
-        </span>
-    )
-}
-
 const renderWord = (wordDiff: WordDiff, index: number) => {
-    const { status, word, expected, charDiffs } = wordDiff;
+    const { status, word, expected } = wordDiff;
 
     switch (status) {
         case 'correct':
-            return <span key={index} className="text-green-400">{word} </span>;
+            return <span key={index}>{word}</span>;
         case 'skipped':
-            return <span key={index} className="bg-gray-500/30 text-gray-400 rounded-sm p-1">{word}{' '}</span>;
+            // Render the skipped word from original text with a grey background
+            return <span key={index} className="bg-gray-500/30 text-gray-400 rounded-sm p-1">{word}</span>;
         case 'extra':
-            return <span key={index} className="bg-yellow-500/20 text-yellow-400 rounded-sm p-1">{word}{' '}</span>;
+            // Render the extra word the user typed with a yellow background
+            return <span key={index} className="bg-yellow-500/20 text-yellow-400 rounded-sm p-1">{word}</span>;
         case 'incorrect':
+            // Render the incorrect word followed by the expected word in green brackets
             return (
-                <span key={index} className="text-red-400 bg-red-500/20 rounded-sm p-1">
-                    {word}
+                <span key={index}>
+                    <span className="text-red-400 bg-red-500/20 rounded-sm p-1">{word}</span>
                     <span className="text-green-300">[{expected}]</span>
-                    {' '}
                 </span>
             );
         case 'whitespace':
-            return <span key={index}> </span>;
-        case 'pending': // Represents text the user didn't type
-            return <span key={index} className="text-muted-foreground opacity-70">{word}{' '}</span>;
+            return <span key={index}>{word}</span>;
+        case 'pending':
+            // In a final review, "pending" means "not typed". We render it greyed out.
+            return <span key={index} className="text-muted-foreground opacity-70">{word}</span>;
         default:
-            return <span key={index}>{word} </span>;
+            return <span key={index}>{word}</span>;
     }
+};
+
+const combineTokens = (diffs: WordDiff[]): React.ReactNode[] => {
+    const result: React.ReactNode[] = [];
+    let currentText = '';
+
+    diffs.forEach((diff, i) => {
+        if (diff.status === 'correct' || diff.status === 'whitespace') {
+            currentText += diff.word;
+        } else {
+            if (currentText) {
+                result.push(currentText);
+                currentText = '';
+            }
+            result.push(renderWord(diff, i));
+        }
+    });
+
+    if (currentText) {
+        result.push(currentText);
+    }
+
+    return result;
 }
 
 
@@ -87,7 +90,9 @@ export default function SubmissionReviewModal({
     if (!score || !assignment) return null;
 
     // Re-generate the diff based on the final submitted text
-    const wordDiffs = useMemo(() => generateWordDiff(assignment.text, score.userInput), [assignment.text, score.userInput]);
+    const wordDiffs = useMemo(() => generateAdvancedDiff(assignment.text, score.userInput), [assignment.text, score.userInput]);
+
+    const combinedNodes = useMemo(() => combineTokens(wordDiffs), [wordDiffs]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -137,7 +142,7 @@ export default function SubmissionReviewModal({
                         <Card className="flex-1 bg-background/80 overflow-y-auto">
                             <CardContent className="p-4">
                                 <p className="font-code text-lg leading-relaxed whitespace-pre-wrap">
-                                    {wordDiffs.map(renderWord)}
+                                    {combinedNodes.map((node, i) => <React.Fragment key={i}>{node}</React.Fragment>)}
                                 </p>
                             </CardContent>
                         </Card>
