@@ -16,6 +16,7 @@ export type CharDiff = {
 
 export type WordDiff = {
     word: string;
+    expected?: string; // Add expected word for incorrect status
     charDiffs?: CharDiff[];
     status: 'correct' | 'incorrect' | 'skipped' | 'extra' | 'whitespace' | 'pending';
 };
@@ -68,20 +69,27 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
 
         // Mismatch: Attempt to resynchronize by looking ahead in the original text
         let foundSync = false;
+        let bestSyncIndex = -1;
+        
+        // Find the nearest future match
         for (let i = 1; (originalIndex + i) < originalWords.length; i++) {
             if (originalWords[originalIndex + i] === tWord) {
-                // Found a sync point. Words in between were skipped.
-                for (let j = 0; j < i; j++) {
-                    mistakes.push({
-                        expected: originalWords[originalIndex + j],
-                        actual: '',
-                        position: originalIndex + j
-                    });
-                }
-                originalIndex += i; // Move original index to the sync point
-                foundSync = true;
-                break;
+                bestSyncIndex = i;
+                break; // Found the closest match, stop searching
             }
+        }
+        
+        if (bestSyncIndex !== -1) {
+            // Words in between were skipped.
+            for (let j = 0; j < bestSyncIndex; j++) {
+                mistakes.push({
+                    expected: originalWords[originalIndex + j],
+                    actual: '',
+                    position: originalIndex + j
+                });
+            }
+            originalIndex += bestSyncIndex; // Move original index to the sync point
+            foundSync = true;
         }
         
         if (foundSync) {
@@ -90,21 +98,26 @@ export function evaluateTyping(originalText: string, userInput: string, timeElap
 
         // No sync found by skipping. Let's try to find an extra word.
         let foundExtra = false;
+        bestSyncIndex = -1;
         for (let i = 1; (typedIndex + i) < typedWords.length; i++) {
              if (originalWords[originalIndex] === typedWords[typedIndex + i]) {
-                // Found a sync point. Words in between were extra.
-                for (let j = 0; j < i; j++) {
-                    mistakes.push({
-                        expected: '',
-                        actual: typedWords[typedIndex + j],
-                        position: originalIndex,
-                    });
-                }
-                typedIndex += i;
-                foundExtra = true;
+                bestSyncIndex = i;
                 break;
              }
         }
+
+        if (bestSyncIndex !== -1) {
+            for (let j = 0; j < bestSyncIndex; j++) {
+                mistakes.push({
+                    expected: '',
+                    actual: typedWords[typedIndex + j],
+                    position: originalIndex,
+                });
+            }
+            typedIndex += bestSyncIndex;
+            foundExtra = true;
+        }
+
 
         if (foundExtra) {
             continue;
@@ -160,37 +173,44 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
     const typedWords = userInput.split(/(\s+)/).filter(Boolean);
     const diff: WordDiff[] = [];
 
-    let oIndex = 0; // Pointer for originalWords
-    let tIndex = 0; // Pointer for typedWords
+    let oIndex = 0;
+    let tIndex = 0;
 
-    while (oIndex < originalWords.length) {
+    while (oIndex < originalWords.length || tIndex < typedWords.length) {
         const oWord = originalWords[oIndex];
         const tWord = typedWords[tIndex];
 
-        // If we've run out of typed words, the rest are pending
-        if (tWord === undefined) {
-             diff.push({ word: oWord, status: /\s+/.test(oWord) ? 'whitespace' : 'pending' });
-             oIndex++;
-             continue;
-        }
+        if (oWord === undefined && tWord === undefined) break;
 
-        // Handle whitespace in both arrays
-        if (/\s+/.test(oWord)) {
+        // Whitespace handling
+        if (oWord && /\s+/.test(oWord)) {
             diff.push({ word: oWord, status: 'whitespace' });
             oIndex++;
-            if (tIndex < typedWords.length && /\s+/.test(typedWords[tIndex])) {
+            if (tWord && /\s+/.test(tWord) && tWord.length === oWord.length) {
                 tIndex++;
             }
             continue;
         }
-        if (/\s+/.test(tWord)) {
-            // User typed extra space, mark it and advance typed pointer
+         if (tWord && /\s+/.test(tWord)) {
             diff.push({ word: tWord, status: 'extra' });
             tIndex++;
             continue;
         }
 
-        // Direct match
+
+        // End of one of the texts
+        if (tWord === undefined) {
+            diff.push({ word: oWord, status: 'pending' });
+            oIndex++;
+            continue;
+        }
+        if (oWord === undefined) {
+            diff.push({ word: tWord, status: 'extra' });
+            tIndex++;
+            continue;
+        }
+
+        // Perfect match
         if (oWord === tWord) {
             diff.push({ word: oWord, status: 'correct' });
             oIndex++;
@@ -198,75 +218,69 @@ export function generateWordDiff(originalText: string, userInput: string): WordD
             continue;
         }
 
-        // Mismatch logic: try to re-sync
-        let foundSync = false;
-        // Look ahead in original text to see if user skipped a word
+        // Mismatch logic
+        // 1. Look for a resync point by checking if user skipped words
+        let bestSyncIndex = -1;
         for (let i = 1; oIndex + i < originalWords.length; i++) {
-            if (/\s+/.test(originalWords[oIndex + i])) continue; // don't sync on whitespace
-            if (originalWords[oIndex + i] === tWord) {
-                // Words from oIndex to oIndex + i - 1 were skipped
-                for (let j = 0; j < i; j++) {
-                    const skippedWord = originalWords[oIndex + j];
-                    if (!/\s+/.test(skippedWord)) {
-                        diff.push({ word: skippedWord, status: 'skipped' });
-                    }
-                }
-                oIndex += i;
-                foundSync = true;
+             if (/\s+/.test(originalWords[oIndex + i])) continue;
+             if (originalWords[oIndex + i] === tWord) {
+                bestSyncIndex = i;
                 break;
             }
         }
-        if (foundSync) continue;
+        if (bestSyncIndex !== -1) {
+            for (let j = 0; j < bestSyncIndex; j++) {
+                const skippedWord = originalWords[oIndex + j];
+                if (!/\s+/.test(skippedWord)) {
+                    diff.push({ word: skippedWord, status: 'skipped' });
+                }
+            }
+            oIndex += bestSyncIndex;
+            continue; // Re-evaluate with the synced-up original index
+        }
         
-        // Look ahead in typed text to see if user added an extra word
+        // 2. Look for a resync point by checking if user added extra words
+        bestSyncIndex = -1;
         for (let i = 1; tIndex + i < typedWords.length; i++) {
-            if (/\s+/.test(typedWords[tIndex + i])) continue; // don't sync on whitespace
-            if (oWord === typedWords[tIndex + i]) {
-                // Words from tIndex to tIndex + i - 1 were extra
-                for (let j = 0; j < i; j++) {
-                     const extraWord = typedWords[tIndex + j];
-                     if (!/\s+/.test(extraWord)) {
-                        diff.push({ word: extraWord, status: 'extra' });
-                     }
-                }
-                tIndex += i;
-                foundSync = true;
+             if (/\s+/.test(typedWords[tIndex + i])) continue;
+             if (oWord === typedWords[tIndex + i]) {
+                bestSyncIndex = i;
                 break;
-            }
+             }
         }
-        if(foundSync) continue;
+        if(bestSyncIndex !== -1) {
+             for (let j = 0; j < bestSyncIndex; j++) {
+                const extraWord = typedWords[tIndex + j];
+                if (!/\s+/.test(extraWord)) {
+                   diff.push({ word: extraWord, status: 'extra' });
+                }
+           }
+           tIndex += bestSyncIndex;
+           continue; // Re-evaluate
+        }
 
 
-        // If no sync, it's a misspelling. Perform char-level diff.
+        // 3. No easy resync found, assume misspelling
         const charDiffs: CharDiff[] = [];
         const maxLen = Math.max(oWord.length, tWord.length);
         for (let i = 0; i < maxLen; i++) {
             const oChar = oWord[i];
             const tChar = tWord[i];
-            if (oChar === tChar) {
-                charDiffs.push({ char: tChar, status: 'correct' });
-            } else if (oChar === undefined) {
+
+            if (i >= oWord.length) {
                 charDiffs.push({ char: tChar, status: 'extra' });
-            } else if (tChar === undefined) {
+            } else if (i >= tWord.length) {
                 charDiffs.push({ char: oChar, status: 'pending' });
+            } else if (oChar === tChar) {
+                charDiffs.push({ char: tChar, status: 'correct' });
             } else {
                 charDiffs.push({ char: oChar, status: 'incorrect' });
             }
         }
-        diff.push({ word: oWord, charDiffs, status: 'incorrect' });
+        diff.push({ word: tWord, expected: oWord, charDiffs, status: 'incorrect' });
         oIndex++;
         tIndex++;
     }
-    
-     // Any remaining typed words are extra
-    while (tIndex < typedWords.length) {
-        const tWord = typedWords[tIndex];
-        if (!/\s+/.test(tWord)) {
-            diff.push({ word: tWord, status: 'extra' });
-        }
-        tIndex++;
-    }
-
 
     return diff;
 }
