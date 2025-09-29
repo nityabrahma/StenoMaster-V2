@@ -535,8 +535,9 @@ const SidebarMenuButton = React.forwardRef<
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className, 
-            "group-data-[state=collapsed]/sidebar-wrapper:[&_svg]:size-6", // Larger icon when collapsed
-            "group-data-[state=expanded]/sidebar-wrapper:[&_svg]:size-5", // Normal icon size when expanded
+            "group-data-[state=collapsed]/sidebar-wrapper:w-12 group-data-[state=collapsed]/sidebar-wrapper:h-12",
+            "group-data-[state=collapsed]/sidebar-wrapper:[&_svg]:size-6",
+            "group-data-[state=expanded]/sidebar-wrapper:[&_svg]:size-5",
             "rounded-lg transition-all duration-300"
         )}
         style={isActive ? {
@@ -743,3 +744,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
