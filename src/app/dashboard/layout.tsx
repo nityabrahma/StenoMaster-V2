@@ -32,7 +32,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const loadData = async () => {
             if (user && !dataLoaded) {
-                setIsLoading(true);
+                // The loading state is already true from the router/auth provider
                 const dataPromises = [
                     fetchAssignments(user.role),
                     fetchScores(5) // Fetch only the last 5 scores for recent activity feeds
@@ -47,13 +47,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 await Promise.all(dataPromises);
 
                 setDataLoaded(true);
-                setIsLoading(false);
+                // The loader will be turned off by the AppRouterProvider when the page transition completes
             }
         };
         loadData();
     }, [user, dataLoaded, fetchAssignments, fetchClasses, fetchStudents, fetchScores, setIsLoading]);
 
     // Don't return null. Let the page render so the loading overlay can work correctly.
+    // The children are only rendered when data is loaded, preventing a flicker.
     return (
         <SidebarProvider>
             <div className="h-screen w-full flex flex-col bg-transparent">

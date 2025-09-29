@@ -6,10 +6,12 @@ import StudentDashboard from '@/components/student-dashboard';
 import { useLoading } from '@/hooks/loading-provider';
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const { isLoading: isDataLoading } = useLoading();
 
-  if (loading || isDataLoading || !user) {
+  // The parent layout now handles the loading state and only renders this page
+  // when data is ready. We just need to check for the user.
+  if (!user || isDataLoading) {
     return null;
   }
 
