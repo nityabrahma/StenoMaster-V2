@@ -1,3 +1,4 @@
+
 'use client';
 import { useAppRouter } from '@/hooks/use-app-router';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -19,7 +20,7 @@ export default function Logo() {
   
   return (
     <div onClick={() => router.push('/')} className="flex items-center justify-center gap-2 cursor-pointer">
-        <Image src="/logo.png" alt="StenoMaster Logo" width={32} height={32} className="w-8 h-8 flex-shrink-0" />
+        <Image src="/logo.png" alt="StenoMaster Logo" width={48} height={32} className="h-8 w-auto flex-shrink-0" />
         <span className={cn(
             "text-2xl font-bold font-headline transition-opacity duration-200",
             state === 'collapsed' && 'opacity-0 hidden'
