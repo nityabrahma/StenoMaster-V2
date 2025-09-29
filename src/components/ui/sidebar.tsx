@@ -479,7 +479,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md text-left text-sm outline-none ring-sidebar-ring transition-all duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[state=collapsed]/sidebar-wrapper:justify-center group-data-[state=collapsed]/sidebar-wrapper:p-3 group-data-[state=expanded]/sidebar-wrapper:p-2 [&>span]:group-data-[collapsible=icon]:hidden",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md text-left text-sm outline-none ring-sidebar-ring transition-all duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[state=collapsed]/sidebar-wrapper:justify-center group-data-[state=collapsed]/sidebar-wrapper:p-0 group-data-[state=collapsed]/sidebar-wrapper:aspect-square [&>span]:group-data-[collapsible=icon]:hidden",
   {
     variants: {
       variant: {
@@ -535,8 +535,9 @@ const SidebarMenuButton = React.forwardRef<
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size, isActive }), className, 
-            "group-data-[state=collapsed]/sidebar-wrapper:[&_svg]:size-6", // Larger icon when collapsed
-            "group-data-[state=expanded]/sidebar-wrapper:[&_svg]:size-5", // Normal icon size when expanded
+            "group-data-[state=collapsed]/sidebar-wrapper:w-12 group-data-[state=collapsed]/sidebar-wrapper:h-12",
+            "group-data-[state=collapsed]/sidebar-wrapper:[&_svg]:size-6",
+            "group-data-[state=expanded]/sidebar-wrapper:[&_svg]:size-5",
             "rounded-lg transition-all duration-300"
         )}
         style={isActive ? {
@@ -743,3 +744,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
