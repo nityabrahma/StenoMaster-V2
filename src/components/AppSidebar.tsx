@@ -131,7 +131,7 @@ export default function AppSidebar() {
                 isActive={isLinkActive(link.href)}
                 tooltip={link.label}
                 onClick={() => router.push(link.href)}
-                className="p-4"
+                className="group-data-[collapsible=icon]:p-2 p-4 group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center"
               >
                 <link.icon />
                 <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
@@ -144,4 +144,3 @@ export default function AppSidebar() {
   );
 }
 
-    
