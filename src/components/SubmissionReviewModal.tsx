@@ -55,7 +55,7 @@ const renderWord = (wordDiff: WordDiff, index: number) => {
             return (
                 <span key={index} className="text-red-400 bg-red-500/20 rounded-sm p-1">
                     {word}
-                    <span className="text-xs text-yellow-300">[{expected}]</span>
+                    <span className="text-green-300">[{expected}]</span>
                     {' '}
                 </span>
             );
@@ -91,7 +91,7 @@ export default function SubmissionReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full">
+      <DialogContent className="max-w-4xl w-full h-[90vh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">
             Review: {assignment.title}
@@ -133,7 +133,7 @@ export default function SubmissionReviewModal({
 
         <div className="flex flex-col">
             <h3 className="font-semibold mb-2">Your Submission with Errors</h3>
-             <ScrollArea className="h-[40vh]">
+             <ScrollArea className="h-[50vh]">
                 <Card className="flex-1 bg-background/80 overflow-y-auto">
                     <CardContent className="p-4">
                         <p className="font-code text-lg leading-relaxed whitespace-pre-wrap">
@@ -143,11 +143,6 @@ export default function SubmissionReviewModal({
                 </Card>
              </ScrollArea>
         </div>
-
-
-        <DialogFooter className="mt-4">
-          <Button onClick={onClose}>Close</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
