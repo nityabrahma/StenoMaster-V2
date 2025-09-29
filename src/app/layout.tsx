@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/logo-192x192.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="theme-color" content="#4B0082" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

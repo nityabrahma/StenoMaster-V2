@@ -1,11 +1,10 @@
-
 'use client';
-import { Feather } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LogoStatic() {
   return (
     <div className="flex items-center justify-center gap-2">
-        <Feather className="w-8 h-8 text-primary" />
+        <Image src="/logo.png" alt="StenoMaster Logo" width={32} height={32} className="w-8 h-8" />
         <span className="text-2xl font-bold font-headline">StenoMaster</span>
     </div>
   );
